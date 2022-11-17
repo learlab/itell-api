@@ -1,11 +1,11 @@
-import numpy as np
+from nltk import trigrams, word_tokenize
 
-def tokenize(text):
-    return np.array(text.split())
+def get_trigrams(text):
+    return set(trigrams(word_tokenize(text)))
 
 def containment_score(summary_input):
-    src = tokenize(summary_input.source)
-    txt = tokenize(summary_input.text)
+    src = get_trigrams(summary_input.source)
+    txt = get_trigrams(summary_input.text)
     containment = len(src.intersection(txt))/len(txt)
     return round(containment, 4)
   
