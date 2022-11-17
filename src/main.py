@@ -2,9 +2,9 @@ import os
 
 from fastapi import FastAPI
 
-from .summaryEval import get_score
-from .utils import containment_score
-from .models.summary import SummaryInput, SummaryResults
+from summaryEval import get_score
+from utils import containment_score
+from models.summary import SummaryInput, SummaryResults
 
 app = FastAPI()
 
