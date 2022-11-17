@@ -1,4 +1,5 @@
 from nltk import trigrams, word_tokenize
+from models.summary import SummaryInput
 
 def get_trigrams(text):
     return set(trigrams(word_tokenize(text)))
