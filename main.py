@@ -2,9 +2,9 @@ import os
 
 from fastapi import FastAPI
 
-from src.model import get_score
+from src.summaryEval import get_score
 from src.utils import containment_score
-from src.models.summary import SummaryInput
+from src.models.summary import SummaryInput, SummaryResults
 
 app = FastAPI()
 
@@ -13,12 +13,15 @@ def hello():
     return {"message": "Hello World"}
 
 @app.post("/score")
-def score(summary_input: SummaryInput):
-#     overlap = containment_score(summary_input.text)
-#     if overlap > .6:
-#         return {"score": 0, "containment": containment}
-#     else:
-    return {"score": get_score(summary_input.text)}
+def score(summary_input: SummaryInput) -> SummaryResults:
+    results = SummaryResults(containment = containment_score(summary_input))
+
+    if results.containment > .6:
+        results.score = 0
+    else:
+        results.score = get_score(summary_input)
+
+    return results
 
 
 if __name__ == "__main__":
