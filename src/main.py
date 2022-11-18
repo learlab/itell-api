@@ -7,11 +7,11 @@ from summaryEval import get_score
 from utils import containment_score
 from fastapi.middleware.cors import CORSMiddleware
 
+
 app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
-    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
