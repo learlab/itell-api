@@ -3,8 +3,8 @@ from nltk.corpus import stopwords
 from gensim.models import Doc2Vec
 from scipy import spatial
 
-source_dict_path = ''
-model_path = ''
+source_dict_path = './source_dict.txt'
+model_path = './models/doc2vec_model'
 
 # Load the source_dict
 data = open(source_dict_path)
