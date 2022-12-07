@@ -2,7 +2,7 @@ from pydantic import BaseModel
 from typing import Optional
 
 class SummaryInput(BaseModel):
-    textbook_name: None | None = None
+    textbook_name: Optional[str]
     chapter_index: int
     section_index: int
     source: Optional[str]

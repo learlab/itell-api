@@ -13,8 +13,8 @@ def test_score_main():
     response = client.post(
         "/score",
         json={
-            'chapter_number': '1',
-            'section_number': '1',
+            'chapter_index': '1',
+            'section_index': '1',
             'summary': 'Economics is about supply and demand.',
         }
     )
@@ -24,8 +24,8 @@ def test_containment():
     response = client.post(
         "/score",
         json={
-            'chapter_number': '1',
-            'section_number': '1',
+            'chapter_index': '1',
+            'section_index': '1',
             'summary': '''Think about it this way: In 2015 the labor force in the United States contained 
             over 158 million workers, according to the U.S. Bureau of Labor Statistics. 
             The total land area was 3,794,101 square miles. While these are certainly large numbers, 
