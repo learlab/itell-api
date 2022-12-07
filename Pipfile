@@ -11,6 +11,7 @@ nltk = "*"
 torch = "*"
 huggingface_hub = "*"
 gensim = "*"
+scipy = "*"
 
 [dev-packages]
 httpx = "*"
