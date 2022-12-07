@@ -3,8 +3,7 @@ import os
 from fastapi import FastAPI
 
 from models.summary import SummaryInput, SummaryResults
-from src.summary_eval import get_score
-from utils import containment_score
+from src.summary_eval import summary_score
 from fastapi.middleware.cors import CORSMiddleware
 
 
@@ -23,20 +22,7 @@ def hello():
 
 @app.post("/score")
 def score(summary_input: SummaryInput) -> SummaryResults:
-    '''Scores a summary in the following sequence. If the summary scores below a threshold at any step,
-    stop processing and return.
-    '''
-    results = SummaryResults(
-        containment=containment_score(summary_input)
-        )
-
-    if results.containment > 0.6:
-        results.score = 0
-    else:
-        results.score = get_score(summary_input)
-
-    return results
-
+    return summary_score(summary_input)
 
 if __name__ == "__main__":
     import uvicorn
