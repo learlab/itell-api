@@ -1,13 +1,11 @@
-from pydantic import BaseModel
-
+from pydantic import BaseModel, constr
 
 class SummaryInput(BaseModel):
-    source: str
-    text: str
+    section_number: constr(regex=r'^\d+-\d+$') # constrain string to chapter-section format "10-1"
+    summary: str
 
 
 class SummaryResults(BaseModel):
-    score: float | None = None  # deprecated!
     content: float | None = None
     wording: float | None = None
     containment: float | None = None
