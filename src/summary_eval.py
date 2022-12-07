@@ -56,7 +56,8 @@ def summary_score(summary_input: SummaryInput) -> SummaryResults:
     If it passes these checks, score the summary using a Huggingface pipeline.
     '''
 
-    summary_input.source = source_dict[summary_input.section_number]
+    section_code = f'{summary_input.chapter_index:02}-{summary_input.section_index}'
+    summary_input.source = source_dict[section_code]
 
     summary_results = SummaryResults(
         containment = containment_score(summary_input),

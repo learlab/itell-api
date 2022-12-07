@@ -1,8 +1,10 @@
-from pydantic import BaseModel, constr
+from pydantic import BaseModel
 from typing import Optional
 
 class SummaryInput(BaseModel):
-    section_number: constr(regex=r'^\d+-\d+$') # constrain string to chapter-section format "10-1"
+    textbook_name: None | None = None
+    chapter_index: int
+    section_index: int
     source: Optional[str]
     summary: str
 
