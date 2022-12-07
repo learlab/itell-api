@@ -16,10 +16,9 @@ model = Doc2Vec.load(model_path)
 # A function to tokenize the text
 def tokenize_text(text):
     tokens = []
-    for sent in nltk.sent_tokenize(text):
-        for word in nltk.word_tokenize(sent):
-            if not word in stopwords:
-                tokens.append(word.lower())
+    for word in nltk.word_tokenize(text):
+        if not word in stopwords:
+            tokens.append(word.lower())
     return tokens
 
 # A function to get the score
