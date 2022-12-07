@@ -28,6 +28,3 @@ def get_similarity(summary, section):
     summary_embedding = model.infer_vector(tokenize_text(summary))
     section_embedding = model.infer_vector(tokenize_text(section))
     return 1 - spatial.distance.cosine(summary_embedding, section_embedding)
-
-
-print(get_similarity(source_dict['01-1'], 'This is a test of the emergency broadcast system'))
