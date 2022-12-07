@@ -3,7 +3,7 @@ import os
 from fastapi import FastAPI
 
 from models.summary import SummaryInput, SummaryResults
-from src.summary_eval import summary_score
+from summary_eval import summary_score
 from fastapi.middleware.cors import CORSMiddleware
 
 

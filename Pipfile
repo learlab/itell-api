@@ -9,6 +9,8 @@ transformers = "*"
 uvicorn = "*"
 nltk = "*"
 torch = "*"
+huggingface_hub = "*"
+gensim = "*"
 
 [dev-packages]
 httpx = "*"

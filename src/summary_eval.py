@@ -5,6 +5,7 @@ from gensim.models import Doc2Vec
 from scipy import spatial
 from nltk.corpus import stopwords
 from nltk import trigrams, word_tokenize
+from pathlib import Path
 import json
 
 from models.summary import SummaryInput, SummaryResults
@@ -12,11 +13,11 @@ from models.summary import SummaryInput, SummaryResults
 english_stop_words = stopwords.words('english')
 
 # a textbook split into sections
-with open('../assets/macroeconomics_2e_sections.json', "r") as data:
+with open(Path('assets/macroeconomics_2e_sections.json'), 'r') as data:
     source_dict = json.loads(data.read())
 
 # a custom pre-trained doc2vec model (gensim)
-doc2vec_model = Doc2Vec.load('../assets/doc2vec_model') 
+doc2vec_model = Doc2Vec.load(str(Path('assets/doc2vec_model'))) 
 
 # Huggingface pipelines to score section summaries
 content_pipe = pipeline('text-classification', model='tiedaar/summary-longformer-content', function_to_apply='none')
