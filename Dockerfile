@@ -3,6 +3,6 @@ FROM python:3.10
 WORKDIR /code
 COPY . /code
 RUN pip install -r ./requirements.txt
-RUN python -c ./download_models.py
+RUN python ./download_models.py
 RUN export PYTHONPATH=$PYTHONPATH:/code
 CMD ["python", "src/main.py"]
