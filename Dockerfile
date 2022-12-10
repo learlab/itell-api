@@ -15,9 +15,10 @@ ENV HF_HOME=/usr/local/huggingface \
 COPY ./download_models.py /code/download_models.py
 RUN python /code/download_models.py
 
+COPY ./assets /code/assets
+
 # /code changes often, so copy this last.
-COPY ./src /code/src \
-     ./assets /code/assets
+COPY ./src /code/src
 ENV PYTHONPATH=$PYTHONPATH:/code
 
 CMD ["python", "src/main.py"]
