@@ -4,8 +4,7 @@ WORKDIR /code
 
 # Copy and install requirements first
 # requirements.txt changes less frequently than /src
-# so we may be able to cache this layer more often
-# if we install requirements first
+# so this layer can be cached
 COPY ./requirements.txt /code/requirements.txt
 RUN pip install --no-cache-dir --upgrade -r /code/requirements.txt
 
