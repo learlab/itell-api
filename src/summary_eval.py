@@ -13,7 +13,9 @@ from models.summary import SummaryInput, SummaryResults
 english_stop_words = stopwords.words('english')
 
 # a textbook split into sections
-with open(Path('assets/macroeconomics_2e_sections.json'), 'r') as data:
+textbook_json = Path().resolve().parent / 'assets' / 'macroeconomics_2e_sections.json'
+
+with open(textbook_json, 'r') as data:
     source_dict = json.loads(data.read())
 
 # a custom pre-trained doc2vec model (gensim)
