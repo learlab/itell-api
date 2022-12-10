@@ -13,10 +13,11 @@ RUN pip install --no-cache-dir --upgrade -r /code/requirements.txt
 # Specify where we want them to cache downloads
 ENV HF_HOME=/usr/local/huggingface \
     NLTK_DATA=/usr/local/nltk_data
-RUN python ./download_models.py
+COPY ./download_models.py /code/download_models.py
+RUN python /code/download_models.py
 
 # /code changes often, so copy this last.
-COPY . /code
+COPY ./src /code/src
 ENV PYTHONPATH=$PYTHONPATH:/code
 
 CMD ["python", "src/main.py"]
