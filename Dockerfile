@@ -16,7 +16,7 @@ COPY ./download_models.py /code/download_models.py
 RUN python /code/download_models.py
 
 # /code changes often, so copy this last.
-COPY ./src /code/src
+COPY ./src /code/src \
      ./assets /code/assets
 ENV PYTHONPATH=$PYTHONPATH:/code
 
