@@ -10,8 +10,11 @@ RUN pip install --no-cache-dir --upgrade -r /code/requirements.txt
 
 # Installing as root seems to confuse these libraries
 # Specify where we want them to cache downloads
+RUN mkdir /usr/local/nltk_data
+
 ENV HF_HOME=/usr/local/huggingface \
     NLTK_DATA=/usr/local/nltk_data
+
     
 # /code changes more often, so copy this last.
 COPY . /code
