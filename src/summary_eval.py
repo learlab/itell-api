@@ -12,11 +12,11 @@ from models.summary import SummaryInput, SummaryResults
 
 english_stop_words = stopwords.words('english')
 
-with open(Path('../assets/macroeconomics_2e_sections.json'), 'r') as data:
+with open(Path('assets/macroeconomics_2e_sections.json'), 'r') as data:
     source_dict = json.loads(data.read())
 
 # a custom pre-trained doc2vec model (gensim)
-doc2vec_model = Doc2Vec.load(str(Path('../assets/doc2vec_model'))) 
+doc2vec_model = Doc2Vec.load(str(Path('assets/doc2vec_model'))) 
 
 # Huggingface pipelines to score section summaries
 content_pipe = pipeline('text-classification', model='tiedaar/summary-longformer-content', function_to_apply='none')
