@@ -16,7 +16,7 @@ with open(Path('assets/macroeconomics_2e_sections.json'), 'r') as data:
     source_dict = json.loads(data.read())
 
 # a custom pre-trained doc2vec model (gensim)
-doc2vec_model = Doc2Vec.load(str(Path('assets/doc2vec_model'))) 
+doc2vec_model = Doc2Vec.load(str(Path('assets/doc2vec_model')))
 
 # Huggingface pipelines to score section summaries
 content_pipe = pipeline('text-classification', model='tiedaar/summary-longformer-content', function_to_apply='none')
@@ -27,6 +27,9 @@ def tokenize_text(text: str):
 
 def get_trigrams(text: str):
     return set(trigrams(tokenize_text(text)))
+
+def extract_score(pipe_output):
+    return pipe_output[0]["score"]
 
 def containment_score(summary_input: SummaryInput) -> float:
     src = get_trigrams(summary_input.source)
@@ -48,7 +51,7 @@ def analytic_score(summary_input: SummaryInput) -> tuple[float]:
     '''Return summary evlauation scores based on summary and source text.
     '''
     input_text = summary_input.summary + '</s>' + summary_input.source
-    return content_pipe(input_text), wording_pipe(input_text)
+    return extract_score(content_pipe(input_text)), extract_score(wording_pipe(input_text))
 
 def summary_score(summary_input: SummaryInput) -> SummaryResults:
     '''Checks summary for text copied from the source and for semantic relevance to the source text.
@@ -71,5 +74,5 @@ def summary_score(summary_input: SummaryInput) -> SummaryResults:
     summary_results.wording = wording
 
     return summary_results
-    
+
 
