@@ -1,7 +1,7 @@
 .PHONY: dev build run
 
 dev:
-	python main.py
+	python src/main.py
 
 build:
 	docker build . -t textbook-summary-api
