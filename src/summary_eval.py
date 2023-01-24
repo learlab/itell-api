@@ -49,7 +49,10 @@ def analytic_score(summary_input: SummaryInput) -> tuple[float]:
     '''Return summary evlauation scores based on summary and source text.
     '''
     input_text = summary_input.summary + '</s>' + summary_input.source
-    return content_pipe(input_text), wording_pipe(input_text)
+    return (
+        content_pipe(input_text, truncation=True, max_length=4096)[0]['score'],
+        wording_pipe(input_text, truncation=True, max_length=4096)[0]['score']
+        )
 
 def summary_score(summary_input: SummaryInput) -> SummaryResults:
     '''Checks summary for text copied from the source and for semantic relevance to the source text.
