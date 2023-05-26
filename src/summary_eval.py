@@ -1,98 +1,140 @@
-from transformers import pipeline, logging
-logging.set_verbosity_error()
+from transformers import logging
 
 from gensim.models import Doc2Vec
 from scipy import spatial
-from nltk.corpus import stopwords
-from nltk import trigrams, word_tokenize
+from nltk import trigrams
+
 from pathlib import Path
 import json
-
 from models.summary import SummaryInput, SummaryResults
+from pipelines.scoring import ScoringPipeline
 
-english_stop_words = stopwords.words('english')
+import spacy
+nlp = spacy.load('en_core_web_sm')
 
-with open(Path('assets/macroeconomics_2e_sections.json'), 'r') as data:
+logging.set_verbosity_error()
+
+with open(Path('assets/offensive-words.txt'), 'r') as data:
+    offensive_words = set(data.read().splitlines())
+
+with open(Path('assets/macroeconomics-2e-sections.json'), 'r') as data:
     source_dict = json.loads(data.read())
 
-# a custom pre-trained doc2vec model (gensim)
-doc2vec_model = Doc2Vec.load(str(Path('assets/doc2vec_model')))
+doc2vec_model = Doc2Vec.load(str(Path('assets/doc2vec-model')))
 
-# Huggingface pipelines to score section summaries
-def make_pipe(model_name: str):
-    return pipeline('text-classification', model=model_name,
-                    function_to_apply='none')
-content_pipe = make_pipe('tiedaar/summary-longformer-content')
-wording_pipe = make_pipe('tiedaar/summary-longformer-wording')
+content_pipe = ScoringPipeline('tiedaar/longformer-content-global')
+wording_pipe = ScoringPipeline('tiedaar/longformer-wording-global')
 
-def tokenize_text(text: str):
-    return [tok for tok in word_tokenize(text.lower())
-            if tok not in english_stop_words]
 
-def get_trigrams(text: str):
-    return set(trigrams(tokenize_text(text)))
+class Summary:
+    def __init__(self, summary_input: SummaryInput):
+        self.textbook_name = summary_input.textbook_name
+        self.chapter_index = summary_input.chapter_index
+        self.section_index = summary_input.section_index
+        self.section_code = f'{self.chapter_index:02}-{self.section_index:02}'
+        self.summary = summary_input.summary
 
-def containment_score(
-    summary_input: SummaryInput,
-    source: str = None, summary: str = None
-) -> float:
-    '''Calculate containment score between a source text and a derivative text.
-    Calculated as the intersection of unique trigrams divided by the number if 
-    unique trigrams in the derivative text.
-    Values range from 0 to 1, with 1 being completely copied.
-    Allows for source and summary to be manually input for testing purposes.'''
-    if summary_input:
-        source, summary = summary_input.source, summary_input.summary
-    src = get_trigrams(source)
-    txt = get_trigrams(summary)
-    try:
-        containment = len(src.intersection(txt)) / len(txt)
-        return round(containment, 4)
-    except ZeroDivisionError:
-        return 1.0
+        self.source = source_dict[self.section_code]['text']
+        self.keyphrases = source_dict[self.section_code]['keyphrases']
 
-def similarity_score(summary_input: SummaryInput) -> float:
-    '''Return semantic similarity score based on summary and source text.
-    '''
-    source_tokens = tokenize_text(summary_input.source)
-    summary_tokens = tokenize_text(summary_input.summary)
-    source_embedding = doc2vec_model.infer_vector(source_tokens)
-    summary_embedding = doc2vec_model.infer_vector(summary_tokens)
-    return 1 - spatial.distance.cosine(summary_embedding, source_embedding)
+        self.results = {}
 
-def analytic_score(summary_input: SummaryInput) -> tuple[float]:
-    '''Return summary evlauation scores based on summary and source text.
-    '''
-    input_text = summary_input.summary + '</s>' + summary_input.source
-    return (
-        content_pipe(input_text, truncation=True, max_length=4096)[0]['score'],
-        wording_pipe(input_text, truncation=True, max_length=4096)[0]['score']
+        # intermediate objects for scoring
+        self.input_text = self.summary + '</s>' + self.source
+        self.summary_doc = nlp(self.summary)
+        self.source_doc = nlp(self.source)
+        self.keyphrase_docs = [nlp(keyphrase) for keyphrase in self.keyphrases]
+
+    def score_containment(self) -> None:
+        '''Calculate containment score between a source text and a derivative
+        text. Calculated as the intersection of unique trigrams divided by the
+        number of unique trigrams in the derivative text. Values range from 0
+        to 1, with 1 being completely copied.'''
+
+        src = set(trigrams(
+            [t.text for t in self.source_doc if not t.is_stop]))
+        txt = set(trigrams(
+            [t.text for t in self.summary_doc if not t.is_stop]))
+        try:
+            containment = len(src.intersection(txt)) / len(txt)
+            self.results['containment'] = round(containment, 4)
+        except ZeroDivisionError:
+            self.results['containment'] = 1.0
+
+    def score_similarity(self) -> None:
+        '''Return semantic similarity score based on summary and source text.
+        '''
+        source_embed = doc2vec_model.infer_vector(
+            [t.text for t in self.source_doc if not t.is_stop])
+        summary_embed = doc2vec_model.infer_vector(
+            [t.text for t in self.summary_doc if not t.is_stop]
         )
+        self.results['similarity'] = 1 - spatial.distance.cosine(summary_embed,
+                                                                 source_embed)
+
+    def score_content(self) -> None:
+        '''Return content score based on summary and source text.
+        '''
+        self.results['content'] = content_pipe(self.input_text,
+                                               truncation=True,
+                                               max_length=4096)[0]['score']
+
+    def score_wording(self) -> None:
+        '''Return wording score based on summary and source text.
+        '''
+        self.results['wording'] = wording_pipe(self.input_text,
+                                               truncation=True,
+                                               max_length=4096)[0]['score']
+
+    def extract_keyphrases(self) -> None:
+        '''Return keyphrases that were included in the summary and suggests
+        keyphrases that were not included.
+        '''
+        included_keyphrases = set()
+        suggested_keyphrases = set()
+
+        sum_lemmas = {t.lemma_ for t in self.summary_doc if not t.is_stop}
+
+        for keyphrase in self.keyphrase_docs:
+            key_lemmas = {t.lemma_ for t in keyphrase if not t.is_stop}
+            keyphrase_included = not sum_lemmas.isdisjoint(key_lemmas)
+            if keyphrase_included:
+                included_keyphrases.add(keyphrase.text)
+            else:
+                suggested_keyphrases.add(keyphrase.text)
+
+        self.results['included_keyphrases'] = included_keyphrases
+        self.results['suggested_keyphrases'] = suggested_keyphrases
+
+    def check_profanity(self) -> None:
+        '''Return True if summary contains profanity.
+        '''
+        summary_words = {t.lower_ for t in self.summary_doc if not t.is_stop}
+        is_clean = summary_words.isdisjoint(offensive_words)
+        self.results['profanity'] = not is_clean
+
 
 def summary_score(summary_input: SummaryInput) -> SummaryResults:
-    '''Checks summary for text copied from the source and for semantic 
+    '''Checks summary for text copied from the source and for semantic
     relevance to the source text. If it passes these checks, score the summary
     using a Huggingface pipeline.
     '''
-    section_code = f'{summary_input.chapter_index:02}-\
-        {summary_input.section_index}'
-    summary_input.source = source_dict[section_code]
 
-    summary_results = SummaryResults(
-        containment = containment_score(summary_input),
-        similarity = similarity_score(summary_input)
-        )
+    summary = Summary(summary_input)
 
-    if summary_results.containment > 0.5 or summary_results.similarity < 0.3:
-        return summary_results
+    summary.score_containment()
+    summary.score_similarity()
+    summary.check_profanity()
+    summary.extract_keyphrases()
 
-    content, wording = analytic_score(summary_input)
-    summary_results.content = content
-    summary_results.wording = wording
+    junk_filter = (summary.results['containment'] > 0.5
+                   or summary.results['similarity'] < 0.3
+                   or summary.results['profanity'])
 
-    return summary_results
+    if junk_filter:
+        return SummaryResults(**summary.results)
 
-if __name__ == "__main__":
-    source='Hello my name is from the future, but I live in the past.'
-    summary='Hello my name is from the future.'
-    print(containment_score(None, source=source, summary=summary))
+    else:
+        summary.score_content()
+        summary.score_wording()
+        return SummaryResults(**summary.results)

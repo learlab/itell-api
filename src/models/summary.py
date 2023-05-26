@@ -1,6 +1,7 @@
 from pydantic import BaseModel
 from typing import Optional
 
+
 class SummaryInput(BaseModel):
     textbook_name: Optional[str]
     chapter_index: int
@@ -10,7 +11,10 @@ class SummaryInput(BaseModel):
 
 
 class SummaryResults(BaseModel):
+    containment: float
+    similarity: float
+    profanity: bool
+    included_keyphrases: set[str]
+    suggested_keyphrases: set[str]
     content: float | None = None
     wording: float | None = None
-    containment: float | None = None
-    similarity: float | None = None
