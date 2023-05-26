@@ -211,13 +211,6 @@
             ],
             "version": "==2.0.7"
         },
-        "en-core-web-sm": {
-            "hashes": [
-                "sha256:0964370218b7e1672a30ac50d72cdc6b16f7c867496f1d60925691188f4d2510"
-            ],
-            "index": "pypi",
-            "version": "==3.5.0"
-        },
         "fastapi": {
             "hashes": [
                 "sha256:4d9d3e8c71c73f11874bcf5e33626258d143252e329a01002f767306c64fb982",
