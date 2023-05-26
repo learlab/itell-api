@@ -14,16 +14,16 @@ nlp = spacy.load('en_core_web_sm')
 
 logging.set_verbosity_error()
 
-with open(Path('assets/offensive_words.txt'), 'r') as data:
+with open(Path('assets/offensive-words.txt'), 'r') as data:
     offensive_words = set(data.read().splitlines())
 
-with open(Path('assets/macroeconomics_2e_sections.json'), 'r') as data:
+with open(Path('assets/macroeconomics-2e-sections.json'), 'r') as data:
     source_dict = json.loads(data.read())
 
-doc2vec_model = Doc2Vec.load(str(Path('assets/doc2vec_model')))
+doc2vec_model = Doc2Vec.load(str(Path('assets/doc2vec-model')))
 
-content_pipe = ScoringPipeline(model='tiedaar/longformer-content-global')
-wording_pipe = ScoringPipeline(model='tiedaar/longformer-wording-global')
+content_pipe = ScoringPipeline('tiedaar/longformer-content-global')
+wording_pipe = ScoringPipeline('tiedaar/longformer-wording-global')
 
 
 class Summary:
@@ -34,11 +34,10 @@ class Summary:
         self.section_code = f'{self.chapter_index:02}-{self.section_index:02}'
         self.summary = summary_input.summary
 
-        self.source = self.source_dict[self.section_index]['text']
-        self.keyphrases = self.source_dict[self.section_index][
-            'keyphrases']
+        self.source = source_dict[self.section_code]['text']
+        self.keyphrases = source_dict[self.section_code]['keyphrases']
 
-        self.results = SummaryResults()
+        self.results = {}
 
         # intermediate objects for scoring
         self.input_text = self.summary + '</s>' + self.source
@@ -58,9 +57,9 @@ class Summary:
             [t.text for t in self.summary_doc if not t.is_stop]))
         try:
             containment = len(src.intersection(txt)) / len(txt)
-            self.results.containment = round(containment, 4)
+            self.results['containment'] = round(containment, 4)
         except ZeroDivisionError:
-            self.results.containment = 1.0
+            self.results['containment'] = 1.0
 
     def score_similarity(self) -> None:
         '''Return semantic similarity score based on summary and source text.
@@ -70,50 +69,49 @@ class Summary:
         summary_embed = doc2vec_model.infer_vector(
             [t.text for t in self.summary_doc if not t.is_stop]
         )
-        self.results.similarity = 1 - spatial.distance.cosine(summary_embed,
-                                                              source_embed)
+        self.results['similarity'] = 1 - spatial.distance.cosine(summary_embed,
+                                                                 source_embed)
 
     def score_content(self) -> None:
         '''Return content score based on summary and source text.
         '''
-        self.results.content = content_pipe(self.input_text,
-                                            truncation=True,
-                                            max_length=4096)[0]['score']
+        self.results['content'] = content_pipe(self.input_text,
+                                               truncation=True,
+                                               max_length=4096)[0]['score']
 
     def score_wording(self) -> None:
         '''Return wording score based on summary and source text.
         '''
-        self.results.wording = wording_pipe(self.input_text,
-                                            truncation=True,
-                                            max_length=4096)[0]['score']
+        self.results['wording'] = wording_pipe(self.input_text,
+                                               truncation=True,
+                                               max_length=4096)[0]['score']
 
     def extract_keyphrases(self) -> None:
         '''Return keyphrases that were included in the summary and suggests
         keyphrases that were not included.
         '''
-        included_keyphrases = {}
-        suggested_keyphrases = {}
+        included_keyphrases = set()
+        suggested_keyphrases = set()
 
-        sum_lemmas = [t.lemma_ for t in self.summary_doc if not t.is_stop]
+        sum_lemmas = {t.lemma_ for t in self.summary_doc if not t.is_stop}
 
         for keyphrase in self.keyphrase_docs:
-            key_lemmas = [t.lemma_ for t in keyphrase if not t.is_stop]
-            keyphrase_included = any(
-                [key_lemma in sum_lemmas for key_lemma in key_lemmas])
+            key_lemmas = {t.lemma_ for t in keyphrase if not t.is_stop}
+            keyphrase_included = not sum_lemmas.isdisjoint(key_lemmas)
             if keyphrase_included:
-                included_keyphrases.add(keyphrase)
+                included_keyphrases.add(keyphrase.text)
             else:
-                suggested_keyphrases.add(keyphrase)
+                suggested_keyphrases.add(keyphrase.text)
 
-        self.results.included_keyphrases = included_keyphrases
-        self.results.suggested_keyphrases = suggested_keyphrases
+        self.results['included_keyphrases'] = included_keyphrases
+        self.results['suggested_keyphrases'] = suggested_keyphrases
 
     def check_profanity(self) -> None:
         '''Return True if summary contains profanity.
         '''
         summary_words = {t.lower_ for t in self.summary_doc if not t.is_stop}
-
-        self.results.profanity = not summary_words.isdisjoint(offensive_words)
+        is_clean = summary_words.isdisjoint(offensive_words)
+        self.results['profanity'] = not is_clean
 
 
 def summary_score(summary_input: SummaryInput) -> SummaryResults:
@@ -129,14 +127,14 @@ def summary_score(summary_input: SummaryInput) -> SummaryResults:
     summary.check_profanity()
     summary.extract_keyphrases()
 
-    junk_filter = (summary.results.containment > 0.5
-                   or summary.results.similarity < 0.3
-                   or summary.results.profanity)
+    junk_filter = (summary.results['containment'] > 0.5
+                   or summary.results['similarity'] < 0.3
+                   or summary.results['profanity'])
 
     if junk_filter:
-        return summary.results
+        return SummaryResults(**summary.results)
 
     else:
         summary.score_content()
         summary.score_wording()
-        return summary.results
+        return SummaryResults(**summary.results)

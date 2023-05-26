@@ -4,10 +4,12 @@ from main import app
 
 client = TestClient(app)
 
+
 def test_read_main():
     response = client.get("/")
     assert response.status_code == 200
     assert response.json() == {"message": "Hello World"}
+
 
 def test_score_main():
     response = client.post(
@@ -19,6 +21,7 @@ def test_score_main():
         }
     )
     print('Really Bad Summary:', response.json())
+
 
 def test_containment():
     response = client.post(
@@ -32,6 +35,20 @@ def test_containment():
     print('Copied Text:', response.json())
     assert response.json()['containment'] > 0.9
 
+
+def test_profanity():
+    response = client.post(
+        "/score",
+        json={
+            'chapter_index': '1',
+            'section_index': '1',
+            'summary': '''Sexy is considered a bad word in this context.'''
+        }
+    )
+    print('Profane Text:', response.json())
+    assert response.json()['profanity'] == True
+
+
 def test_long_example():
     response = client.post(
         "/score",
@@ -43,8 +60,10 @@ def test_long_example():
     )
     print('Really Long Summary:', response.json())
 
+
 if __name__ == "__main__":
     test_read_main()
     test_score_main()
+    test_profanity()
     test_containment()
     test_long_example()
