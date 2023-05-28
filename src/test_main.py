@@ -49,7 +49,7 @@ def test_profanity():
     assert response.json()['profanity'] == True
 
 
-def test_long_example():
+def test_long_summary():
     response = client.post(
         "/score",
         json={
@@ -60,10 +60,22 @@ def test_long_example():
     )
     print('Really Long Summary:', response.json())
 
+def test_irrelevant_summary():
+    response = client.post(
+        "/score",
+        json={
+            'chapter_index': '5',
+            'section_index': '2',
+            'summary': '''The z-index property in CSS controls the vertical stacking order of elements that overlap. As in, which one appears as if it is physically closer to you. z-index only affects elements that have a position value other than static (the default).Elements can overlap for a variety of reasons, for instance, relative positioning has nudged it over something else. Negative margin has pulled the element over another. Absolutely positioned elements overlap each other. All sorts of reasons.'''
+        }
+    )
+    print('Irrelevant Summary:', response.json())
+            
 
 if __name__ == "__main__":
     test_read_main()
+    test_irrelevant_summary()
     test_score_main()
     test_profanity()
     test_containment()
-    test_long_example()
+    test_long_summary()

@@ -10,7 +10,7 @@ class ScoringPipeline(TextClassificationPipeline):
             model=LongformerForSequenceClassification.from_pretrained(model),
             tokenizer=AutoTokenizer.from_pretrained(
                 'allenai/longformer-base-4096'),
-            function_to_apply='sigmoid',
+            function_to_apply='None',
             *args,
             **kwargs
         )
