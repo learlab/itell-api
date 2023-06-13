@@ -60,6 +60,7 @@ def test_long_summary():
     )
     print('Really Long Summary:', response.json())
 
+
 def test_irrelevant_summary():
     response = client.post(
         "/score",
@@ -70,9 +71,22 @@ def test_irrelevant_summary():
         }
     )
     print('Irrelevant Summary:', response.json())
-            
+
+
+def test_errored_summary():
+    response = client.post(
+        "/score",
+        json={
+            'chapter_index': '1',
+            'section_index': '1',
+            'summary': '''Economics is a field that considers labor, production, and the distribution of goods within society. Modern economics began with Adam Smith, who first described the division of labor. He argued that specialization of labor could lead to higher productivity, and this is the foundation of our modern economy. I am excited to learn more!'''
+        }
+    )
+    print('Errored Summary:', response.json())
+  
 
 if __name__ == "__main__":
+    test_errored_summary()
     test_read_main()
     test_irrelevant_summary()
     test_score_main()
