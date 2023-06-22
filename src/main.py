@@ -11,6 +11,9 @@ app = FastAPI()
 origins = [
     "http://localhost:8000",
     "https://textbook-demo.web.app",
+    "https://itell.vercel.app",
+    "https://itell-poe.vercel.app",
+    "https://itell-think-python.vercel.app",
 ]
 
 app.add_middleware(
@@ -36,8 +39,5 @@ if __name__ == "__main__":
     import uvicorn
 
     uvicorn.run(
-        "main:app",
-        host="0.0.0.0",
-        port=int(os.environ.get("PORT", 8001)),
-        reload=True
+        "main:app", host="0.0.0.0", port=int(os.environ.get("PORT", 8001)), reload=True
     )
