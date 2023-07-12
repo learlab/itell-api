@@ -6,6 +6,8 @@ from nltk import trigrams
 
 from pathlib import Path
 import json
+import random
+
 from models.summary import SummaryInput, SummaryResults
 from pipelines.scoring import ScoringPipeline
 
@@ -91,20 +93,22 @@ class Summary:
         keyphrases that were not included.
         '''
         included_keyphrases = set()
-        suggested_keyphrases = set()
+        suggested_keyphrases = list()
 
-        sum_lemmas = {t.lemma_ for t in self.summary_doc if not t.is_stop}
+        summary_lemmas = {t.lemma_ for t in self.summary_doc if not t.is_stop}
 
         for keyphrase in self.keyphrase_docs:
             key_lemmas = {t.lemma_ for t in keyphrase if not t.is_stop}
-            keyphrase_included = not sum_lemmas.isdisjoint(key_lemmas)
+            keyphrase_included = not summary_lemmas.isdisjoint(key_lemmas)
             if keyphrase_included:
                 included_keyphrases.add(keyphrase.text)
             else:
-                suggested_keyphrases.add(keyphrase.text)
+                suggested_keyphrases.append(keyphrase.text)
 
         self.results['included_keyphrases'] = included_keyphrases
-        self.results['suggested_keyphrases'] = suggested_keyphrases
+        self.results['suggested_keyphrases'] = random.sample(
+            suggested_keyphrases, 3
+            )
 
     def check_profanity(self) -> None:
         '''Return True if summary contains profanity.
