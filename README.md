@@ -16,4 +16,5 @@ The code defines a Docker image. Anytime a change is committed to `main`, Github
 ## Usage
 
 The API request is a POST request to the `/score` endpoint. The request body should be a JSON object with fields defined in /models/summary.py.
+
 The response is a JSON object with fields defined in /models/summary.py

@@ -1,23 +1,20 @@
 from pydantic import BaseModel
+from enum import Enum
 from typing import Optional
 
-textbook_names = [
-    'macroeconomics-2e',
-    'think-python-2e',
-]
+
+class TextbookNames(str, Enum):
+    macro_econ_2e = 'macroeconomics-2e'
+    think_python_2e = 'think-python-2e'
+
 
 class SummaryInput(BaseModel):
-    textbook_name: str # macroeconomics-2e, think-python-2e
-    chapter_index: int | None = None
-    section_index: int | None = None
-    source: Optional[str]
+    textbook_name: TextbookNames
+    chapter_index: Optional[int] = None
+    section_index: Optional[int] = None
+    source: Optional[str] = None
     summary: str
 
-    @field_validator('textbook_name')
-    def validate_textbook_name(cls, v):
-        if v not in textbook_names:
-            raise ValueError(f'Invalid textbook name: {v}')
-        return v
 
 class SummaryResults(BaseModel):
     containment: float
@@ -25,5 +22,5 @@ class SummaryResults(BaseModel):
     profanity: bool
     included_keyphrases: set[str]
     suggested_keyphrases: set[str]
-    content: float | None = None
-    wording: float | None = None
+    content: Optional[float] = None
+    wording: Optional[float] = None

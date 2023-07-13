@@ -1,3 +1,5 @@
+from fastapi import HTTPException
+
 from transformers import logging
 
 from gensim.models import Doc2Vec
@@ -37,7 +39,8 @@ class Summary:
         if not source_dict_path.exists():
             raise HTTPException(
                 status_code=500,
-                detail=f'The server validated the textbook name but failed to locate the relevant resource at {source_dict_path}.',
+                detail='The server validated the textbook name but failed to '
+                f'locate the relevant resource at {source_dict_path}.',
                 )
             
         with open(source_dict_path, 'r') as data:

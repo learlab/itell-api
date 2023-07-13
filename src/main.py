@@ -29,7 +29,7 @@ app.add_middleware(
 
 @app.get("/")
 def hello():
-    return {"message": "Hello World"}
+    return {"message": "This is a summary scoring API for iTELL."}
 
 
 @app.post("/score")
@@ -41,5 +41,8 @@ if __name__ == "__main__":
     import uvicorn
 
     uvicorn.run(
-        "main:app", host="0.0.0.0", port=int(os.environ.get("PORT", 8001)), reload=True
+        "main:app",
+        host="0.0.0.0",
+        port=int(os.environ.get("PORT", 8001)),
+        reload=True
     )
