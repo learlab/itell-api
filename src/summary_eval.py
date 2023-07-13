@@ -19,9 +19,6 @@ logging.set_verbosity_error()
 with open(Path('assets/offensive-words.txt'), 'r') as data:
     offensive_words = set(data.read().splitlines())
 
-with open(Path('assets/macroeconomics-2e-sections.json'), 'r') as data:
-    source_dict = json.loads(data.read())
-
 doc2vec_model = Doc2Vec.load(str(Path('assets/doc2vec-model')))
 
 content_pipe = ScoringPipeline('tiedaar/longformer-content-global')
@@ -36,6 +33,16 @@ class Summary:
         self.section_code = f'{self.chapter_index:02}-{self.section_index:02}'
         self.summary = summary_input.summary
 
+        source_dict_path = Path(f'assets/{self.textbook_name}-sections.json')
+        if not source_dict_path.exists():
+            raise HTTPException(
+                status_code=500,
+                detail=f'The server validated the textbook name but failed to locate the relevant resource at {source_dict_path}.',
+                )
+            
+        with open(source_dict_path, 'r') as data:
+            source_dict = json.loads(data.read())
+            
         self.source = source_dict[self.section_code]['text']
         self.keyphrases = source_dict[self.section_code]['keyphrases']
 
