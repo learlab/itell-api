@@ -19,7 +19,6 @@ def test_think_python():
         json={
             'textbook_name': 'think-python-2e',
             'chapter_index': '1',
-            'section_index': '',
             'summary': 'Python is a snake.',
         }
     )
@@ -31,13 +30,24 @@ def test_invalid_textbook_name():
         "/score",
         json={
             'textbook_name': 'invalid-textbook-name',
-            'chapter_index': None,
-            'section_index': None,
             'summary': 'Validity is important.',
         }
     )
     print('Invalid Textbook Name:', response.json())
 
+
+def test_irrelevant_summary():
+    response = client.post(
+        "/score",
+        json={
+            'textbook_name': 'macroeconomics-2e',
+            'chapter_index': '5',
+            'section_index': '2',
+            'summary': '''The z-index property in CSS controls the vertical stacking order of elements that overlap. As in, which one appears as if it is physically closer to you. z-index only affects elements that have a position value other than static (the default).Elements can overlap for a variety of reasons, for instance, relative positioning has nudged it over something else. Negative margin has pulled the element over another. Absolutely positioned elements overlap each other. All sorts of reasons.''',  # noqa: E501
+        }
+    )
+    print('Irrelevant Summary:', response.json())
+    
 
 def test_score_main():
     response = client.post(
@@ -93,21 +103,10 @@ def test_long_summary():
     print('Really Long Summary:', response.json())
 
 
-def test_irrelevant_summary():
-    response = client.post(
-        "/score",
-        json={
-            'textbook_name': 'macroeconomics-2e',
-            'chapter_index': '5',
-            'section_index': '2',
-            'summary': '''The z-index property in CSS controls the vertical stacking order of elements that overlap. As in, which one appears as if it is physically closer to you. z-index only affects elements that have a position value other than static (the default).Elements can overlap for a variety of reasons, for instance, relative positioning has nudged it over something else. Negative margin has pulled the element over another. Absolutely positioned elements overlap each other. All sorts of reasons.''',  # noqa: E501
-        }
-    )
-    print('Irrelevant Summary:', response.json())
-
-
 if __name__ == "__main__":
     test_read_main()
+    test_think_python()
+    test_invalid_textbook_name()
     test_irrelevant_summary()
     test_score_main()
     test_profanity()

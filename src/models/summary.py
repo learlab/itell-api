@@ -10,8 +10,8 @@ class TextbookNames(str, Enum):
 
 class SummaryInput(BaseModel):
     textbook_name: TextbookNames
-    chapter_index: Optional[int] = None
-    section_index: Optional[int] = None
+    chapter_index: Optional[int] = 00
+    section_index: Optional[int] = 00
     source: Optional[str] = None
     summary: str
 
