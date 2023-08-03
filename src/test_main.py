@@ -4,6 +4,9 @@ from main import app
 
 client = TestClient(app)
 
+def test_read_gpu():
+    response = client.get("/gpu")
+    print('Read GPU:', response.json())
 
 def test_read_main():
     response = client.get("/")

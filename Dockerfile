@@ -1,11 +1,14 @@
 FROM nvcr.io/nvidia/pytorch:23.07-py3
 
-# Copy pipfile and pipfile.lock
+# Do requirements first so we can cache them
+# This layer only changes when requirements are updated.
+COPY requirements.txt /usr/src/
+
+RUN python3 -m pip install -r requirements.txt
+
 COPY . /usr/src/
 
 WORKDIR /usr/src/
-
-RUN python3 -m pip install -r requirements.txt
 
 # Installing as root seems to confuse these libraries
 # Specify where we want them to cache downloads
@@ -16,7 +19,5 @@ ENV HF_HOME=/usr/local/huggingface \
 
 # download big models so they are stored in container
 RUN python3 ./download_models.py
-
-# EXPOSE 8001
 
 CMD ["python3", "src/main.py"]
