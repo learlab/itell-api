@@ -1,4 +1,4 @@
-FROM huggingface/transformers-pytorch-gpu@sha256:3ba9aef0e4cc4cbb886d2154d72aa12b6786a7facc0166fb5afb4349fc3ee840
+FROM python:3.10
 
 WORKDIR /code
 

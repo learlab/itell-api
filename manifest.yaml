@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: itell-score-deployment
+  labels:
+    app: itell-score-api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: itell-score-api
+  template:
+    metadata:
+      labels:
+        app: itell-score-api
+    spec:
+      containers:
+      - name: itell-score-api
+        image: langdonholmes/itell-score-api
+        resources:
+          limits:
+            nvidia.com/gpu: "1"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: itell-score-svc
+  labels:
+    app: itell-score-api
+spec:
+  type: NodePort
+  ports:
+  - port: 8001
+    protocol: TCP
+    targetPort: 8001
+    nodePort: 30003
+  selector:
+    app: itell-score-api
