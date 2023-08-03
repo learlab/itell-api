@@ -33,6 +33,12 @@ def hello():
     return {"message": "This is a summary scoring API for iTELL."}
 
 
+@app.get("/gpu")
+def gpu_available():
+    import torch
+    return f'GPU Available: {torch.cuda.is_available()}'
+
+
 @app.post("/score")
 def score(summary_input: SummaryInput) -> SummaryResults:
     return summary_score(summary_input)

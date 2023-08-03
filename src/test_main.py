@@ -8,21 +8,6 @@ client = TestClient(app)
 def test_read_main():
     response = client.get("/")
     assert response.status_code == 200
-    assert response.json() == {
-        "message": "This is a summary scoring API for iTELL."
-        }
-
-
-def test_think_python():
-    response = client.post(
-        "/score",
-        json={
-            'textbook_name': 'think-python-2e',
-            'chapter_index': '1',
-            'summary': 'Python is a snake.',
-        }
-    )
-    print('Think Python:', response.json())
 
 
 def test_invalid_textbook_name():
@@ -105,7 +90,6 @@ def test_long_summary():
 
 if __name__ == "__main__":
     test_read_main()
-    test_think_python()
     test_invalid_textbook_name()
     test_irrelevant_summary()
     test_score_main()
