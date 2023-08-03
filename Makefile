@@ -1,23 +1,22 @@
-IMAGENAME=itell-score-api
+user=langdonholmes
+image_name=itell-score-api
 
-.PHONY: help dev build push run build-push
+.PHONY: help download build push run build-push
 
-dev:
-	python src/main.py
+download:
+	python src/download_models.py
 
 build:
-	docker build . -t ${IMAGENAME}
+	docker build . -t ${user}/${image_name}
 
 push:
-	docker push ${IMAGENAME}
-
-run:
-	docker run -p 8000:80 -d --rm textbook-summary-api
+	docker push ${user}/${image_name}
 
 help:
 	@echo "Makefile arguments:"
 	@echo ""
-	@echo ":IMAGENAME: = ${IMAGENAME} - Name of image to build"
+	@echo ":user: = ${user} - Name of DockerHub user"
+	@echo ":image_name: = ${image_name} - Name of image to build"
 	@echo ""
 	@echo "Makefile commands:"
 	@echo "build"
