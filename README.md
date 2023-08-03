@@ -22,6 +22,10 @@ The code defines a Docker image. Anytime a change is committed to `main`, Github
 
 The image is hosted on our bare metal server using a Kubernetes manifest.yaml file. The Makefile defines a build and push sequence to DockerHub. The manifest file defines a deployment and service for the image. The deployment is configured to pull the image from DockerHub. The service is configured to expose the deployment on port 30003.
 
+To update the deployment with a new Docker image, use `microk8s kubectl rollout restart deployment/itell-score-deployment`.
+
+To verify that a GPU was allocated to the deployment and is usable, you can use the /gpu endpoint: `curl http://localhost:30003/gpu`
+
 ## Usage
 
 The API request is a POST request to the `/score` endpoint. The request body should be a JSON object with fields defined in /models/summary.py.

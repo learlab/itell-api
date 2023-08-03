@@ -8,8 +8,7 @@ WORKDIR /usr/src/
 
 RUN python3 -m pip install -r requirements.txt
 
-COPY . /usr/src/
-
+COPY download_models.py /usr/src/
 
 # Installing as root seems to confuse these libraries
 # Specify where we want them to cache downloads
@@ -20,5 +19,7 @@ ENV HF_HOME=/usr/local/huggingface \
 
 # download big models so they are stored in container
 RUN python3 ./download_models.py
+
+COPY . /usr/src/
 
 CMD ["python3", "src/main.py"]
