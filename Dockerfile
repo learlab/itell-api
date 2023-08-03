@@ -4,11 +4,12 @@ FROM nvcr.io/nvidia/pytorch:23.07-py3
 # This layer only changes when requirements are updated.
 COPY requirements.txt /usr/src/
 
+WORKDIR /usr/src/
+
 RUN python3 -m pip install -r requirements.txt
 
 COPY . /usr/src/
 
-WORKDIR /usr/src/
 
 # Installing as root seems to confuse these libraries
 # Specify where we want them to cache downloads
