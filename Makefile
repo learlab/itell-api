@@ -1,10 +1,7 @@
 user=langdonholmes
 image_name=itell-score-api
 
-.PHONY: help download build push run build-push
-
-download:
-	python src/download_models.py
+.PHONY: help build push run build-push
 
 build:
 	docker build . -t ${user}/${image_name}
@@ -20,9 +17,8 @@ help:
 	@echo ""
 	@echo "Makefile commands:"
 	@echo "build"
-	@echo "dev"
 	@echo "push"
-	@echo "all"
+	@echo "build-push"
 
 .DEFAULT_GOAL := build-push
 
