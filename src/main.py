@@ -4,7 +4,10 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from models.summary import SummaryInput, SummaryResults
+from models.QA import QAInput, QAResults
+
 from summary_eval import summary_score
+from qa_eval import qa_score
 
 app = FastAPI()
 
@@ -42,6 +45,12 @@ def gpu_available():
 @app.post("/score")
 def score(summary_input: SummaryInput) -> SummaryResults:
     return summary_score(summary_input)
+
+
+@app.post("/qascore")
+def qascore(qa_input: QAInput) -> QAResults:
+    return qa_score(qa_input)
+
 
 
 if __name__ == "__main__":
