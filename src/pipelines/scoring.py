@@ -11,6 +11,7 @@ class ScoringPipeline(TextClassificationPipeline):
             tokenizer=AutoTokenizer.from_pretrained(
                 'allenai/longformer-base-4096'),
             function_to_apply='None',
+            device='cuda' if torch.cuda.is_available() else 'cpu',
             *args,
             **kwargs
         )
