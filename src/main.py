@@ -1,13 +1,17 @@
 import os
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
 from models.summary import SummaryInput, SummaryResults
-from models.QA import QAInput, QAResults
+from models.answer import AnswerInput, AnswerResults
 
 from summary_eval import summary_score
-from qa_eval import qa_score
+from answer_eval import answer_score
+
+from typing import Union
+from enum import Enum
+
 
 app = FastAPI()
 
@@ -31,6 +35,11 @@ app.add_middleware(
 )
 
 
+class ScoreType(str, Enum):
+    summary = "summary"
+    answer = "answer"
+
+
 @app.get("/")
 def hello():
     return {"message": "This is a summary scoring API for iTELL."}
@@ -39,18 +48,22 @@ def hello():
 @app.get("/gpu")
 def gpu_available():
     import torch
+
     return {"message": f"GPU Available: {torch.cuda.is_available()}"}
 
 
-@app.post("/score")
-def score(summary_input: SummaryInput) -> SummaryResults:
-    return summary_score(summary_input)
+@app.post("/score/{score_type}")
+def score(
+    score_type: ScoreType, input_body: Union[SummaryInput, AnswerInput]
+) -> Union[SummaryResults, AnswerResults]:
+    if score_type == ScoreType.summary:
+        return summary_score(input_body)
 
+    elif score_type == ScoreType.answer:
+        return answer_score(input_body)
 
-@app.post("/qascore")
-def qascore(qa_input: QAInput) -> QAResults:
-    return qa_score(qa_input)
-
+    else:
+        raise HTTPException(status_code=404, detail="Invalid score type")
 
 
 if __name__ == "__main__":

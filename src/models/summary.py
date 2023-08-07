@@ -1,11 +1,6 @@
 from pydantic import BaseModel
-from enum import Enum
 from typing import Optional
-
-
-class TextbookNames(str, Enum):
-    macro_econ_2e = 'macroeconomics-2e'
-    think_python_2e = 'think-python-2e'
+from models.textbook import TextbookNames
 
 
 class SummaryInput(BaseModel):
