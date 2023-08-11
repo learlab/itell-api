@@ -1,19 +1,23 @@
 from models.answer import AnswerInput, AnswerResults
+from supabase import Client
 import random
 
 
 class Answer:
     threshold = 0.5  # Minimum score to be considered correct
 
-    def __init__(self, answer_input: AnswerInput):
-        self.chapter_index = answer_input.chapter_index
-        self.section_index = answer_input.section_index
-        self.subsection_index = answer_input.subsection_index
-        self.section_index = f"{self.chapter_index:02}-{self.section_index:02}"
-        self.subsection_index = (
-            f"{self.section_index}"
-            "-"
-            f"-{self.subsection_index:02}"
+    def __init__(self, answer_input: AnswerInput, db: Client):
+        section_index = (
+            f"{answer_input.chapter_index:02}-{answer_input.section_index:02}"
+        )
+
+        self.data = (
+            db.table("subsections")
+            .select("clean_text", "question", "answer")
+            .eq("section_id", section_index)
+            .eq("subsection", answer_input.subsection_index)
+            .execute()
+            .data
         )
 
         self.answer = answer_input.answer
@@ -26,7 +30,7 @@ class Answer:
 
         """
 
-        INSERT CODE FOR BLEURT MODEL
+        TODO: INSERT CODE FOR BLEURT MODEL
         replace random values below with actual scores
 
         """
@@ -38,7 +42,9 @@ class Answer:
 
 
 def answer_score(answer_input: AnswerInput) -> AnswerResults:
-    answer = Answer(answer_input)
+    from database import db
+
+    answer = Answer(answer_input, db)
     answer.score_answer()
 
     return AnswerResults(**answer.results)
