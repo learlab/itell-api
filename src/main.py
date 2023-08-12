@@ -9,10 +9,6 @@ from models.answer import AnswerInput, AnswerResults
 from summary_eval import summary_score
 from answer_eval import answer_score
 
-from typing import Union
-from enum import Enum
-
-
 app = FastAPI()
 
 origins = [
@@ -35,11 +31,6 @@ app.add_middleware(
 )
 
 
-class ScoreType(str, Enum):
-    summary = "summary"
-    answer = "answer"
-
-
 @app.get("/")
 def hello():
     return {"message": "This is a summary scoring API for iTELL."}
@@ -52,26 +43,19 @@ def gpu_available():
     return {"message": f"GPU Available: {torch.cuda.is_available()}"}
 
 
-@app.post("/score/{score_type}")
-def score(
-    score_type: ScoreType, input_body: Union[SummaryInput, AnswerInput]
-) -> Union[SummaryResults, AnswerResults]:
-    if score_type == ScoreType.summary:
-        return summary_score(input_body)
+@app.post("/score/summary")
+def score_summary(input_body: SummaryInput) -> SummaryResults:
+    return summary_score(input_body)
 
-    elif score_type == ScoreType.answer:
-        return answer_score(input_body)
 
-    else:
-        raise HTTPException(status_code=404, detail="Invalid score type")
+@app.post("/score/answer")
+def score_answer(input_body: AnswerInput) -> AnswerResults:
+    return answer_score(input_body)
 
 
 if __name__ == "__main__":
     import uvicorn
 
     uvicorn.run(
-        "main:app",
-        host="0.0.0.0",
-        port=int(os.environ.get("PORT", 8001)),
-        reload=True
+        "main:app", host="0.0.0.0", port=int(os.getenv("port", 8001)), reload=True
     )

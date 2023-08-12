@@ -4,7 +4,7 @@ import torch
 from typing import Dict
 
 
-class ScoringPipeline(TextClassificationPipeline):
+class SummaryPipeline(TextClassificationPipeline):
     def __init__(self, model, *args, **kwargs):
         super().__init__(
             model=LongformerForSequenceClassification.from_pretrained(model),

@@ -1,5 +1,3 @@
-from fastapi import HTTPException
-
 from transformers import logging
 
 from gensim.models import Doc2Vec
@@ -7,11 +5,12 @@ from scipy import spatial
 from nltk import trigrams
 
 from pathlib import Path
-import json
+from itertools import chain
 import random
 
 from models.summary import SummaryInput, SummaryResults
-from pipelines.scoring import ScoringPipeline
+from pipelines.summary import SummaryPipeline
+from supabase import Client
 
 import spacy
 
@@ -24,39 +23,36 @@ with open(Path("assets/offensive-words.txt"), "r") as data:
 
 doc2vec_model = Doc2Vec.load(str(Path("assets/doc2vec-model")))
 
-content_pipe = ScoringPipeline("tiedaar/longformer-content-global")
-wording_pipe = ScoringPipeline("tiedaar/longformer-wording-global")
+content_pipe = SummaryPipeline("tiedaar/longformer-content-global")
+wording_pipe = SummaryPipeline("tiedaar/longformer-wording-global")
 
 
 class Summary:
-    def __init__(self, summary_input: SummaryInput):
-        self.textbook_name = summary_input.textbook_name
-        self.chapter_index = summary_input.chapter_index
-        self.section_index = summary_input.section_index
-        self.section_code = f"{self.chapter_index:02}-{self.section_index:02}"
-        self.summary = summary_input.summary
+    def __init__(self, summary_input: SummaryInput, db: Client):
+        section_index = (
+            f"{summary_input.chapter_index:02}" f"-{summary_input.section_index:02}"
+        )
 
-        source_dict_path = Path(f"assets/{self.textbook_name}-sections.json")
-        if not source_dict_path.exists():
-            raise HTTPException(
-                status_code=500,
-                detail="The server validated the textbook name but failed to "
-                f"locate the relevant resource at {source_dict_path}.",
-            )
+        # Fetch content and restructure data
+        data = (
+            db.table("subsections")
+            .select("clean_text", "keyphrases")
+            .eq("section_id", section_index)
+            .execute()
+            .data
+        )
+        clean_text = "\n\n".join([str(row["clean_text"]) for row in data])
+        keyphrases = [row["keyphrases"] for row in data]
 
-        with open(source_dict_path, "r") as data:
-            source_dict = json.loads(data.read())
-
-        self.source = source_dict[self.section_code]["text"]
-        self.keyphrases = source_dict[self.section_code]["keyphrases"]
+        # Create SpaCy objects
+        self.source = nlp(clean_text)
+        self.keyphrases = list(nlp.pipe(chain(*keyphrases)))
+        self.summary = nlp(summary_input.summary)
 
         self.results = {}
 
         # intermediate objects for scoring
-        self.input_text = self.summary + "</s>" + self.source
-        self.summary_doc = nlp(self.summary)
-        self.source_doc = nlp(self.source)
-        self.keyphrase_docs = [nlp(keyphrase) for keyphrase in self.keyphrases]
+        self.input_text = self.summary.text + "</s>" + self.source.text
 
     def score_containment(self) -> None:
         """Calculate containment score between a source text and a derivative
@@ -64,8 +60,8 @@ class Summary:
         number of unique trigrams in the derivative text. Values range from 0
         to 1, with 1 being completely copied."""
 
-        src = set(trigrams([t.text for t in self.source_doc if not t.is_stop]))
-        txt = set(trigrams([t.text for t in self.summary_doc if not t.is_stop]))
+        src = set(trigrams([t.text for t in self.source if not t.is_stop]))
+        txt = set(trigrams([t.text for t in self.summary if not t.is_stop]))
         try:
             containment = len(src.intersection(txt)) / len(txt)
             self.results["containment"] = round(containment, 4)
@@ -75,10 +71,10 @@ class Summary:
     def score_similarity(self) -> None:
         """Return semantic similarity score based on summary and source text"""
         source_embed = doc2vec_model.infer_vector(
-            [t.text for t in self.source_doc if not t.is_stop]
+            [t.text for t in self.source if not t.is_stop]
         )
         summary_embed = doc2vec_model.infer_vector(
-            [t.text for t in self.summary_doc if not t.is_stop]
+            [t.text for t in self.summary if not t.is_stop]
         )
         self.results["similarity"] = 1 - spatial.distance.cosine(
             summary_embed, source_embed
@@ -103,9 +99,9 @@ class Summary:
         included_keyphrases = set()
         suggested_keyphrases = list()
 
-        summary_lemmas = {t.lemma_ for t in self.summary_doc if not t.is_stop}
+        summary_lemmas = {t.lemma_ for t in self.summary if not t.is_stop}
 
-        for keyphrase in self.keyphrase_docs:
+        for keyphrase in self.keyphrases:
             key_lemmas = {t.lemma_ for t in keyphrase if not t.is_stop}
             keyphrase_included = not summary_lemmas.isdisjoint(key_lemmas)
             if keyphrase_included:
@@ -118,7 +114,7 @@ class Summary:
 
     def check_profanity(self) -> None:
         """Return True if summary contains profanity."""
-        summary_words = {t.lower_ for t in self.summary_doc if not t.is_stop}
+        summary_words = {t.lower_ for t in self.summary if not t.is_stop}
         is_clean = summary_words.isdisjoint(offensive_words)
         self.results["profanity"] = not is_clean
 
@@ -128,8 +124,9 @@ def summary_score(summary_input: SummaryInput) -> SummaryResults:
     relevance to the source text. If it passes these checks, score the summary
     using a Huggingface pipeline.
     """
+    from database import db
 
-    summary = Summary(summary_input)
+    summary = Summary(summary_input, db)
 
     summary.score_containment()
     summary.score_similarity()

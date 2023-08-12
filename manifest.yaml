@@ -1,21 +1,21 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: itell-score-deployment
+  name: itell-score
   labels:
-    app: itell-score-api
+    app: itell-api
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: itell-score-api
+      app: itell-api
   template:
     metadata:
       labels:
-        app: itell-score-api
+        app: itell-api
     spec:
       containers:
-      - name: itell-score-api
+      - name: itell-api
         image: langdonholmes/itell-score-api
         resources:
           limits:
@@ -24,15 +24,33 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: itell-score-svc
+  name: itell-api
   labels:
-    app: itell-score-api
+    app: itell-api
 spec:
-  type: NodePort
   ports:
   - port: 8001
     protocol: TCP
     targetPort: 8001
-    nodePort: 30003
   selector:
-    app: itell-score-api
+    app: itell-api
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+  name: itell-api
+  namespace: jhub
+spec:
+  rules:
+  - host: itell-api.learlab.vanderbilt.edu
+    http:
+      paths:
+      - backend:
+          service:
+            name: itell-api
+            port:
+              number: 8001
+        path: /
+        pathType: Prefix
