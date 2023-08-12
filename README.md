@@ -28,6 +28,6 @@ To verify that a GPU was allocated to the deployment and is usable, you can use 
 
 ## Usage
 
-The API request is a POST request to the `/score` endpoint. The request body should be a JSON object with fields defined in /models/summary.py.
+The API request is a POST request to the `/score/answer` or `/score/answer` endpoint. The request body should be a JSON object with fields defined in /models/summary.py or /models/answer.py.
 
-The response is a JSON object with fields defined in /models/summary.py
+The response is a JSON object with fields defined in /models/summary.py or /models/answer.py
