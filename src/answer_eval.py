@@ -6,7 +6,7 @@ import random
 
 class Answer:
     # NOTE: The optimal threhsold basis the chatgpt/vicuna dataset is 0.6 for this BLEURT model.
-    threshold = 0.5  # Minimum score to be considered correct
+    threshold = 0.6  # Minimum score to be considered correct
     
     def __init__(self, answer_input: AnswerInput, db: Client):
         section_index = (
