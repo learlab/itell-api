@@ -2,6 +2,7 @@ from models.answer import AnswerInput, AnswerResults
 from supabase import Client
 from bleurt import score as score_lib
 import random
+from pathlib import Path
 
 
 class Answer:
@@ -26,7 +27,7 @@ class Answer:
         self.results = {}
 
         self.batch_size = 16
-        self.bleurt_scorer = score_lib.BleurtScorer('models/bleurt')
+        self.bleurt_scorer = score_lib.BleurtScorer(str(Path("assets/bleurt")))
     
     def score_answer(self) -> None:
         """
