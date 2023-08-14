@@ -119,7 +119,10 @@ class Summary:
                     included_keyphrases.append(keyphrase.text)
                 elif keyphrase.text not in suggested_keyphrases:
                     suggested_keyphrases.append(keyphrase.text)
-                    weights.append(chunk["focus_time"])
+                    # weight keyphrase suggestions by inverse focus time
+                    # keyphrases from chunks with less focus time are more
+                    # likely to be suggested
+                    weights.append( 1 / chunk["focus_time"] )
 
         self.results["included_keyphrases"] = included_keyphrases
         self.results["suggested_keyphrases"] = random.choices(
