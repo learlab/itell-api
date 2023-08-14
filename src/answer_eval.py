@@ -1,11 +1,13 @@
 from models.answer import AnswerInput, AnswerResults
 from supabase import Client
+from bleurt import score as score_lib
 import random
 
 
 class Answer:
+    # NOTE: The optimal threhsold basis the chatgpt/vicuna dataset is 0.6 for this BLEURT model.
     threshold = 0.5  # Minimum score to be considered correct
-
+    
     def __init__(self, answer_input: AnswerInput, db: Client):
         section_index = (
             f"{answer_input.chapter_index:02}-{answer_input.section_index:02}"
@@ -23,19 +25,15 @@ class Answer:
         self.answer = answer_input.answer
         self.results = {}
 
+        self.batch_size = 16
+        self.bleurt_scorer = score_lib.BleurtScorer('models/bleurt')
+    
     def score_answer(self) -> None:
-        """Placeholder for BLEURT model implementation.
-        Currently adds random float (between -1 and 1 to mimic BEURT)
-        and random bool to result dict"""
-
+        """
+        The function uses finetuned BLEURT model to score input answers.
         """
 
-        TODO: INSERT CODE FOR BLEURT MODEL
-        replace random values below with actual scores
-
-        """
-
-        score = random.uniform(-1, 1)
+        score = self.bleurt_scorer.score(references=[self.data[0]['answer']], candidates=[self.answer], batch_size=self.batch_size)        
 
         self.results["score"] = score
         self.results["is_passing"] = bool(score > self.threshold)
