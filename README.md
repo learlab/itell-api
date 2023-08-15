@@ -20,11 +20,11 @@ The code defines a Docker image. Anytime a change is committed to `main`, Github
 
 ### LEARlab Bare Metal Deployment
 
-The image is hosted on our bare metal server using a Kubernetes manifest.yaml file. The Makefile defines a build and push sequence to DockerHub. The manifest file defines a deployment and service for the image. The deployment is configured to pull the image from DockerHub. The service is configured to expose the deployment on port 30003.
+The Makefile defines a build and push sequence to DockerHub.
 
-To update the deployment with a new Docker image, use `microk8s kubectl rollout restart deployment/itell-score`.
+The image is hosted on our bare metal server using a Kubernetes manifest.yaml file. The manifest file defines a deployment and service for the image. The deployment is configured to pull the image from DockerHub.
 
-To verify that a GPU was allocated to the deployment and is usable, you can use the /gpu endpoint: `curl http://localhost:30003/gpu`
+To update the deployment with a new Docker image, use `microk8s kubectl rollout restart deployment/itell-api`.
 
 ## Usage
 
