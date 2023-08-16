@@ -26,13 +26,20 @@ CONTAINER_PORT=8001
 
 ### LEARlab Bare Metal Deployment
 
-The image is hosted on our bare metal server using a Kubernetes manifest.yaml file. The Makefile defines a build and push sequence to DockerHub. The manifest file defines a deployment and service for the image. The deployment is configured to pull the image from DockerHub. The service is configured to expose the deployment on port 30003.
+The Makefile defines a build and push sequence to DockerHub. Make sure to create a `.env` file like the following:
 
 Create Kubernetes secrets with `microk8s kubectl create secret generic supabase-itell --from-env-file=.env`
 
 To update the deployment with a new Docker image, use `microk8s kubectl rollout restart deployment/itell-score-deployment`.
+```
+host=https://[SupaBase Database Sub-domain].supabase.co
+password=[SupaBase Password]
+port=8001
+```
 
-To verify that a GPU was allocated to the deployment and is usable, you can use the /gpu endpoint: `curl http://localhost:30003/gpu`
+The image is hosted on our bare metal server using a Kubernetes manifest.yaml file. The manifest file defines a deployment and service for the image. The deployment is configured to pull the image from DockerHub.
+
+To update the deployment with a new Docker image, use `microk8s kubectl rollout restart deployment/itell-api`.
 
 ## Usage
 
