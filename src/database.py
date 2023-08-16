@@ -12,6 +12,4 @@ def get_client():
 db = get_client()
 
 if __name__ == "__main__":
-print(db.table("subsections")
-        .select("keyphrases")
-        .data[0])
+    print(db.table("subsections").select("keyphrases").data[0])
