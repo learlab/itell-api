@@ -1,13 +1,10 @@
 import os
 from supabase import create_client, Client
-from dotenv import load_dotenv
-
-load_dotenv()
 
 
 def get_client():
-    url: str = os.getenv("host")
-    password: str = os.getenv("password")
+    url: str = os.getenv("SUPABASE_HOST")
+    password: str = os.getenv("SUPABASE_PASSWORD")
     supabase: Client = create_client(url, password)
     return supabase
 
