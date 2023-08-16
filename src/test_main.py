@@ -90,7 +90,7 @@ def test_focus_time():
             },
         },
     )
-    print("Profane Text:", response.json())
+    print("Focus time:", response.json())
 
 
 def test_long_summary():
