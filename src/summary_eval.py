@@ -122,7 +122,7 @@ class Summary:
                     # weight keyphrase suggestions by inverse focus time
                     # keyphrases from chunks with less focus time are more
                     # likely to be suggested
-                    weights.append( 1 / chunk["focus_time"] )
+                    weights.append(1 / chunk["focus_time"])
 
         self.results["included_keyphrases"] = included_keyphrases
         self.results["suggested_keyphrases"] = random.choices(
