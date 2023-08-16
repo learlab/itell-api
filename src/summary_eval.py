@@ -12,7 +12,7 @@ from transformers import logging
 from models.summary import SummaryInput, SummaryResults
 from pipelines.summary import SummaryPipeline
 
-nlp = spacy.load("en_core_web_sm")
+nlp = spacy.load("en_core_web_sm", disable=["ner"])
 
 logging.set_verbosity_error()
 
