@@ -1,16 +1,10 @@
-from pydantic import BaseModel
-from typing import Optional
-from models.textbook import TextbookNames
+from models.base import InputBase, ResultsBase
 
 
-class AnswerInput(BaseModel):
-    textbook_name: TextbookNames
-    chapter_index: Optional[int] = 00
-    section_index: Optional[int] = 00
-    subsection_index: int  # QAs are going to have to need subsection info
+class AnswerInput(InputBase):
     answer: str
 
 
-class AnswerResults(BaseModel):
+class AnswerResults(ResultsBase):
     score: float  # BLEURT or some other score
     is_passing: bool

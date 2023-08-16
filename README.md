@@ -16,12 +16,21 @@ This repository defines the api for our digital textbook project. It scores sect
 
 ## Deployment
 
-The code defines a Docker image. Anytime a change is committed to `main`, Github Actions will issue a build command to Google Cloud. After the build is manually approved from the Google Cloud platform, it will automatically build AND deploy to Google Cloud Run.
+The Makefile defines a build and push sequence to DockerHub. Make sure to create a `.env` file in the application root directory like the following:
+
+```
+SUPABASE_HOST=https://[SupaBase Database Sub-domain].supabase.co
+SUPABASE_PASSWORD=[SupaBase Password]
+CONTAINER_PORT=8001
+```
 
 ### LEARlab Bare Metal Deployment
 
 The Makefile defines a build and push sequence to DockerHub. Make sure to create a `.env` file like the following:
 
+Create Kubernetes secrets with `microk8s kubectl create secret generic supabase-itell --from-env-file=.env`
+
+To update the deployment with a new Docker image, use `microk8s kubectl rollout restart deployment/itell-score-deployment`.
 ```
 host=https://[SupaBase Database Sub-domain].supabase.co
 password=[SupaBase Password]

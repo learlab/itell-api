@@ -68,7 +68,7 @@ def test_containment():
     assert response.json()["containment"] > 0.9
 
 
-def test_profanity():
+def test_focus_time():
     response = client.post(
         "/score/summary",
         json={
@@ -76,10 +76,21 @@ def test_profanity():
             "chapter_index": "1",
             "section_index": "1",
             "summary": """Sexy is considered a bad word in this context.""",
+            "focus_time": {
+                "overview": 1,
+                "introduction-to-fred": 48,
+                "the-problem-of-scarcity": 29,
+                "learn-with-videos": 1,
+                "the-division-of-and-specialization-of-labor": 40,
+                "why-the-division-of-labor-increases-production": 1,
+                "trade-and-markets": 19,
+                "learn-with-videos-1": 254,
+                "why-study-economics": 15,
+                "learn-with-videos-2": 516,
+            },
         },
     )
-    print("Profane Text:", response.json())
-    assert response.json()["profanity"]
+    print("Focus time:", response.json())
 
 
 def test_long_summary():
@@ -118,7 +129,7 @@ def test_main():
 
 def test_summary_score():
     test_irrelevant_summary()
-    test_profanity()
+    test_focus_time()
     test_containment()
     test_long_summary()
 
