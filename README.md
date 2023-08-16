@@ -20,7 +20,13 @@ The code defines a Docker image. Anytime a change is committed to `main`, Github
 
 ### LEARlab Bare Metal Deployment
 
-The Makefile defines a build and push sequence to DockerHub.
+The Makefile defines a build and push sequence to DockerHub. Make sure to create a `.env` file like the following:
+
+```
+host=https://[SupaBase Database Sub-domain].supabase.co
+password=[SupaBase Password]
+port=8001
+```
 
 The image is hosted on our bare metal server using a Kubernetes manifest.yaml file. The manifest file defines a deployment and service for the image. The deployment is configured to pull the image from DockerHub.
 
