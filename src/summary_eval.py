@@ -116,12 +116,17 @@ class Summary:
                     re.IGNORECASE,
                 )
                 if keyphrase_included:
+                    # keyphrase is included in summary
                     included_keyphrases.append(keyphrase.text)
-                elif keyphrase.text not in suggested_keyphrases:
+                elif keyphrase.text in suggested_keyphrases:
+                    # keyphrase has already been suggested
+                    # increase the weight of this keyphrase suggestion
+                    keyphrase_index = suggested_keyphrases.index(keyphrase.text)
+                    weights[keyphrase_index] += 1 / chunk["focus_time"]
+                else:
+                    # New keyphrase suggestion
                     suggested_keyphrases.append(keyphrase.text)
                     # weight keyphrase suggestions by inverse focus time
-                    # keyphrases from chunks with less focus time are more
-                    # likely to be suggested
                     weights.append(1 / chunk["focus_time"])
 
         self.results["included_keyphrases"] = included_keyphrases
