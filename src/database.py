@@ -15,11 +15,6 @@ def get_client():
 db = get_client()
 
 if __name__ == "__main__":
-    print(
-        db.table("subsections")
+print(db.table("subsections")
         .select("keyphrases")
-        .eq("section_id", "04-02")
-        .eq("subsection", 1)
-        .execute()
-        .data
-    )
+        .data[0])
