@@ -26,23 +26,14 @@ CONTAINER_PORT=8001
 
 ### LEARlab Bare Metal Deployment
 
-The Makefile defines a build and push sequence to DockerHub. Make sure to create a `.env` file like the following:
-
-Create Kubernetes secrets with `microk8s kubectl create secret generic supabase-itell --from-env-file=.env`
-
-To update the deployment with a new Docker image, use `microk8s kubectl rollout restart deployment/itell-score-deployment`.
-```
-host=https://[SupaBase Database Sub-domain].supabase.co
-password=[SupaBase Password]
-port=8001
-```
-
 The image is hosted on our bare metal server using a Kubernetes manifest.yaml file. The manifest file defines a deployment and service for the image. The deployment is configured to pull the image from DockerHub.
+
+The deployment relies on a Kubernetes secret. This was created using `microk8s kubectl create secret generic supabase-itell --from-env-file=.env`
 
 To update the deployment with a new Docker image, use `microk8s kubectl rollout restart deployment/itell-api`.
 
 ## Usage
 
-The API request is a POST request to the `/score` endpoint. The request body should be a JSON object with fields defined in /models/summary.py.
+The main API request is a POST request to the `/score/summary` endpoint. The request body should be a JSON object with fields defined in /models/summary.py.
 
 The response is a JSON object with fields defined in /models/summary.py
