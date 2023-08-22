@@ -27,9 +27,9 @@ class Summary:
 
         # TODO: Change to use section slug
         # This process should be the same for all textbooks.
-        if summary_input.textbook_name.name == "think_python_2e":
+        if summary_input.textbook_name.name == "THINK_PYTHON":
             section_index = f"{summary_input.section_index:02}"
-        elif summary_input.textbook_name.name == "macroeconomics-2e":
+        elif summary_input.textbook_name.name == "MACRO_ECON":
             section_index = (
                 f"{summary_input.chapter_index:02}-{summary_input.section_index:02}"
             )
@@ -147,7 +147,7 @@ def summary_score(summary_input: SummaryInput) -> SummaryResults:
     using a Huggingface pipeline.
     """
     from database import get_client
-    db = get_client(summary_input.textbook_name.name)
+    db = get_client(summary_input.textbook_name)
 
     summary = Summary(summary_input, db)
 
