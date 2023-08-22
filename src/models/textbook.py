@@ -1,5 +1,10 @@
 from enum import Enum
 
+
 class TextbookNames(str, Enum):
-    macro_econ_2e = 'macroeconomics-2e'
-    think_python_2e = 'think-python-2e'
+    MACRO_ECON = "macroeconomics-2e"
+    THINK_PYTHON = "think-python-2e"
+
+if __name__ == "__main__":
+    test = TextbookNames.MACRO_ECON
+    print(test.value)
