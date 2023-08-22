@@ -12,9 +12,9 @@ class Answer:
     def __init__(self, answer_input: AnswerInput, db: Client):
         # TODO: Change to use section slug
         # This process should be the same for all textbooks.
-        if answer_input.textbook_name == "think_python_2e":
+        if answer_input.textbook_name.name == "think_python_2e":
             section_index = f"{answer_input.section_index:02}"
-        elif answer_input.textbook_name == "macroeconomics-2e":
+        elif answer_input.textbook_name.name == "macroeconomics-2e":
             section_index = (
                 f"{answer_input.chapter_index:02}-{answer_input.section_index:02}"
             )
@@ -53,7 +53,7 @@ class Answer:
 def answer_score(answer_input: AnswerInput) -> AnswerResults:
     from database import get_client
 
-    db = get_client(answer_input.textbook_name)
+    db = get_client(answer_input.textbook_name.name)
 
     answer = Answer(answer_input, db)
     answer.score_answer()
