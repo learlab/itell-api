@@ -17,6 +17,9 @@ spec:
       containers:
       - name: itell-api
         image: langdonholmes/itell-score-api
+        envFrom:
+        - secretRef:
+            name: supabase-itell
         resources:
           limits:
             nvidia.com/gpu: "1"

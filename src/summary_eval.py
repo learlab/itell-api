@@ -1,25 +1,20 @@
-from transformers import logging
-
-from gensim.models import Doc2Vec
-from scipy import spatial
-from nltk import trigrams
-
-from pathlib import Path
-from itertools import chain
 import random
+import re
+from pathlib import Path
+
+import spacy
+from gensim.models import Doc2Vec
+from nltk import trigrams
+from scipy import spatial
+from supabase import Client
+from transformers import logging
 
 from models.summary import SummaryInput, SummaryResults
 from pipelines.summary import SummaryPipeline
-from supabase import Client
 
-import spacy
-
-nlp = spacy.load("en_core_web_sm")
+nlp = spacy.load("en_core_web_sm", disable=["ner"])
 
 logging.set_verbosity_error()
-
-with open(Path("assets/offensive-words.txt"), "r") as data:
-    offensive_words = set(data.read().splitlines())
 
 doc2vec_model = Doc2Vec.load(str(Path("assets/doc2vec-model")))
 
@@ -30,24 +25,32 @@ wording_pipe = SummaryPipeline("tiedaar/longformer-wording-global")
 class Summary:
     def __init__(self, summary_input: SummaryInput, db: Client):
         section_index = (
-            f"{summary_input.chapter_index:02}" f"-{summary_input.section_index:02}"
+            f"{summary_input.chapter_index:02}-{summary_input.section_index:02}"
         )
 
         # Fetch content and restructure data
         data = (
             db.table("subsections")
-            .select("clean_text", "keyphrases")
+            .select("slug", "clean_text", "keyphrases")
             .eq("section_id", section_index)
             .execute()
             .data
         )
+
         clean_text = "\n\n".join([str(row["clean_text"]) for row in data])
-        keyphrases = [row["keyphrases"] for row in data]
 
         # Create SpaCy objects
         self.source = nlp(clean_text)
-        self.keyphrases = list(nlp.pipe(chain(*keyphrases)))
         self.summary = nlp(summary_input.summary)
+
+        # Organize and Process keyphrases:
+        self.chunks = {}
+        for row in data:
+            self.chunks[row["slug"]] = {
+                "keyphrases": list(nlp.pipe(row["keyphrases"])),
+                # chunks with no focus time record are assigned 1 seconds
+                "focus_time": summary_input.focus_time.get(row["slug"], 1),
+            }
 
         self.results = {}
 
@@ -92,31 +95,44 @@ class Summary:
             self.input_text, truncation=True, max_length=4096
         )[0]["score"]
 
-    def extract_keyphrases(self) -> None:
+    def suggest_keyphrases(self) -> None:
         """Return keyphrases that were included in the summary and suggests
         keyphrases that were not included.
         """
-        included_keyphrases = set()
+        included_keyphrases = list()
         suggested_keyphrases = list()
+        weights = list()
 
-        summary_lemmas = {t.lemma_ for t in self.summary if not t.is_stop}
+        summary_lemmas = " ".join(
+            [t.lemma_.lower() for t in self.summary if not t.is_stop]
+        )
 
-        for keyphrase in self.keyphrases:
-            key_lemmas = {t.lemma_ for t in keyphrase if not t.is_stop}
-            keyphrase_included = not summary_lemmas.isdisjoint(key_lemmas)
-            if keyphrase_included:
-                included_keyphrases.add(keyphrase.text)
-            else:
-                suggested_keyphrases.append(keyphrase.text)
+        for chunk in self.chunks.values():
+            for keyphrase in chunk["keyphrases"]:
+                keyphrase_lemmas = [t.lemma_ for t in keyphrase if not t.is_stop]
+                keyphrase_included = re.search(
+                    re.escape(r" ".join(keyphrase_lemmas)),
+                    summary_lemmas,
+                    re.IGNORECASE,
+                )
+                if keyphrase_included:
+                    # keyphrase is included in summary
+                    included_keyphrases.append(keyphrase.text)
+                elif keyphrase.text in suggested_keyphrases:
+                    # keyphrase has already been suggested
+                    # increase the weight of this keyphrase suggestion
+                    keyphrase_index = suggested_keyphrases.index(keyphrase.text)
+                    weights[keyphrase_index] += 1 / chunk["focus_time"]
+                else:
+                    # New keyphrase suggestion
+                    suggested_keyphrases.append(keyphrase.text)
+                    # weight keyphrase suggestions by inverse focus time
+                    weights.append(1 / chunk["focus_time"])
 
         self.results["included_keyphrases"] = included_keyphrases
-        self.results["suggested_keyphrases"] = random.sample(suggested_keyphrases, 3)
-
-    def check_profanity(self) -> None:
-        """Return True if summary contains profanity."""
-        summary_words = {t.lower_ for t in self.summary if not t.is_stop}
-        is_clean = summary_words.isdisjoint(offensive_words)
-        self.results["profanity"] = not is_clean
+        self.results["suggested_keyphrases"] = random.choices(
+            suggested_keyphrases, k=3, weights=weights
+        )
 
 
 def summary_score(summary_input: SummaryInput) -> SummaryResults:
@@ -130,13 +146,10 @@ def summary_score(summary_input: SummaryInput) -> SummaryResults:
 
     summary.score_containment()
     summary.score_similarity()
-    summary.check_profanity()
-    summary.extract_keyphrases()
+    summary.suggest_keyphrases()
 
     junk_filter = (
-        summary.results["containment"] > 0.5
-        or summary.results["similarity"] < 0.3
-        or summary.results["profanity"]
+        summary.results["containment"] > 0.5 or summary.results["similarity"] < 0.3
     )
 
     if junk_filter:

@@ -13,6 +13,7 @@ app = FastAPI()
 
 origins = [
     "*",
+    # TODO: Remove wildcard. Add authentication methods.
     "http://localhost:8000",
     "http://localhost:3000",
     "http://localhost:3001",
