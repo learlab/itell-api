@@ -13,7 +13,7 @@ class Answer:
         # TODO: Change to use section slug
         # This process should be the same for all textbooks.
         if answer_input.textbook_name.name == "THINK_PYTHON":
-            section_index = f"{answer_input.section_index:02}"
+            section_index = f"{answer_input.chapter_index:02}"
         elif answer_input.textbook_name.name == "MACRO_ECON":
             section_index = (
                 f"{answer_input.chapter_index:02}-{answer_input.section_index:02}"

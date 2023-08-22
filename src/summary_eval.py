@@ -28,7 +28,7 @@ class Summary:
         # TODO: Change to use section slug
         # This process should be the same for all textbooks.
         if summary_input.textbook_name.name == "THINK_PYTHON":
-            section_index = f"{summary_input.section_index:02}"
+            section_index = f"{summary_input.chapter_index:02}"
         elif summary_input.textbook_name.name == "MACRO_ECON":
             section_index = (
                 f"{summary_input.chapter_index:02}-{summary_input.section_index:02}"
