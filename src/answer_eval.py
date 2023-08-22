@@ -1,6 +1,5 @@
 from models.answer import AnswerInput, AnswerResults
 from supabase import Client
-import random
 from transformers import logging
 from pipelines.answer import AnswerPipeline
 
@@ -8,11 +7,17 @@ logging.set_verbosity_error()
 
 answer_pipe = AnswerPipeline()
 
+
 class Answer:
     def __init__(self, answer_input: AnswerInput, db: Client):
-        section_index = (
-            f"{answer_input.chapter_index:02}-{answer_input.section_index:02}"
-        )
+        # TODO: Change to use section slug
+        # This process should be the same for all textbooks.
+        if answer_input.textbook_name == "think_python_2e":
+            section_index = f"{answer_input.section_index:02}"
+        elif answer_input.textbook_name == "macroeconomics-2e":
+            section_index = (
+                f"{answer_input.chapter_index:02}-{answer_input.section_index:02}"
+            )
 
         self.data = (
             db.table("subsections")
@@ -37,7 +42,7 @@ class Answer:
 
         """
 
-        correct_answer = self.data['answer']
+        correct_answer = self.data["answer"]
         res = answer_pipe.process(correct_answer, self.answer)
         # score = random.uniform(-1, 1)
 
@@ -46,7 +51,9 @@ class Answer:
 
 
 def answer_score(answer_input: AnswerInput) -> AnswerResults:
-    from database import db
+    from database import get_client
+
+    db = get_client(answer_input.textbook_name)
 
     answer = Answer(answer_input, db)
     answer.score_answer()

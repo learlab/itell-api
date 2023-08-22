@@ -24,9 +24,15 @@ wording_pipe = SummaryPipeline("tiedaar/longformer-wording-global")
 
 class Summary:
     def __init__(self, summary_input: SummaryInput, db: Client):
-        section_index = (
-            f"{summary_input.chapter_index:02}-{summary_input.section_index:02}"
-        )
+
+        # TODO: Change to use section slug
+        # This process should be the same for all textbooks.
+        if summary_input.textbook_name == "think_python_2e":
+            section_index = f"{summary_input.section_index:02}"
+        elif summary_input.textbook_name == "macroeconomics-2e":
+            section_index = (
+                f"{summary_input.chapter_index:02}-{summary_input.section_index:02}"
+            )
 
         # Fetch content and restructure data
         data = (
@@ -140,7 +146,8 @@ def summary_score(summary_input: SummaryInput) -> SummaryResults:
     relevance to the source text. If it passes these checks, score the summary
     using a Huggingface pipeline.
     """
-    from database import db
+    from database import get_client
+    db = get_client(summary_input.textbook_name)
 
     summary = Summary(summary_input, db)
 
