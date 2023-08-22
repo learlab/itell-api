@@ -13,14 +13,14 @@ app = FastAPI()
 
 origins = [
     "*",
-    # TODO: Add frontend URLs here
-    # "http://localhost:8000",
-    # "http://localhost:3000",
-    # "http://localhost:3001",
-    # "https://textbook-demo.web.app",
-    # "https://itell.vercel.app",
-    # "https://itell-poe.vercel.app",
-    # "https://itell-think-python.vercel.app",
+    # TODO: Remove wildcard. Add authentication methods.
+    "http://localhost:8000",
+    "http://localhost:3000",
+    "http://localhost:3001",
+    "https://textbook-demo.web.app",
+    "https://itell.vercel.app",
+    "https://itell-poe.vercel.app",
+    "https://itell-think-python.vercel.app",
 ]
 
 app.add_middleware(
