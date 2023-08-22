@@ -16,11 +16,11 @@ This repository defines the api for our digital textbook project. It scores sect
 
 ## Deployment
 
-The Makefile defines a build and push sequence to DockerHub. Make sure to create a `.env` file in the application root directory like the following:
+The Makefile defines a build and push sequence to DockerHub. Make sure to create a `.env` file in the application root directory like the following. It should contain all the textbook names defined in the src/models/textbooks.py.
 
 ```
-SUPABASE_HOST=https://[SupaBase Database Sub-domain].supabase.co
-SUPABASE_PASSWORD=[SupaBase Password]
+MACRO_ECON_HOST=https://[SupaBase Database Sub-domain].supabase.co
+MACRO_ECON_PASSWORD=[SupaBase Password]
 CONTAINER_PORT=8001
 ```
 
