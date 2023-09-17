@@ -20,12 +20,12 @@ class SummaryPipeline(TextClassificationPipeline):
 
     def preprocess(self, inputs, **tokenizer_kwargs) -> Dict[str, torch.Tensor]:
         """Only works with a single input, not a list of inputs."""
-        input_dict = self.tokenizer(inputs, **tokenizer_kwargs)
+        input_dict = self.tokenizer(inputs, **tokenizer_kwargs)  # type: ignore
 
-        sep_index = input_dict["input_ids"].index(2)
+        sep_index = input_dict["input_ids"].index(2)  # type: ignore
 
         input_dict["global_attention_mask"] = [1] * (sep_index + 1) + [0] * (
-            len(input_dict["input_ids"]) - (sep_index + 1)
+            len(input_dict["input_ids"]) - (sep_index + 1)  # type: ignore
         )
 
         return {k: torch.tensor([v]) for k, v in input_dict.items()}

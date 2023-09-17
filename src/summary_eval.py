@@ -1,22 +1,24 @@
 import random
 import re
-from pathlib import Path
 
 import spacy
 from gensim.models import Doc2Vec
+
+# from generate_embeddings import generate_embedding, max_similarity
 from nltk import trigrams
 from scipy import spatial
-from supabase import Client
+from supabase.client import Client
 from transformers import logging
 
 from models.summary import SummaryInput, SummaryResults
 from pipelines.summary import SummaryPipeline
+from src.database import get_client
 
 nlp = spacy.load("en_core_web_sm", disable=["ner"])
 
 logging.set_verbosity_error()
 
-doc2vec_model = Doc2Vec.load(str(Path("assets/doc2vec-model")))
+doc2vec_model = Doc2Vec.load("assets/doc2vec-model")
 
 content_pipe = SummaryPipeline("tiedaar/longformer-content-global")
 wording_pipe = SummaryPipeline("tiedaar/longformer-wording-global")
@@ -24,7 +26,6 @@ wording_pipe = SummaryPipeline("tiedaar/longformer-wording-global")
 
 class Summary:
     def __init__(self, summary_input: SummaryInput, db: Client):
-
         # TODO: Change to use section slug
         # This process should be the same for all textbooks.
         if summary_input.textbook_name.name == "THINK_PYTHON":
@@ -33,6 +34,8 @@ class Summary:
             section_index = (
                 f"{summary_input.chapter_index:02}-{summary_input.section_index:02}"
             )
+        else:
+            raise ValueError("Textbook not supported.")
 
         # Fetch content and restructure data
         data = (
@@ -79,10 +82,10 @@ class Summary:
 
     def score_similarity(self) -> None:
         """Return semantic similarity score based on summary and source text"""
-        source_embed = doc2vec_model.infer_vector(
+        source_embed = doc2vec_model.infer_vector(  # type: ignore
             [t.text for t in self.source if not t.is_stop]
         )
-        summary_embed = doc2vec_model.infer_vector(
+        summary_embed = doc2vec_model.infer_vector(  # type: ignore
             [t.text for t in self.summary if not t.is_stop]
         )
         self.results["similarity"] = 1 - spatial.distance.cosine(
@@ -93,13 +96,13 @@ class Summary:
         """Return content score based on summary and source text."""
         self.results["content"] = content_pipe(
             self.input_text, truncation=True, max_length=4096
-        )[0]["score"]
+        )[0]["score"]  # type: ignore
 
     def score_wording(self) -> None:
         """Return wording score based on summary and source text."""
         self.results["wording"] = wording_pipe(
             self.input_text, truncation=True, max_length=4096
-        )[0]["score"]
+        )[0]["score"]  # type: ignore
 
     def suggest_keyphrases(self) -> None:
         """Return keyphrases that were included in the summary and suggests
@@ -141,12 +144,11 @@ class Summary:
         )
 
 
-def summary_score(summary_input: SummaryInput) -> SummaryResults:
+async def summary_score(summary_input: SummaryInput) -> SummaryResults:
     """Checks summary for text copied from the source and for semantic
     relevance to the source text. If it passes these checks, score the summary
     using a Huggingface pipeline.
     """
-    from database import get_client
     db = get_client(summary_input.textbook_name)
 
     summary = Summary(summary_input, db)

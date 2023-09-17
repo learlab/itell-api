@@ -6,7 +6,7 @@ This repository defines the api for our digital textbook project. It scores sect
 
 1. Clone the repository and run `pip install -r requirements.txt` to install requirements from the pipfile.
 2. Run `python .\download_models.py` to download required models from SpaCy and Huggingface.
-
+3. Test `python -m src.test_main` to make sure everything is working.
 ### Using Dev Containers
 
 1. Install the [Remote - Containers](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers) extension for VSCode.

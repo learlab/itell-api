@@ -3,16 +3,22 @@ import spacy
 
 huggingface_hub.snapshot_download(
     repo_id='tiedaar/longformer-content-global',
-    # filename='pytorch_model.bin'
     )
 
 huggingface_hub.snapshot_download(
     repo_id='tiedaar/longformer-wording-global',
-    # filename='pytorch_model.bin'
     )
 
 huggingface_hub.snapshot_download(
     repo_id='facehugger92/POE_QA_mpnetbase',
     )
 
-spacy.cli.download('en_core_web_sm')
+huggingface_hub.snapshot_download(
+    repo_id='lmsys/vicuna-7b-v1.5',
+    )
+
+huggingface_hub.snapshot_download(
+    repo_id='sentence-transformers/all-MiniLM-L6-v2',
+    )
+
+spacy.cli.download('en_core_web_sm')  # type: ignore
