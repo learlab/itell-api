@@ -34,5 +34,6 @@ define user ask question
 
 define flow question
     user ask question
-    execute retrieve_relevant_chunks
-    execute generate_bot_message
+    bot answer question
+#    execute retrieve_relevant_chunks
+#    execute generate_bot_message

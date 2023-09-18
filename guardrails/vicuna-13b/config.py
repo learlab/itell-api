@@ -31,8 +31,8 @@ def get_model_config(config: RailsConfig, type: str):
 
 
 def get_vicuna():
-    """Loads the Vicuna 7B LLM."""
-    repo_id = "lmsys/vicuna-7b-v1.5"
+    """Loads the Vicuna 13B LLM."""
+    repo_id = "lmsys/vicuna-13b-v1.5"
 
     model_params = {
         "device_map": "auto",
@@ -66,20 +66,25 @@ async def retrieve_relevant_chunks(
     """Retrieve relevant chunks from the knowledge base and add them to the context."""
     user_message = context["last_user_message"]
 
-    result = retrieve_chunks(user_message, db, match_count=1)[0]
+    result = retrieve_chunks(user_message, db, match_count=1)
 
-    context_updates = {
-        "relevant_chunks": (
-            f"Question: {user_message}\n"
-            f"Citing: {result['clean_text']}\n"
-            f"Source: {result['heading']}"
+    if not result:
+        return ActionResult(return_value="No relevant chunks found.")
+
+    else:
+        result = result[0]
+        context_updates = {
+            "relevant_chunks": (
+                f"Question: {user_message}\n"
+                f"Citing: {result['clean_text']}\n"
+                f"Source: {result['heading']}"
+            )
+        }
+
+        return ActionResult(
+            return_value=context_updates["relevant_chunks"],
+            context_updates=context_updates,
         )
-    }
-
-    return ActionResult(
-        return_value=context_updates["relevant_chunks"],
-        context_updates=context_updates,
-    )
 
 
 def init_main_llm():
