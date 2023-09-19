@@ -2,6 +2,8 @@ from fastapi.testclient import TestClient
 
 from src.main import app
 
+# TODO: Rework with async/await.
+
 client = TestClient(app)
 
 
@@ -118,6 +120,7 @@ def test_short_answer():
         },
     )
     print("Short answer test results:", response.json())
+    return
 
 
 def test_main():

@@ -29,9 +29,9 @@ ENV HF_HOME=/usr/local/huggingface \
 # Copy big models from local
 COPY assets/huggingface/ /usr/local/huggingface/
 
-# download big models so they are stored in container
+# download big models (if not copied) so they are stored in container
 RUN python3 ./download_models.py
 
 COPY . /usr/src/
 
-# CMD ["python3", "src/main.py"]
+CMD ["python3", "src/main.py"]
