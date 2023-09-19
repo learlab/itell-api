@@ -1,6 +1,6 @@
 models:
   - type: main
-    engine: hf_pipeline_vicuna
+    engine: hf_pipeline
 
 instructions:
   - type: general

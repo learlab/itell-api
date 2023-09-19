@@ -14,7 +14,7 @@ huggingface_hub.snapshot_download(
     )
 
 huggingface_hub.snapshot_download(
-    repo_id='lmsys/vicuna-13b-v1.5',
+    repo_id='TheBloke/OpenOrcaxOpenChat-Preview2-13B-GPTQ',
     )
 
 huggingface_hub.snapshot_download(

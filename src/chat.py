@@ -2,7 +2,7 @@ from nemoguardrails import LLMRails, RailsConfig
 from models.chat import ChatInput, ChatResult
 
 # initialize rails
-config = RailsConfig.from_path("guardrails/vicuna-13b")
+config = RailsConfig.from_path("guardrails/open-orca")
 rails = LLMRails(config, verbose=False)
 
 
@@ -19,7 +19,7 @@ if __name__ == "__main__":
     while True:
         try:
             user_input = input("User: ")
-            print("Vicuna: ", end="")
+            print("Assistant: ", end="")
             response = rails.generate(user_input)
             print(response)
         except KeyboardInterrupt:

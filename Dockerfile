@@ -1,4 +1,13 @@
-FROM nvcr.io/nvidia/pytorch:23.07-py3
+# FROM nvcr.io/nvidia/pytorch:22.12-py3
+FROM nvidia/cuda:11.8.0-devel-ubuntu22.04
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Install system dependencies
+RUN apt-get update && \
+    apt-get install -y \
+        git \
+        python3
 
 # Do requirements first so we can cache them
 # This layer only changes when requirements are updated.
@@ -17,9 +26,12 @@ RUN mkdir /usr/local/nltk_data
 ENV HF_HOME=/usr/local/huggingface \
     NLTK_DATA=/usr/local/nltk_data
 
+# Copy big models from local
+COPY assets/huggingface/ /usr/local/huggingface/
+
 # download big models so they are stored in container
 RUN python3 ./download_models.py
 
 COPY . /usr/src/
 
-CMD ["python3", "src/main.py"]
+# CMD ["python3", "src/main.py"]
