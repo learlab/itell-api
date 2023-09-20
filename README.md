@@ -9,6 +9,10 @@ This repository defines the api for our digital textbook project. The iTELL API 
 ## Development
 
 1. Clone the repository and run `pip install -r requirements.txt`
+ - If you need to adjust the requirements, please install pip-tools: `pip install pip-tools`
+ - Make changes to the `requirements.in` file
+ - Rebuild the `requirements.txt` file with `pip-compile`
+
 2. Run `python ./download_models.py` to download required models from SpaCy and Huggingface
 3. Make sure to create a `.env` file in the application root directory like the following. It should contain all the textbook names defined in the `src/models/textbooks.py`:
 
