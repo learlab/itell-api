@@ -1,7 +1,8 @@
 from models.answer import AnswerInput, AnswerResults
-from supabase import Client
+from supabase.client import Client
 from transformers import logging
 from pipelines.answer import AnswerPipeline
+from src.database import get_client
 
 logging.set_verbosity_error()
 
@@ -18,6 +19,8 @@ class Answer:
             section_index = (
                 f"{answer_input.chapter_index:02}-{answer_input.section_index:02}"
             )
+        else:
+            raise ValueError("Textbook not supported.")
 
         self.data = (
             db.table("subsections")
@@ -44,15 +47,12 @@ class Answer:
 
         correct_answer = self.data["answer"]
         res = answer_pipe.process(correct_answer, self.answer)
-        # score = random.uniform(-1, 1)
 
         self.results["score"] = res["score"]
         self.results["is_passing"] = bool(int(res["label"][-1]))
 
 
-def answer_score(answer_input: AnswerInput) -> AnswerResults:
-    from database import get_client
-
+async def answer_score(answer_input: AnswerInput) -> AnswerResults:
     db = get_client(answer_input.textbook_name)
 
     answer = Answer(answer_input, db)
