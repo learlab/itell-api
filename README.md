@@ -1,6 +1,10 @@
 # API for Textbook Summaries
 
-This repository defines the api for our digital textbook project. It scores section summaries using a finetuned language model.
+This repository defines the api for our digital textbook project. The iTELL API provides the frontend with GPU-accelerated natural language processing services. Its principal features are the following:
+
+- Sumamry scoring
+- Short answer scoring
+- Intelligent tutor API
 
 ## Development
 
@@ -25,18 +29,20 @@ CONTAINER_PORT=8001
 
 ## Deployment
 
-The Makefile defines a build and push sequence to DockerHub. It will also copy the big downloaded models to `./assets/huggingface`. In future builds, models will be copied to the Docker image instead of being downloaded.
+The Makefile defines a build and push sequence to the localhost:32000 container registry.
 
 ### LEARlab Bare Metal Deployment
 
-The image is hosted on our bare metal server using a Kubernetes manifest.yaml file. The manifest file defines a deployment and service for the image. The deployment is configured to pull the image from DockerHub.
+The image is hosted on our bare metal server using a Kubernetes manifest.yaml file. The manifest file defines a deployment and service for the image. The deployment is configured to pull the image from a local Docker registry (microk8s built-in registry).
 
 The deployment relies on a Kubernetes secret. This was created using `microk8s kubectl create secret generic supabase-itell --from-env-file=.env`
 
 To update the deployment with a new Docker image, use `microk8s kubectl rollout restart deployment/itell-api`.
 
+To access the running container, find the pod's id using `microk8s kubectl get pods` then run `microk8s kubectl exec -i -t itell-api-[POD-ID-SEQUENCE] -- /bin/bash`
+
 ## Usage
 
-The main API request is a POST request to the `/score/summary` endpoint. The request body should be a JSON object with fields defined in /models/summary.py.
+The API endpoints are defined in `src/main.py`.
 
-The response is a JSON object with fields defined in /models/summary.py
+The request and response bodies are defined as pydantic objects in the `models` folder.
