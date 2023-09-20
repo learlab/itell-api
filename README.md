@@ -4,9 +4,18 @@ This repository defines the api for our digital textbook project. It scores sect
 
 ## Development
 
-1. Clone the repository and run `pip install -r requirements.txt` to install requirements from the pipfile.
-2. Run `python .\download_models.py` to download required models from SpaCy and Huggingface.
-3. Test `python -m src.test_main` to make sure everything is working.
+1. Clone the repository and run `pip install -r requirements.txt`
+2. Run `python ./download_models.py` to download required models from SpaCy and Huggingface
+3. Make sure to create a `.env` file in the application root directory like the following. It should contain all the textbook names defined in the `src/models/textbooks.py`:
+
+```
+MACRO_ECON_HOST=https://[SupaBase Database Sub-domain].supabase.co
+MACRO_ECON_PASSWORD=[SupaBase Password]
+CONTAINER_PORT=8001
+```
+
+5. Test `python -m src.test_main` to make sure everything is working.
+
 ### Using Dev Containers
 
 1. Install the [Remote - Containers](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers) extension for VSCode.
@@ -16,13 +25,7 @@ This repository defines the api for our digital textbook project. It scores sect
 
 ## Deployment
 
-The Makefile defines a build and push sequence to DockerHub. Make sure to create a `.env` file in the application root directory like the following. It should contain all the textbook names defined in the src/models/textbooks.py.
-
-```
-MACRO_ECON_HOST=https://[SupaBase Database Sub-domain].supabase.co
-MACRO_ECON_PASSWORD=[SupaBase Password]
-CONTAINER_PORT=8001
-```
+The Makefile defines a build and push sequence to DockerHub. It will also copy the big downloaded models to `./assets/huggingface`. In future builds, models will be copied to the Docker image instead of being downloaded.
 
 ### LEARlab Bare Metal Deployment
 
