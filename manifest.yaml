@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - name: itell-api
-        image: langdonholmes/itell-score-api
+        image: localhost:32000/itell-score-api
         envFrom:
         - secretRef:
             name: supabase-itell

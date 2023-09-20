@@ -1,4 +1,5 @@
-user=langdonholmes
+# user=langdonholmes
+user=localhost:32000
 image_name=itell-score-api
 
 .PHONY: help build push run build-push
