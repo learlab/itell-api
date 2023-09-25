@@ -23,6 +23,13 @@ spec:
         resources:
           limits:
             nvidia.com/gpu: "1"
+        volumeMounts:
+        - name: pvc
+          mountPath: /usr/local/huggingface
+      volumes:
+      - name: pvc
+        persistentVolumeClaim:
+          claimName: models-nfs
 ---
 apiVersion: v1
 kind: Service

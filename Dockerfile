@@ -18,8 +18,6 @@ WORKDIR /usr/src/
 
 RUN pip install -r requirements.txt
 
-COPY download_models.py /usr/src/
-
 # Installing as root seems to confuse these libraries
 # Specify where we want them to cache downloads
 RUN mkdir /usr/local/nltk_data
@@ -27,10 +25,7 @@ RUN mkdir /usr/local/nltk_data
 ENV HF_HOME=/usr/local/huggingface \
     NLTK_DATA=/usr/local/nltk_data
 
-# download big models with Docker cache
-RUN \
-    --mount=type=cache,target=/usr/local/huggingface \
-    python3 ./download_models.py
+RUN python3 -m spacy download en_core_web_sm
 
 COPY . /usr/src/
 
