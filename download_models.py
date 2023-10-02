@@ -10,8 +10,12 @@ huggingface_hub.snapshot_download(
     )
 
 huggingface_hub.snapshot_download(
-    repo_id='facehugger92/POE_QA_mpnetbase',
-    )
+    repo_id='tiedaar/short-answer-classification',
+)
+
+huggingface_hub.snapshot_download(
+    repo_id='vaiibhavgupta/finetuned-bleurt-large',
+)
 
 huggingface_hub.snapshot_download(
     repo_id='TheBloke/OpenOrcaxOpenChat-Preview2-13B-GPTQ',

@@ -35,21 +35,18 @@ class Answer:
         self.results = {}
 
     def score_answer(self) -> None:
-        """Placeholder for BLEURT model implementation.
-        Currently uses MPNet"""
-
         """
-
-        TODO: INSERT CODE FOR BLEURT MODEL
-        Replace MPNet pipeline below
-
+        This currently returns passing score ONLY if both BLEURT and MPnet agree that it is passing
         """
 
         correct_answer = self.data["answer"]
-        res = answer_pipe.process(correct_answer, self.answer)
+        res = answer_pipe.process(self.answer, correct_answer)
 
-        self.results["score"] = res["score"]
-        self.results["is_passing"] = bool(int(res["label"][-1]))
+        self.results["score"] = res
+        if res < 2:
+            self.results["is_passing"] = False
+        else:
+            self.resluts["is_passing"] = True
 
 
 async def answer_score(answer_input: AnswerInput) -> AnswerResults:
