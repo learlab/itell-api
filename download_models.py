@@ -1,28 +1,22 @@
+"""
+This file can be used to download models from HuggingFace Hub and Spacy.
+We have set up a persistent volume for model storage on our deployment server,
+so this file is no longer needed for deployment.
+"""
+
 import huggingface_hub
 import spacy
 
-huggingface_hub.snapshot_download(
-    repo_id='tiedaar/longformer-content-global',
-    )
+hf_models = [
+    "tiedaar/longformer-content-global",
+    "tiedaar/longformer-wording-global",
+    "tiedaar/short-answer-classification",
+    "vaiibhavgupta/finetuned-bleurt-large",
+    "sentence-transformers/all-MiniLM-L6-v2",
+    "Open-Orca/OpenOrcaxOpenChat-Preview2-13B",
+]
 
-huggingface_hub.snapshot_download(
-    repo_id='tiedaar/longformer-wording-global',
-    )
+for repo_name in hf_models:
+    huggingface_hub.snapshot_download(repo_id=repo_name)
 
-huggingface_hub.snapshot_download(
-    repo_id='tiedaar/short-answer-classification',
-)
-
-huggingface_hub.snapshot_download(
-    repo_id='vaiibhavgupta/finetuned-bleurt-large',
-)
-
-huggingface_hub.snapshot_download(
-    repo_id='TheBloke/OpenOrcaxOpenChat-Preview2-13B-GPTQ',
-    )
-
-huggingface_hub.snapshot_download(
-    repo_id='sentence-transformers/all-MiniLM-L6-v2',
-    )
-
-spacy.cli.download('en_core_web_sm')  # type: ignore
+spacy.cli.download("en_core_web_sm")  # type: ignore
