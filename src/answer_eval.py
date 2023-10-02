@@ -40,7 +40,7 @@ class Answer:
         """
 
         correct_answer = self.data["answer"]
-        res = answer_pipe.process(self.answer, correct_answer)
+        res = answer_pipe(self.answer, correct_answer)
 
         self.results["score"] = res
         if res < 2:

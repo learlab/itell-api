@@ -139,6 +139,7 @@ class Summary:
                     weights.append(1 / chunk["focus_time"])
 
         self.results["included_keyphrases"] = included_keyphrases
+        k = max(3, len(suggested_keyphrases))
         self.results["suggested_keyphrases"] = random.choices(
             suggested_keyphrases, k=3, weights=weights
         )

@@ -48,8 +48,9 @@ spec:
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  annotations:
-    nginx.ingress.kubernetes.io/rewrite-target: /
+        #annotations:
+          #nginx.ingress.kubernetes.io/use-regex: "true"
+          #nginx.ingress.kubernetes.io/rewrite-target: /$1
   name: itell-api
   namespace: jhub
 spec:
@@ -57,10 +58,10 @@ spec:
   - host: itell-api.learlab.vanderbilt.edu
     http:
       paths:
-      - backend:
+      - path: /
+        pathType: Prefix
+        backend:
           service:
             name: itell-api
             port:
               number: 8001
-        path: /
-        pathType: Prefix
