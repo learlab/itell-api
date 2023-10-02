@@ -10,17 +10,19 @@ async def generate_embedding(input_body: ChunkInput) -> ChunkEmbedding:
     return ChunkEmbedding(embed=embed)
 
 
-# def max_similarity(text_input: str, db: Client) -> float:
-#     return embedding_pipeline.max_similarity(text_input, db)
-
-
 def retrieve_chunks(
     text_input: str,
     db: Client,
     match_threshold: float = 0.3,
     match_count: int = 1,
 ) -> list[dict]:
-    results = embedding_pipeline.retrieve_chunks(
-        text_input, db, match_threshold, match_count
-    )
-    return results
+    embed = embedding_pipeline(text_input)
+    results = db.rpc(
+        "retrieve_chunks",
+        {
+            "embedding": embed,
+            "match_threshold": match_threshold,
+            "match_count": match_count,
+        },
+    ).execute()
+    return results.data
