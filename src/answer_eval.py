@@ -46,7 +46,7 @@ class Answer:
         if res < 2:
             self.results["is_passing"] = False
         else:
-            self.resluts["is_passing"] = True
+            self.results["is_passing"] = True
 
 
 async def answer_score(answer_input: AnswerInput) -> AnswerResults:
