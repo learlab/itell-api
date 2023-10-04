@@ -26,6 +26,6 @@ ENV HF_HOME=/usr/local/huggingface \
 
 RUN python3 -m spacy download en_core_web_sm
 
-COPY ["guardrails", "assets", "models", "pipelines", "src", "/usr/src/"]
+COPY ["assets", "models", "pipelines", "src", "/usr/src/"]
 
 CMD ["python3", "-m", "src.main"]

@@ -1,10 +1,11 @@
 from models.base import InputBase, ResultsBase
 from typing import Optional
+from fastapi.responses import StreamingResponse
+
 
 class ChatInput(InputBase):
     message: str
     history: Optional[dict]
 
 
-class ChatResult(ResultsBase):
-    message: str
+ChatResult = StreamingResponse

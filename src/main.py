@@ -10,7 +10,7 @@ from models.chat import ChatInput, ChatResult
 
 from src.summary_eval import summary_score
 from src.answer_eval import answer_score
-from src.generate_embeddings import generate_embedding
+from src.retrieve import generate_embedding
 from src.chat import moderated_chat
 
 app = FastAPI()

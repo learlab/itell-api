@@ -1,11 +1,11 @@
 import os
-from supabase import create_client, Client
+from supabase.client import create_client, Client
 from models.textbook import TextbookNames
 
 
 def get_client(textbook_name: TextbookNames):
-    url: str = os.getenv(f"{textbook_name.name}_HOST")
-    password: str = os.getenv(f"{textbook_name.name}_PASSWORD")
+    url: str = os.environ[f"{textbook_name.name}_HOST"]
+    password: str = os.environ[f"{textbook_name.name}_PASSWORD"]
     supabase: Client = create_client(url, password)
     return supabase
 

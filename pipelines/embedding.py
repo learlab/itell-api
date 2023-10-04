@@ -8,4 +8,4 @@ class EmbeddingPipeline:
         self.model = SentenceTransformer(self.model_name)
 
     def __call__(self, text_input: str) -> list[float]:
-        return self.model.encode(text_input).tolist()
+        return self.model.encode(text_input).tolist()  # type: ignore

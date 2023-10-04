@@ -12,7 +12,7 @@ from nemoguardrails.actions.actions import ActionResult
 from nemoguardrails.llm.helpers import get_llm_instance_wrapper
 from nemoguardrails.llm.providers import register_llm_provider
 
-from src.generate_embeddings import retrieve_chunks
+from src.retrieve import retrieve_chunks
 from src.database import get_client
 from models.textbook import TextbookNames
 
