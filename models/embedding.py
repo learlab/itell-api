@@ -1,4 +1,5 @@
 from models.base import InputBase, ResultsBase
+from typing import List
 
 
 class ChunkInput(InputBase):
@@ -6,4 +7,4 @@ class ChunkInput(InputBase):
 
 
 class ChunkEmbedding(ResultsBase):
-    embed: list[float]
+    embed: List[float]

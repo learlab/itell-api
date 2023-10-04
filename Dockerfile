@@ -6,7 +6,6 @@ ENV DEBIAN_FRONTEND=noninteractive
 # Install system dependencies
 RUN apt-get update && \
     apt-get install -y \
-        git \
         python3 \
         python3-pip
 
@@ -27,6 +26,6 @@ ENV HF_HOME=/usr/local/huggingface \
 
 RUN python3 -m spacy download en_core_web_sm
 
-COPY . /usr/src/
+COPY ["guardrails", "assets", "models", "pipelines", "src", "/usr/src/"]
 
 CMD ["python3", "-m", "src.main"]
