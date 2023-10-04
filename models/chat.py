@@ -1,4 +1,4 @@
-from models.base import InputBase, ResultsBase
+from models.base import InputBase
 from typing import Optional
 from fastapi.responses import StreamingResponse
 

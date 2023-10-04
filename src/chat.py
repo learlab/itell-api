@@ -1,12 +1,14 @@
 from models.chat import ChatInput, ChatResult
 from vllm.sampling_params import SamplingParams
+from typing import AsyncGenerator
+from fastapi.responses import StreamingResponse
 
 from src.database import get_client
 from src.retrieve import retrieve_chunks
 from pipelines.chat import ChatPipeline
 
 
-async def moderated_chat(chat_input: ChatInput) -> ChatResult:
+async def moderated_chat(chat_input: ChatInput) -> AsyncGenerator[bytes, None]:
     # Adding in the specific name of the textbook majorly improved response quality
     textbook_name = chat_input.textbook_name
 
@@ -35,12 +37,14 @@ async def moderated_chat(chat_input: ChatInput) -> ChatResult:
     )
 
     # Retrieve relevant chunks
-    additional_context = "\n# This is some additional context:"
+    additional_context = ""
     db = get_client(textbook_name)
     relevant_chunks = await retrieve_chunks(chat_input.message, db, match_count=1)
-    for chunk in relevant_chunks:
-        additional_context += f"\n# {chunk['title']}"
-        additional_context += f"\n{chunk['clean_text']}"
+    if relevant_chunks:
+        additional_context += "\n# This is some additional context:"
+        for chunk in relevant_chunks:
+            additional_context += f"\n# {chunk['title']}"
+            additional_context += f"\n{chunk['clean_text']}"
 
     # TODO: Retrieve Examples
     # We can set up a database of a questions and responses
@@ -59,13 +63,24 @@ async def moderated_chat(chat_input: ChatInput) -> ChatResult:
     # Join the prompt components together, ending with the (modified) user message
     prompt = "".join([preface, sample_conversation, additional_context, history, msg])
 
-    result = await ChatPipeline(prompt, sampling_params)
-    return result
+    return await ChatPipeline(prompt, sampling_params)
 
-    # result = result[0].outputs[0].text
 
-    # if isinstance(result, str):
-    #     # TODO: Add required ChatResult fields.
-    #     return ChatResult(message=result)
-    # else:
-    #     return ChatResult(message="Internal Server Error")
+if __name__ == "__main__":
+    from fastapi import FastAPI
+    import uvicorn
+    import os
+
+    app = FastAPI()
+
+    @app.post("/chat")
+    async def chat(input_body: ChatInput) -> ChatResult:
+        return StreamingResponse(await moderated_chat(input_body))
+
+    uvicorn.run(
+        app,
+        host="0.0.0.0",
+        port=int(os.getenv("port", 8001)),
+        reload=False,
+        timeout_keep_alive=30,
+    )

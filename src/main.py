@@ -44,7 +44,6 @@ def hello():
 @app.get("/gpu")
 def gpu_available():
     import torch
-
     return {"message": f"GPU Available: {torch.cuda.is_available()}"}
 
 
@@ -65,12 +64,12 @@ async def embed(input_body: ChunkInput) -> ChunkEmbedding:
 
 @app.post("/chat")
 async def chat(input_body: ChatInput) -> ChatResult:
-    return await moderated_chat(input_body)
+    return ChatResult(await moderated_chat(input_body))
 
 
 if __name__ == "__main__":
     import uvicorn
 
     uvicorn.run(
-        "src.main:app", host="0.0.0.0", port=int(os.getenv("port", 8001)), reload=True
+        "src.main:app", host="0.0.0.0", port=int(os.getenv("port", 8001)), reload=False
     )
