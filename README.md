@@ -2,7 +2,7 @@
 
 This repository defines the api for our digital textbook project. The iTELL API provides the frontend with GPU-accelerated natural language processing services. Its principal features are the following:
 
-- Sumamry scoring
+- Summary scoring
 - Short answer scoring
 - Intelligent tutor API
 
