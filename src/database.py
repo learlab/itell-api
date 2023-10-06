@@ -11,5 +11,5 @@ def get_client(textbook_name: TextbookNames):
 
 
 if __name__ == "__main__":
-    db = get_client(TextbookNames.MACRO_ECON)
-    print(db.table("subsections").select("keyphrases").data[0])
+    db = get_client(TextbookNames.THINK_PYTHON)
+    print(db.table("subsections").select("keyphrases").execute().data[0])

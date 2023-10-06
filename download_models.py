@@ -5,7 +5,7 @@ so this file is no longer needed for deployment.
 """
 
 import huggingface_hub
-import spacy
+from spacy.cli.download import download as spacy_download
 
 hf_models = [
     "tiedaar/longformer-content-global",
@@ -19,4 +19,4 @@ hf_models = [
 for repo_name in hf_models:
     huggingface_hub.snapshot_download(repo_id=repo_name)
 
-spacy.cli.download("en_core_web_sm")  # type: ignore
+spacy_download("en_core_web_sm")
