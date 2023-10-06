@@ -1,10 +1,11 @@
-'''
-This file creates a class called AnswerPipeline.
-It loads a Bleurt model and an MPnet model for classifying whether an answer matches a correct answer.
-The method process takes a candidate and a reference answer as inputs.
-If both models agree that the candidate is correct, it returns a 2. If both models agree that it is incorrect, it returns a 1.
-If the models disagree it returns a 2.
-'''
+"""
+Defines AnswerPipeline:
+It loads a Bleurt model and an MPnet model for scoring a short answer.
+The __call__ method takes a candidate and a reference answer as inputs.
+If both models agree that the candidate is correct, return 2.
+If the models disagree, return 1.
+If both models agree that it is incorrect, return 0.
+"""
 
 from transformers import pipeline
 from typing import Dict

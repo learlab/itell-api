@@ -6,6 +6,7 @@ from src.database import get_client
 
 logging.set_verbosity_error()
 
+
 answer_pipe = AnswerPipeline()
 
 
