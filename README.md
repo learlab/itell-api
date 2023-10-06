@@ -2,7 +2,7 @@
 
 This repository defines the api for our digital textbook project. The iTELL API provides the frontend with GPU-accelerated natural language processing services. Its principal features are the following:
 
-- Sumamry scoring
+- Summary scoring
 - Short answer scoring
 - Intelligent tutor API
 
@@ -39,9 +39,20 @@ The Makefile defines a build and push sequence to the localhost:32000 container 
 
 The image is hosted on our bare metal server using a Kubernetes manifest.yaml file. The manifest file defines a deployment and service for the image. The deployment is configured to pull the image from a local Docker registry (microk8s built-in registry).
 
-The deployment relies on a Kubernetes secret. This was created using `microk8s kubectl create secret generic supabase-itell --from-env-file=.env`
+The repository is located at `/srv/repos/itell-api` on the lab server. You should only need the following commands to deploy an update. Run these from within the repository directory:
 
-To update the deployment with a new Docker image, use `microk8s kubectl rollout restart deployment/itell-api`.
+1. `git fetch`  
+2. `git pull`  
+3. `make`  
+4. `microk8s kubectl rollout restart deployment/itell-api`  
+
+If you need to make any quick fixes to get the deployment working, please do not forget to push those changes directly to main:  
+1. Make your changes to the files
+2. `git add .`
+3. `git commit -m [commit message]`
+4. `git push`
+
+The deployment relies on a Kubernetes secret. This was created using `microk8s kubectl create secret generic supabase-itell --from-env-file=.env`. You will need to run this command from within the repository directory whenever environment variables are updated. Since the `.env` file is not pushed to Github, you will also need to manually update this file on the server before running the `create secret` command.
 
 To access the running container, find the pod's id using `microk8s kubectl get pods` then run `microk8s kubectl exec -i -t itell-api-[POD-ID-SEQUENCE] -- /bin/bash`
 
