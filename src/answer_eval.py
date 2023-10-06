@@ -35,15 +35,41 @@ class Answer:
         self.results = {}
 
     def score_answer(self) -> None:
-        """
-        This currently returns passing score ONLY if both BLEURT and MPnet agree that it is passing
-        """
-
+        '''
+        This returns three objects in its results -
+        logits - dictionary with raw bleurt score and mpnet label
+        score - 0, 1, or 2 to say how correct the answer is
+        is_passing - bool to describe whether it is passing (both models agree yes)
+        '''
+        # return logits from bleurt and label from MPnet
         correct_answer = self.data["answer"]
         res = answer_pipe.process(self.answer, correct_answer)
+        self.results["logits"] = res
 
-        self.results["score"] = res
-        if res < 2:
+        # Get bleurt results
+        bleurt_score = res['bleurt_score']
+        if bleurt_score > 0.7:
+            bleurt_res = True
+        else:
+            bleurt_res = False
+
+        # Get MPnet results
+        mpnet_score = res['mpnet_score']
+        if mpnet_score == 'correct_answer':
+            mpnet_res = True
+        elif mpnet_score == 'incorrect_answer':
+            mpnet_res = False
+
+        # Majority voting
+        if mpnet_res == True and bleurt_res == True:
+            self.results["score"] = 2
+        elif mpnet_res == False and bleurt_res == False:
+            self.results["score"] = 0
+        else:
+            self.results["score"] = 1
+
+        # is_passing results
+        if self.results["score"] < 2:
             self.results["is_passing"] = False
         else:
             self.results["is_passing"] = True

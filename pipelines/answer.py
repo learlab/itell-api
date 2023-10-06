@@ -19,28 +19,11 @@ class AnswerPipeline:
         )
         
     
-    def process(self, candidate: str, reference: str) -> Dict[str, str]:
-        bleurt_sequence = f'{candidate}[SEP]{reference}'
-        mpnet_sequence = f'{candidate}</s>{reference}'
+    def process(self, target: str, reference: str) -> Dict[str, str]:
+        bleurt_sequence = f'{target}[SEP]{reference}'
+        mpnet_sequence = f'{target}</s>{reference}'
         
-        # Get bleurt results
         bleurt_score = self.bleurt_classifier(bleurt_sequence)[0]['score']
-        if bleurt_score > 0.7:
-            bleurt_res = True
-        else:
-            bleurt_res = False
-
-        # Get MPnet results
         mpnet_score = self.mpnet_classifier(mpnet_sequence)[0]['label']
-        if mpnet_score == 'correct_answer':
-            mpnet_res = True
-        elif mpnet_score == 'incorrect_answer':
-            mpnet_res = False
 
-        # Majority voting
-        if mpnet_res == True and bleurt_res == True:
-            return 2
-        elif mpnet_res == False and bleurt_res == False:
-            return 0
-        else:
-            return 1
+        return {'bleurt_score':bleurt_score, 'mpnet_score':mpnet_score}
