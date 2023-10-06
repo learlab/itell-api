@@ -8,15 +8,8 @@ from vllm.utils import random_uuid
 import json
 import os
 
-# For deployment an an RTX A6000 with 48GiB of VRAM
-engine_args = AsyncEngineArgs(
-    model="Open-Orca/OpenOrcaxOpenChat-Preview2-13B",
-    download_dir="/usr/local/huggingface/hub",
-    gpu_memory_utilization=0.80,
-)
-
 # For local development on an RTX 3060 with 12GiB of VRAM
-if os.environ.get("ENVIRONMENT") == "development":
+if os.environ.get("ENV") == "development":
     engine_args = AsyncEngineArgs(
         model="TheBloke/OpenOrcaxOpenChat-Preview2-13B-AWQ",
         download_dir="/usr/local/huggingface/hub",
@@ -24,6 +17,14 @@ if os.environ.get("ENVIRONMENT") == "development":
         dtype="half",
         quantization="awq",
     )
+
+# For deployment an an RTX A6000 with 48GiB of VRAM
+engine_args = AsyncEngineArgs(
+    model="Open-Orca/OpenOrcaxOpenChat-Preview2-13B",
+    download_dir="/usr/local/huggingface/hub",
+    gpu_memory_utilization=0.80,
+)
+
 
 engine = AsyncLLMEngine.from_engine_args(engine_args)
 
@@ -33,7 +34,7 @@ async def ChatPipeline(
 ) -> AsyncGenerator[bytes, None]:
     """Generate completion for the request.
     - prompt: the prompt to use for the generation.
-    - other fields: the sampling parameters (See `SamplingParams` for details).
+    - sampling_params: the sampling parameters (See `SamplingParams` for details).
     """
     request_id = random_uuid()
 
@@ -41,7 +42,10 @@ async def ChatPipeline(
 
     async def stream_results() -> AsyncGenerator[bytes, None]:
         async for request_output in results_generator:  # type: ignore
-            ret = {"text": request_output.outputs[-1].text}
+            ret = {
+                "request_id": request_id,
+                "text": request_output.outputs[-1].text,
+                }
             yield (json.dumps(ret) + "\0").encode("utf-8")
 
     return stream_results()

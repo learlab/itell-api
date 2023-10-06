@@ -44,6 +44,7 @@ def hello():
 @app.get("/gpu")
 def gpu_available():
     import torch
+
     return {"message": f"GPU Available: {torch.cuda.is_available()}"}
 
 
