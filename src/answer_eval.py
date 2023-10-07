@@ -42,11 +42,35 @@ class Answer:
         correct_answer = self.data["answer"]
         res = answer_pipe(self.answer, correct_answer)
 
-        self.results["score"] = res
-        if res < 2:
+        self.results["results"] = res
+
+        # Get bleurt results
+        bleurt_score = res['bleurt_score']
+        if bleurt_score > 0.7:
+            bleurt_res = True
+        else:
+            bleurt_res = False
+
+        # Get MPnet results
+        mpnet_score = res['mpnet_score']
+        if mpnet_score == 'correct_answer':
+            mpnet_res = True
+        elif mpnet_score == 'incorrect_answer':
+            mpnet_res = False        
+
+        # Majority voting
+        if mpnet_res == True and bleurt_res == True:
+            self.results["score"] = 2
+        elif mpnet_res == False and bleurt_res == False:
+            self.results["score"] = 0
+        else:
+            self.results["score"] = 1
+
+        # is_passing results
+        if self.results["score"] < 2:
             self.results["is_passing"] = False
         else:
-            self.results["is_passing"] = True
+            self.results["is_passing"] = True        
 
 
 async def answer_score(answer_input: AnswerInput) -> AnswerResults:

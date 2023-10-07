@@ -6,5 +6,6 @@ class AnswerInput(InputBase):
 
 
 class AnswerResults(ResultsBase):
-    score: float  # BLEURT or some other score
+    score: float  # in [0,1,2] 0 means incorrect, 2 means correct, 1 means model disagreement
     is_passing: bool
+    results: dict # dictionary contining BLEURT score and MPnet label

@@ -2,9 +2,7 @@
 Defines AnswerPipeline:
 It loads a Bleurt model and an MPnet model for scoring a short answer.
 The __call__ method takes a candidate and a reference answer as inputs.
-If both models agree that the candidate is correct, return 2.
-If the models disagree, return 1.
-If both models agree that it is incorrect, return 0.
+Return a dictionary with the bleurt score and the mpnet label
 """
 
 from transformers import pipeline
@@ -27,24 +25,7 @@ class AnswerPipeline:
         bleurt_sequence = f"{candidate}[SEP]{reference}"
         mpnet_sequence = f"{candidate}</s>{reference}"
 
-        # Get bleurt results
-        bleurt_score = self.bleurt_classifier(bleurt_sequence)[0]["score"]
-        if bleurt_score >= self.bleurt_threshold:
-            bleurt_passing = True
-        else:
-            bleurt_passing = False
+        bleurt_score = self.bleurt_classifier(bleurt_sequence)[0]['score']
+        mpnet_score = self.mpnet_classifier(mpnet_sequence)[0]['label']
 
-        # Get MPnet results
-        mpnet_score = self.mpnet_classifier(mpnet_sequence)[0]["label"]
-        if mpnet_score == "correct_answer":
-            mpnet_passing = True
-        elif mpnet_score == "incorrect_answer":
-            mpnet_passing = False
-
-        # Majority voting
-        if bleurt_passing and mpnet_passing:
-            return 2
-        elif bleurt_passing or mpnet_passing:
-            return 1
-        else:
-            return 0
+        return {'bleurt_score':bleurt_score, 'mpnet_score':mpnet_score}
