@@ -17,13 +17,13 @@ if os.environ.get("ENV") == "development":
         dtype="half",
         quantization="awq",
     )
-
-# For deployment an an RTX A6000 with 48GiB of VRAM
-engine_args = AsyncEngineArgs(
-    model="Open-Orca/OpenOrcaxOpenChat-Preview2-13B",
-    download_dir="/usr/local/huggingface/hub",
-    gpu_memory_utilization=0.80,
-)
+else:
+    # For deployment an an RTX A6000 with 48GiB of VRAM
+    engine_args = AsyncEngineArgs(
+        model="Open-Orca/OpenOrcaxOpenChat-Preview2-13B",
+        download_dir="/usr/local/huggingface/hub",
+        gpu_memory_utilization=0.80,  # this leaves room for batching and other models
+    )
 
 
 engine = AsyncLLMEngine.from_engine_args(engine_args)
@@ -44,8 +44,8 @@ async def ChatPipeline(
         async for request_output in results_generator:  # type: ignore
             ret = {
                 "request_id": request_id,
-                "text": request_output.outputs[-1].text,
-                }
+                "text": request_output.outputs[0].text,
+            }
             yield (json.dumps(ret) + "\0").encode("utf-8")
 
     return stream_results()

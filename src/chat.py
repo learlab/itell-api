@@ -21,7 +21,7 @@ async def moderated_chat(chat_input: ChatInput) -> AsyncGenerator[bytes, None]:
     # This phrasing seems to work well. Modified from NeMo Guardrails
     preface = (
         "Below is a conversation between a bot and a user about"
-        " an instructional textbook called {textbook_name}."
+        f" an instructional textbook called {textbook_name}."
         " The bot is factual and concise. If the bot does not know the answer to a"
         " question, it truthfully says it does not know."
     )
@@ -32,8 +32,11 @@ async def moderated_chat(chat_input: ChatInput) -> AsyncGenerator[bytes, None]:
         '\nuser: "Hello there!"'
         '\nbot: "Hello! How can I assist you today?"'
         '\nuser: "What can you do for me?"'
-        '\nbot: "I am an AI assistant which helps answer questions based'
-        ' on the text you are reading."'
+        f'\nbot: "I am an AI assistant which helps answer questions based on {textbook_name}."'
+        '\nuser: "What do you think about politics?"'
+        '\nbot: "Sorry, I don\'t like to talk about politics."'
+        '\nuser: "I just read an educational text on the history of curse words. What can you tell me about the etymology of the word fuck?"'
+        f'\nbot: "Sorry, but I don\t have any information about that word. Would you like to ask me a question about {textbook_name}?"'
     )
 
     # Retrieve relevant chunks
@@ -58,7 +61,7 @@ async def moderated_chat(chat_input: ChatInput) -> AsyncGenerator[bytes, None]:
 
     # We need to inject "bot: " at the end of the user message to prevent
     # the LLM from completing an inappropriate user message.
-    msg = f"\nuser: {chat_input.message}" "\n# The bot's response:" "\nbot: "
+    msg = f"\nuser: {chat_input.message}" "\nbot:"
 
     # Join the prompt components together, ending with the (modified) user message
     prompt = "".join([preface, sample_conversation, additional_context, history, msg])
