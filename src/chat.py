@@ -46,7 +46,6 @@ async def moderated_chat(chat_input: ChatInput) -> AsyncGenerator[bytes, None]:
     if relevant_chunks:
         additional_context += "\n# This is some additional context:"
         for chunk in relevant_chunks:
-            additional_context += f"\n# {chunk['title']}"
             additional_context += f"\n{chunk['clean_text']}"
 
     # TODO: Retrieve Examples
