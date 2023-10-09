@@ -4,30 +4,17 @@
 #
 #    pip-compile
 #
-accelerate==0.23.0
-    # via -r requirements.in
-aiohttp==3.8.5
-    # via
-    #   langchain
-    #   nemoguardrails
+--extra-index-url https://download.pytorch.org/whl/cu118
+
 aiosignal==1.3.1
-    # via
-    #   aiohttp
-    #   ray
-annoy==1.17.3
-    # via nemoguardrails
+    # via ray
 anyio==4.0.0
     # via
     #   httpcore
     #   starlette
     #   watchfiles
-async-timeout==4.0.3
-    # via
-    #   aiohttp
-    #   langchain
 attrs==23.1.0
     # via
-    #   aiohttp
     #   jsonschema
     #   referencing
 blis==0.7.11
@@ -45,9 +32,7 @@ certifi==2023.7.22
 cffi==1.16.0
     # via cryptography
 charset-normalizer==3.3.0
-    # via
-    #   aiohttp
-    #   requests
+    # via requests
 click==8.1.7
     # via
     #   click-log
@@ -75,8 +60,6 @@ cymem==2.0.8
     #   preshed
     #   spacy
     #   thinc
-dataclasses-json==0.5.14
-    # via langchain
 deprecation==2.1.0
     # via postgrest
 docutils==0.20.1
@@ -88,7 +71,6 @@ exceptiongroup==1.1.3
 fastapi==0.96.0
     # via
     #   -r requirements.in
-    #   nemoguardrails
     #   vllm
 filelock==3.12.4
     # via
@@ -99,7 +81,6 @@ filelock==3.12.4
     #   triton
 frozenlist==1.4.0
     # via
-    #   aiohttp
     #   aiosignal
     #   ray
 fsspec==2023.9.2
@@ -112,8 +93,6 @@ gitpython==3.1.37
     # via python-semantic-release
 gotrue==1.1.1
     # via supabase
-greenlet==3.0.0
-    # via sqlalchemy
 h11==0.14.0
     # via
     #   httpcore
@@ -126,7 +105,6 @@ httpx==0.23.3
     # via
     #   -r requirements.in
     #   gotrue
-    #   nemoguardrails
     #   postgrest
     #   storage3
     #   supabase
@@ -134,16 +112,12 @@ httpx==0.23.3
 huggingface-hub==0.17.3
     # via
     #   -r requirements.in
-    #   accelerate
-    #   sentence-transformers
     #   transformers
 idna==3.4
     # via
     #   anyio
-    #   httpx
     #   requests
     #   rfc3986
-    #   yarl
 importlib-metadata==6.8.0
     # via
     #   keyring
@@ -158,52 +132,33 @@ jeepney==0.8.0
     #   secretstorage
 jinja2==3.1.2
     # via
-    #   nemoguardrails
     #   spacy
     #   torch
 joblib==1.3.2
-    # via
-    #   nltk
-    #   scikit-learn
+    # via nltk
 jsonschema==4.19.1
     # via ray
 jsonschema-specifications==2023.7.1
     # via jsonschema
 keyring==24.2.0
     # via twine
-langchain==0.0.251
-    # via nemoguardrails
 langcodes==3.3.0
     # via spacy
-langsmith==0.0.41
-    # via langchain
 lit==17.0.1
     # via triton
 markupsafe==2.1.3
     # via jinja2
-marshmallow==3.20.1
-    # via dataclasses-json
 more-itertools==10.1.0
     # via jaraco-classes
 mpmath==1.3.0
     # via sympy
 msgpack==1.0.7
     # via ray
-multidict==6.0.4
-    # via
-    #   aiohttp
-    #   yarl
 murmurhash==1.0.10
     # via
     #   preshed
     #   spacy
     #   thinc
-mypy-extensions==1.0.0
-    # via typing-inspect
-nemoguardrails==0.5.0
-    # via -r requirements.in
-nest-asyncio==1.5.6
-    # via nemoguardrails
 networkx==3.1
     # via torch
 nh3==0.2.14
@@ -211,63 +166,24 @@ nh3==0.2.14
 ninja==1.11.1
     # via vllm
 nltk==3.8.1
-    # via
-    #   -r requirements.in
-    #   sentence-transformers
-numexpr==2.8.7
-    # via langchain
+    # via -r requirements.in
 numpy==1.26.0
     # via
-    #   accelerate
     #   blis
     #   gensim
-    #   langchain
-    #   numexpr
     #   pandas
     #   pyarrow
     #   ray
-    #   scikit-learn
     #   scipy
-    #   sentence-transformers
     #   spacy
     #   thinc
-    #   torchvision
     #   transformers
     #   vllm
     #   xformers
-nvidia-cublas-cu11==11.10.3.66
-    # via
-    #   nvidia-cudnn-cu11
-    #   nvidia-cusolver-cu11
-    #   torch
-nvidia-cuda-cupti-cu11==11.7.101
-    # via torch
-nvidia-cuda-nvrtc-cu11==11.7.99
-    # via torch
-nvidia-cuda-runtime-cu11==11.7.99
-    # via torch
-nvidia-cudnn-cu11==8.5.0.96
-    # via torch
-nvidia-cufft-cu11==10.9.0.58
-    # via torch
-nvidia-curand-cu11==10.2.10.91
-    # via torch
-nvidia-cusolver-cu11==11.4.0.1
-    # via torch
-nvidia-cusparse-cu11==11.7.4.91
-    # via torch
-nvidia-nccl-cu11==2.14.3
-    # via torch
-nvidia-nvtx-cu11==11.7.91
-    # via torch
-openapi-schema-pydantic==1.2.4
-    # via langchain
 packaging==23.2
     # via
-    #   accelerate
     #   deprecation
     #   huggingface-hub
-    #   marshmallow
     #   python-semantic-release
     #   ray
     #   spacy
@@ -278,8 +194,6 @@ pandas==2.1.1
     # via vllm
 pathy==0.10.2
     # via spacy
-pillow==10.0.1
-    # via torchvision
 pkginfo==1.9.6
     # via twine
 postgrest==0.10.6
@@ -293,9 +207,7 @@ protobuf==3.20.3
     #   -r requirements.in
     #   ray
 psutil==5.9.5
-    # via
-    #   accelerate
-    #   vllm
+    # via vllm
 pyarrow==13.0.0
     # via vllm
 pycparser==2.21
@@ -306,10 +218,6 @@ pydantic==1.10.13
     #   confection
     #   fastapi
     #   gotrue
-    #   langchain
-    #   langsmith
-    #   nemoguardrails
-    #   openapi-schema-pydantic
     #   postgrest
     #   spacy
     #   thinc
@@ -334,10 +242,7 @@ pytz==2023.3.post1
     # via pandas
 pyyaml==6.0.1
     # via
-    #   accelerate
     #   huggingface-hub
-    #   langchain
-    #   nemoguardrails
     #   ray
     #   transformers
     #   uvicorn
@@ -358,15 +263,11 @@ regex==2023.8.8
 requests==2.31.0
     # via
     #   huggingface-hub
-    #   langchain
-    #   langsmith
-    #   nemoguardrails
     #   python-gitlab
     #   python-semantic-release
     #   ray
     #   requests-toolbelt
     #   spacy
-    #   torchvision
     #   transformers
     #   twine
     #   weasel
@@ -384,25 +285,14 @@ rpds-py==0.10.3
     #   referencing
 safetensors==0.3.3
     # via transformers
-scikit-learn==1.3.1
-    # via sentence-transformers
 scipy==1.11.3
-    # via
-    #   gensim
-    #   scikit-learn
-    #   sentence-transformers
+    # via gensim
 secretstorage==3.3.3
     # via keyring
 semver==2.13.0
     # via python-semantic-release
-sentence-transformers==2.2.2
-    # via nemoguardrails
 sentencepiece==0.1.99
-    # via
-    #   sentence-transformers
-    #   vllm
-simpleeval==0.9.13
-    # via nemoguardrails
+    # via vllm
 six==1.16.0
     # via python-dateutil
 smart-open==6.4.0
@@ -424,8 +314,6 @@ spacy-legacy==3.0.12
     # via spacy
 spacy-loggers==1.0.5
     # via spacy
-sqlalchemy==2.0.21
-    # via langchain
 srsly==2.4.8
     # via
     #   confection
@@ -433,9 +321,7 @@ srsly==2.4.8
     #   thinc
     #   weasel
 starlette==0.27.0
-    # via
-    #   fastapi
-    #   nemoguardrails
+    # via fastapi
 storage3==0.5.3
     # via supabase
 strenum==0.4.15
@@ -446,38 +332,28 @@ supafunc==0.2.2
     # via supabase
 sympy==1.12
     # via torch
-tenacity==8.2.3
-    # via langchain
 thinc==8.2.1
     # via spacy
-threadpoolctl==3.2.0
-    # via scikit-learn
 tokenizers==0.13.3
     # via transformers
 tomlkit==0.12.1
     # via python-semantic-release
-torch==2.0.1
+torch==2.0.1+cu118
     # via
-    #   accelerate
-    #   sentence-transformers
-    #   torchvision
+    #   -r requirements.in
     #   triton
     #   vllm
     #   xformers
-torchvision==0.15.2
-    # via sentence-transformers
 tqdm==4.66.1
     # via
     #   huggingface-hub
     #   nltk
-    #   sentence-transformers
     #   spacy
     #   transformers
     #   twine
 transformers==4.33.3
     # via
     #   -r requirements.in
-    #   sentence-transformers
     #   vllm
 triton==2.0.0
     # via torch
@@ -485,24 +361,17 @@ twine==3.8.0
     # via python-semantic-release
 typer==0.7.0
     # via
-    #   nemoguardrails
     #   pathy
     #   spacy
     #   weasel
 typing-extensions==4.5.0
     # via
     #   cloudpathlib
-    #   fastapi
     #   huggingface-hub
-    #   nemoguardrails
     #   pydantic
     #   realtime
-    #   sqlalchemy
     #   storage3
     #   torch
-    #   typing-inspect
-typing-inspect==0.9.0
-    # via dataclasses-json
 tzdata==2023.3
     # via pandas
 urllib3==2.0.6
@@ -512,7 +381,6 @@ urllib3==2.0.6
 uvicorn[standard]==0.22.0
     # via
     #   -r requirements.in
-    #   nemoguardrails
     #   vllm
 uvloop==0.17.0
     # via uvicorn
@@ -532,20 +400,11 @@ websockets==10.4
     #   realtime
     #   uvicorn
 wheel==0.41.2
-    # via
-    #   nvidia-cublas-cu11
-    #   nvidia-cuda-cupti-cu11
-    #   nvidia-cuda-runtime-cu11
-    #   nvidia-curand-cu11
-    #   nvidia-cusparse-cu11
-    #   nvidia-nvtx-cu11
-    #   python-semantic-release
+    # via python-semantic-release
 xformers==0.0.22
     # via
     #   -r requirements.in
     #   vllm
-yarl==1.9.2
-    # via aiohttp
 zipp==3.17.0
     # via importlib-metadata
 
