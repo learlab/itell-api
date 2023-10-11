@@ -1,6 +1,6 @@
 import os
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
 from models.summary import SummaryInput, SummaryResults
@@ -58,9 +58,19 @@ async def score_answer(input_body: AnswerInput) -> AnswerResults:
     return await answer_score(input_body)
 
 
-@app.post("/embed")
-async def embed(input_body: ChunkInput) -> ChunkEmbedding:
+@app.post("/generate/embedding")
+async def gen_embedding(input_body: ChunkInput) -> ChunkEmbedding:
     return await generate_embedding(input_body)
+
+
+@app.post("/generate/question")
+async def gen_question(input_body: ChunkInput) -> None:
+    raise HTTPException(status_code=404, detail="Not Implemented")
+
+
+@app.post("/generate/keyphrases")
+async def gen_keyphrases(input_body: ChunkInput) -> None:
+    raise HTTPException(status_code=404, detail="Not Implemented")
 
 
 @app.post("/chat")
