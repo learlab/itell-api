@@ -1,4 +1,4 @@
-from typing import Optional, Dict
+from typing import Optional, Dict, Set
 from models.base import InputBase, ResultsBase
 
 
@@ -11,7 +11,7 @@ class SummaryInput(InputBase):
 class SummaryResults(ResultsBase):
     containment: float
     similarity: float
-    included_keyphrases: set[str]
-    suggested_keyphrases: set[str]
+    included_keyphrases: Set[str]
+    suggested_keyphrases: Set[str]
     content: Optional[float] = None
     wording: Optional[float] = None

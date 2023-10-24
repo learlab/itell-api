@@ -1,6 +1,6 @@
 import os
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
 from models.summary import SummaryInput, SummaryResults
@@ -10,7 +10,7 @@ from models.chat import ChatInput, ChatResult
 
 from src.summary_eval import summary_score
 from src.answer_eval import answer_score
-from src.generate_embeddings import generate_embedding
+from src.retrieve import generate_embedding
 from src.chat import moderated_chat
 
 app = FastAPI()
@@ -58,19 +58,29 @@ async def score_answer(input_body: AnswerInput) -> AnswerResults:
     return await answer_score(input_body)
 
 
-@app.post("/embed")
-async def embed(input_body: ChunkInput) -> ChunkEmbedding:
+@app.post("/generate/embedding")
+async def gen_embedding(input_body: ChunkInput) -> ChunkEmbedding:
     return await generate_embedding(input_body)
+
+
+@app.post("/generate/question")
+async def gen_question(input_body: ChunkInput) -> None:
+    raise HTTPException(status_code=404, detail="Not Implemented")
+
+
+@app.post("/generate/keyphrases")
+async def gen_keyphrases(input_body: ChunkInput) -> None:
+    raise HTTPException(status_code=404, detail="Not Implemented")
 
 
 @app.post("/chat")
 async def chat(input_body: ChatInput) -> ChatResult:
-    return await moderated_chat(input_body)
+    return ChatResult(await moderated_chat(input_body))
 
 
 if __name__ == "__main__":
     import uvicorn
 
     uvicorn.run(
-        "src.main:app", host="0.0.0.0", port=int(os.getenv("port", 8001)), reload=True
+        "src.main:app", host="0.0.0.0", port=int(os.getenv("port", 8001)), reload=False
     )

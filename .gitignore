@@ -1,5 +1,5 @@
 # Large files
-assets/huggingface/
+huggingface
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
