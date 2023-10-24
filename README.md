@@ -9,7 +9,7 @@ This repository defines the api for our digital textbook project. The iTELL API 
 
 ## Development
 
-1. Clone the repository and run `pip install -r requirements.txt`
+1. Clone the repository and run `pip install -r requirements.txt` (use dev-requirements.txt if you have a GPU and need to test iTELL AI)
  - If you need to adjust the requirements, please install pip-tools: `pip install pip-tools`
  - Make changes to the `requirements.in` file
  - Rebuild the `requirements.txt` file with `pip-compile`

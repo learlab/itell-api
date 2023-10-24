@@ -45,8 +45,6 @@ blis==0.7.11
     # via
     #   -r requirements.txt
     #   thinc
-build==1.0.3
-    # via pip-tools
 cachetools==5.3.1
     # via tox
 catalogue==2.0.10
@@ -79,7 +77,6 @@ click==8.1.7
     #   -r requirements.txt
     #   click-log
     #   nltk
-    #   pip-tools
     #   python-semantic-release
     #   ray
     #   typer
@@ -233,6 +230,7 @@ huggingface-hub==0.17.3
     #   -r requirements.txt
     #   accelerate
     #   datasets
+    #   sentence-transformers
     #   transformers
 humanfriendly==10.0
     # via coloredlogs
@@ -346,6 +344,7 @@ nltk==3.8.1
     # via
     #   -r requirements.txt
     #   rouge-score
+    #   sentence-transformers
 numexpr==2.8.7
     # via lm-eval
 numpy==1.26.0
@@ -362,6 +361,7 @@ numpy==1.26.0
     #   rouge-score
     #   scikit-learn
     #   scipy
+    #   sentence-transformers
     #   spacy
     #   thinc
     #   torchvision
@@ -376,7 +376,6 @@ packaging==23.2
     # via
     #   -r requirements.txt
     #   accelerate
-    #   build
     #   datasets
     #   deprecation
     #   huggingface-hub
@@ -400,10 +399,10 @@ pathy==0.10.2
     # via
     #   -r requirements.txt
     #   spacy
-pillow==10.0.1
-    # via torchvision
-pip-tools==7.3.0
-    # via -r dev-requirements.in
+pillow==10.1.0
+    # via
+    #   -r requirements.txt
+    #   torchvision
 pkginfo==1.9.6
     # via
     #   -r requirements.txt
@@ -468,8 +467,6 @@ pygments==2.16.1
     #   rootpath
 pyproject-api==1.6.1
     # via tox
-pyproject-hooks==1.0.0
-    # via build
 pytablewriter==1.2.0
     # via lm-eval
 python-dateutil==2.8.2
@@ -553,6 +550,7 @@ rfc3986[idna2008]==1.5.0
     # via
     #   -r requirements.txt
     #   httpx
+    #   rfc3986
     #   twine
 rootpath==0.1.1
     # via
@@ -571,13 +569,17 @@ safetensors==0.3.3
     # via
     #   -r requirements.txt
     #   transformers
-scikit-learn==1.3.1
-    # via lm-eval
+scikit-learn==1.3.2
+    # via
+    #   -r requirements.txt
+    #   lm-eval
+    #   sentence-transformers
 scipy==1.11.3
     # via
     #   -r requirements.txt
     #   gensim
     #   scikit-learn
+    #   sentence-transformers
 secretstorage==3.3.3
     # via
     #   -r requirements.txt
@@ -586,10 +588,13 @@ semver==2.13.0
     # via
     #   -r requirements.txt
     #   python-semantic-release
+sentence-transformers==2.2.2
+    # via -r requirements.txt
 sentencepiece==0.1.99
     # via
     #   -r requirements.txt
     #   autoawq
+    #   sentence-transformers
     #   vllm
 six==1.16.0
     # via
@@ -674,7 +679,9 @@ thinc==8.2.1
     #   -r requirements.txt
     #   spacy
 threadpoolctl==3.2.0
-    # via scikit-learn
+    # via
+    #   -r requirements.txt
+    #   scikit-learn
 tokenizers==0.13.3
     # via
     #   -r requirements.txt
@@ -684,10 +691,7 @@ toml==0.10.2
     # via autoawq
 tomli==2.0.1
     # via
-    #   build
-    #   pip-tools
     #   pyproject-api
-    #   pyproject-hooks
     #   tox
 tomlkit==0.12.1
     # via
@@ -699,12 +703,16 @@ torch==2.0.1+cu118
     #   accelerate
     #   autoawq
     #   lm-eval
+    #   sentence-transformers
     #   torchvision
     #   triton
     #   vllm
     #   xformers
 torchvision==0.15.2+cu118
-    # via autoawq
+    # via
+    #   -r requirements.txt
+    #   autoawq
+    #   sentence-transformers
 tox==4.11.3
     # via
     #   attributedict
@@ -717,6 +725,7 @@ tqdm==4.66.1
     #   huggingface-hub
     #   nltk
     #   openai
+    #   sentence-transformers
     #   spacy
     #   tqdm-multiprocess
     #   transformers
@@ -728,6 +737,7 @@ transformers==4.33.3
     #   -r requirements.txt
     #   autoawq
     #   lm-eval
+    #   sentence-transformers
     #   vllm
 triton==2.0.0
     # via
@@ -742,6 +752,7 @@ typepy[datetime]==1.3.2
     #   dataproperty
     #   pytablewriter
     #   tabledata
+    #   typepy
 typer==0.7.0
     # via
     #   -r requirements.txt
@@ -769,6 +780,7 @@ urllib3==2.0.6
 uvicorn[standard]==0.22.0
     # via
     #   -r requirements.txt
+    #   uvicorn
     #   vllm
 uvloop==0.17.0
     # via
@@ -800,7 +812,6 @@ websockets==10.4
 wheel==0.41.2
     # via
     #   -r requirements.txt
-    #   pip-tools
     #   python-semantic-release
 xformers==0.0.22
     # via
@@ -818,5 +829,4 @@ zstandard==0.21.0
     # via lm-eval
 
 # The following packages are considered to be unsafe in a requirements file:
-# pip
 # setuptools

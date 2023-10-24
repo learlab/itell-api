@@ -30,7 +30,7 @@ class Summary:
         # This process should be the same for all textbooks.
         if summary_input.textbook_name.name == "THINK_PYTHON":
             section_index = f"{summary_input.chapter_index:02}"
-        elif summary_input.textbook_name.name == "MACRO_ECON" or summary_input.textbook_name.name == "MATHIA":
+        elif summary_input.textbook_name.name in ["MACRO_ECON", "MATHIA"]:
             section_index = (
                 f"{summary_input.chapter_index:02}-{summary_input.section_index:02}"
             )
@@ -96,13 +96,17 @@ class Summary:
         """Return content score based on summary and source text."""
         self.results["content"] = content_pipe(
             self.input_text, truncation=True, max_length=4096
-        )[0]["score"]  # type: ignore
+        )[0][
+            "score"
+        ]  # type: ignore
 
     def score_wording(self) -> None:
         """Return wording score based on summary and source text."""
         self.results["wording"] = wording_pipe(
             self.input_text, truncation=True, max_length=4096
-        )[0]["score"]  # type: ignore
+        )[0][
+            "score"
+        ]  # type: ignore
 
     def suggest_keyphrases(self) -> None:
         """Return keyphrases that were included in the summary and suggests

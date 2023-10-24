@@ -15,7 +15,7 @@ class Answer:
         # This process should be the same for all textbooks.
         if answer_input.textbook_name.name == "THINK_PYTHON":
             section_index = f"{answer_input.chapter_index:02}"
-        elif answer_input.textbook_name.name == "MACRO_ECON" or answer_input.textbook_name.name == "MATHIA":
+        elif answer_input.textbook_name.name in ["MACRO_ECON", "MATHIA"]:
             section_index = (
                 f"{answer_input.chapter_index:02}-{answer_input.section_index:02}"
             )
