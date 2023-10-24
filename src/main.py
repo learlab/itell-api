@@ -73,6 +73,11 @@ async def gen_keyphrases(input_body: ChunkInput) -> None:
     raise HTTPException(status_code=404, detail="Not Implemented")
 
 
+@app.post("/generate/transcript")
+async def gen_transcript(input_body: ChunkInput) -> None:
+    raise HTTPException(status_code=404, detail="Not Implemented")
+
+
 @app.post("/chat")
 async def chat(input_body: ChatInput) -> ChatResult:
     return ChatResult(await moderated_chat(input_body))
