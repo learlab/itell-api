@@ -7,6 +7,7 @@ from models.summary import SummaryInput, SummaryResults
 from models.answer import AnswerInput, AnswerResults
 from models.embedding import ChunkInput, ChunkEmbedding
 from models.chat import ChatInput, ChatResult
+from models.transcript import TranscriptInput, TranscriptResults
 
 from src.summary_eval import summary_score
 from src.answer_eval import answer_score
@@ -74,8 +75,9 @@ async def gen_keyphrases(input_body: ChunkInput) -> None:
 
 
 @app.post("/generate/transcript")
-async def gen_transcript(input_body: ChunkInput) -> None:
-    raise HTTPException(status_code=404, detail="Not Implemented")
+async def gen_transcript(input_body: TranscriptInput) -> TranscriptResults:
+    return await TranscriptResults(input_body) 
+    #raise HTTPException(status_code=404, detail="Not Implemented")
 
 
 @app.post("/chat")
