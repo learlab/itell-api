@@ -13,6 +13,7 @@ from src.summary_eval import summary_score
 from src.answer_eval import answer_score
 from src.retrieve import generate_embedding
 from src.chat import moderated_chat
+from src.get_transcript import generate_transcript
 
 app = FastAPI()
 
@@ -76,9 +77,7 @@ async def gen_keyphrases(input_body: ChunkInput) -> None:
 
 @app.post("/generate/transcript")
 async def gen_transcript(input_body: TranscriptInput) -> TranscriptResults:
-    return await TranscriptResults(input_body) 
-    #raise HTTPException(status_code=404, detail="Not Implemented")
-
+    return await generate_transcript(input_body) 
 
 @app.post("/chat")
 async def chat(input_body: ChatInput) -> ChatResult:
