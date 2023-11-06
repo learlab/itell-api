@@ -8,4 +8,4 @@ class TranscriptInput(BaseModel):
     end_time: int = None
 
 class TranscriptResults(ResultsBase):
-    transcript: Optional[str] = None
+    transcript: str = None

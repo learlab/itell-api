@@ -26,9 +26,9 @@ class Transcript:
         end_time = self.end_time or srt[-1]['start']
 
         if start_time > srt[-1]['start']:
-            raise IndexError('Start time is beyond the range of the video')
+            raise HTTPException(status_code=400, detail="Start time is beyond the range of the video")
         if end_time < start_time:
-            raise IndexError('Start time must come before end time')
+            raise HTTPException(status_code=400, detail="Start time must come before end time")
 
         transcript_timeframe = [segment for segment in srt if end_time > segment['start'] >= start_time]                                    
         transcript = ' '.join([x['text'] for x in transcript_timeframe])
