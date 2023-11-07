@@ -1,9 +1,8 @@
-from typing import Optional, Dict, Set
 from models.base import ResultsBase
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 class TranscriptInput(BaseModel):
-    url: str = None
+    url: str = Field(pattern=r'^((?:https?:)?\/\/)?((?:www|m)\.)?((?:youtube(-nocookie)?\.com|youtu.be))(\/(?:[\w\-]+\?v=|embed\/|live\/|v\/)?)([\w\-]+)(\S+)?$')
     start_time: int = None
     end_time: int = None
 
