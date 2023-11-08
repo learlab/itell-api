@@ -77,7 +77,8 @@ async def gen_keyphrases(input_body: ChunkInput) -> None:
 
 @app.post("/generate/transcript")
 async def gen_transcript(input_body: TranscriptInput) -> TranscriptResults:
-    return await generate_transcript(input_body) 
+    return await generate_transcript(input_body)
+
 
 @app.post("/chat")
 async def chat(input_body: ChatInput) -> ChatResult:

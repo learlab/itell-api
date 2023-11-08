@@ -122,10 +122,11 @@ def test_short_answer():
     print("Short answer test results:", response.json())
     return
 
+
 def test_generate_transcript():
     response = client.post(
         "/generate/transcript",
-        json = {
+        json={
             "url": "https://www.youtube.com/watch?v=Cqbleas1mmo",
             "start_time": 50,
             "end_time": 200,
@@ -133,6 +134,7 @@ def test_generate_transcript():
     )
     print("Transcript:", response.json())
     return
+
 
 def test_main():
     test_read_main()
@@ -151,8 +153,10 @@ def test_summary_score():
 def test_answer_score():
     test_short_answer()
 
+
 def test_transcript():
     test_generate_transcript()
+
 
 if __name__ == "__main__":
     test_main()

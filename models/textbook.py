@@ -6,6 +6,7 @@ class TextbookNames(str, Enum):
     THINK_PYTHON = "think-python-2e"
     MATHIA = "mathia-1e"
 
+
 if __name__ == "__main__":
     test = TextbookNames.MACRO_ECON
     print(test.value)
