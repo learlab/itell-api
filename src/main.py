@@ -7,11 +7,13 @@ from models.summary import SummaryInput, SummaryResults
 from models.answer import AnswerInput, AnswerResults
 from models.embedding import ChunkInput, ChunkEmbedding
 from models.chat import ChatInput, ChatResult
+from models.transcript import TranscriptInput, TranscriptResults
 
 from src.summary_eval import summary_score
 from src.answer_eval import answer_score
 from src.retrieve import generate_embedding
 from src.chat import moderated_chat
+from src.get_transcript import generate_transcript
 
 app = FastAPI()
 
@@ -74,8 +76,8 @@ async def gen_keyphrases(input_body: ChunkInput) -> None:
 
 
 @app.post("/generate/transcript")
-async def gen_transcript(input_body: ChunkInput) -> None:
-    raise HTTPException(status_code=404, detail="Not Implemented")
+async def gen_transcript(input_body: TranscriptInput) -> TranscriptResults:
+    return await generate_transcript(input_body)
 
 
 @app.post("/chat")

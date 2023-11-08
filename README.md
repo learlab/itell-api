@@ -9,10 +9,12 @@ This repository defines the api for our digital textbook project. The iTELL API 
 
 ## Development
 
+Since the introduction of the chat model, development requires a CUDA-enabled GPU. We will create a CPU-only workflow in the future.
+
 1. Clone the repository and run `pip install -r requirements.txt` (use dev-requirements.txt if you have a GPU and need to test iTELL AI)
  - If you need to adjust the requirements, please install pip-tools: `pip install pip-tools`
  - Make changes to the `requirements.in` file
- - Rebuild the `requirements.txt` file with `pip-compile`
+ - Rebuild the `requirements.txt` file with `pip-compile requirements.in` and/or `pip-compile dev-requirements.in`
 
 2. Run `python ./download_models.py` to download required models from SpaCy and Huggingface
 3. Make sure to create a `.env` file in the application root directory like the following. It should contain all the textbook names defined in the `src/models/textbooks.py`:

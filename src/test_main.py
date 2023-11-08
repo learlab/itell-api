@@ -123,6 +123,19 @@ def test_short_answer():
     return
 
 
+def test_generate_transcript():
+    response = client.post(
+        "/generate/transcript",
+        json={
+            "url": "https://www.youtube.com/watch?v=Cqbleas1mmo",
+            "start_time": 50,
+            "end_time": 200,
+        },
+    )
+    print("Transcript:", response.json())
+    return
+
+
 def test_main():
     test_read_main()
     test_read_gpu()
@@ -141,7 +154,12 @@ def test_answer_score():
     test_short_answer()
 
 
+def test_transcript():
+    test_generate_transcript()
+
+
 if __name__ == "__main__":
     test_main()
     test_summary_score()
     test_answer_score()
+    test_generate_transcript()
