@@ -541,6 +541,7 @@ requests==2.31.0
     #   transformers
     #   twine
     #   weasel
+    #   youtube-transcript-api
 requests-toolbelt==1.0.0
     # via
     #   -r requirements.txt
@@ -821,6 +822,8 @@ xxhash==3.4.1
     # via datasets
 yarl==1.9.2
     # via aiohttp
+youtube-transcript-api==0.6.1
+    # via -r requirements.txt
 zipp==3.17.0
     # via
     #   -r requirements.txt
