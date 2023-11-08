@@ -5,9 +5,9 @@ from models.textbook import TextbookNames
 
 class InputBase(BaseModel):
     textbook_name: TextbookNames
-    chapter_index: Optional[int] = 00
-    section_index: Optional[int] = 00
-    subsection_index: Optional[int] = 00
+    chapter_index: Optional[int] = 0
+    section_index: Optional[int] = 0
+    subsection_index: Optional[int] = 0
 
 
 class ResultsBase(BaseModel):
