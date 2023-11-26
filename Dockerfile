@@ -1,4 +1,3 @@
-# FROM nvcr.io/nvidia/pytorch:22.12-py3
 FROM nvidia/cuda:11.8.0-devel-ubuntu22.04
 
 ENV DEBIAN_FRONTEND=noninteractive
@@ -17,8 +16,7 @@ WORKDIR /usr/src/
 
 RUN pip install -r requirements.txt
 
-# Installing as root seems to confuse these libraries
-# Specify where we want them to cache downloads
+# Specify where we want nltk and hf to cache downloads
 RUN mkdir /usr/local/nltk_data
 
 ENV HF_HOME=/usr/local/huggingface \

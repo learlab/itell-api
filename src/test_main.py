@@ -2,8 +2,6 @@ from fastapi.testclient import TestClient
 
 from src.main import app
 
-# TODO: Rework with async/await.
-
 client = TestClient(app)
 
 
