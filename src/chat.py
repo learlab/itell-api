@@ -15,7 +15,7 @@ async def moderated_chat(chat_input: ChatInput) -> AsyncGenerator[bytes, None]:
     # Stop generation when the LLM generates the token for "user" (1792)
     # This prevents the LLM from having a conversation with itself
     sampling_params = SamplingParams(
-        temperature=0.4, max_tokens=256, stop_token_ids=[1792]
+        temperature=0.4, max_tokens=1024, stop_token_ids=[1792]
     )
 
     # This phrasing seems to work well. Modified from NeMo Guardrails

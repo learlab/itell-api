@@ -12,7 +12,6 @@ from models.transcript import TranscriptInput, TranscriptResults
 from src.summary_eval import summary_score
 from src.answer_eval import answer_score
 from src.retrieve import generate_embedding
-from src.chat import moderated_chat
 from src.get_transcript import generate_transcript
 
 app = FastAPI()
@@ -79,10 +78,15 @@ async def gen_keyphrases(input_body: ChunkInput) -> None:
 async def gen_transcript(input_body: TranscriptInput) -> TranscriptResults:
     return await generate_transcript(input_body)
 
+if os.environ.get("ENV") == "development":
+    print("Skipping chat endpoint in development mode.")
+    pass
+else:
+    from src.chat import moderated_chat
 
-@app.post("/chat")
-async def chat(input_body: ChatInput) -> ChatResult:
-    return ChatResult(await moderated_chat(input_body))
+    @app.post("/chat")
+    async def chat(input_body: ChatInput) -> ChatResult:
+        return ChatResult(await moderated_chat(input_body))
 
 
 if __name__ == "__main__":
