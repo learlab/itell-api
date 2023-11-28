@@ -16,7 +16,7 @@ Since the introduction of the chat model, development requires a CUDA-enabled GP
  - Make changes to the `requirements.in` file
  - Rebuild the `requirements.txt` file with `pip-compile requirements.in` and/or `pip-compile dev-requirements.in`
 
-2. Run `python ./download_models.py` to download required models from SpaCy and Huggingface
+2. Run `python -m spacy download en_core_web_sm` to download required model from SpaCy
 3. Make sure to create a `.env` file in the application root directory like the following. It should contain all the textbook names defined in the `src/models/textbooks.py`:
 
 ```

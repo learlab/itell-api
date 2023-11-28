@@ -10,6 +10,7 @@ from models.chat import ChatInput, ChatResult
 from models.transcript import TranscriptInput, TranscriptResults
 
 from src.summary_eval import summary_score
+from src.summary_eval_strapi import summary_score_strapi
 from src.answer_eval import answer_score
 from src.retrieve import generate_embedding
 from src.get_transcript import generate_transcript
@@ -51,7 +52,10 @@ def gpu_available():
 
 @app.post("/score/summary")
 async def score_summary(input_body: SummaryInput) -> SummaryResults:
-    return await summary_score(input_body)
+    if input_body.textbook_name:
+        return await summary_score(input_body)
+    else:
+        return await summary_score_strapi(input_body)
 
 
 @app.post("/score/answer")
@@ -80,7 +84,6 @@ async def gen_transcript(input_body: TranscriptInput) -> TranscriptResults:
 
 if os.environ.get("ENV") == "development":
     print("Skipping chat endpoint in development mode.")
-    pass
 else:
     from src.chat import moderated_chat
 

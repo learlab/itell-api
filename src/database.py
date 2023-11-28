@@ -1,6 +1,22 @@
 import os
+import json
+import requests
 from supabase.client import create_client, Client
 from models.textbook import TextbookNames
+
+
+class Strapi:
+    url: str = os.environ["STRAPI_URL"]
+    key: str = os.environ["STRAPY_KEY"]
+
+    def fetch(self, query) -> dict:
+        headers = {"Authorization": f"Bearer {self.key}"}
+        response = requests.request("GET", self.url + query, headers=headers)
+        return json.loads(response.text)
+
+
+def get_strapi():
+    return Strapi()
 
 
 def get_client(textbook_name: TextbookNames):
@@ -10,6 +26,8 @@ def get_client(textbook_name: TextbookNames):
     return supabase
 
 
-if __name__ == "__main__":
-    db = get_client(TextbookNames.THINK_PYTHON)
-    print(db.table("subsections").select("keyphrases").execute().data[0])
+def get_vector_store():
+    url: str = os.environ["VECTOR_HOST"]
+    key: str = os.environ["VECTOR_KEY"]
+    supabase: Client = create_client(url, key)
+    return supabase
