@@ -4,7 +4,7 @@ from typing import AsyncGenerator
 from fastapi.responses import StreamingResponse
 
 from src.database import get_client
-from src.retrieve import retrieve_chunks
+from src.embedding import retrieve_chunks
 from pipelines.chat import ChatPipeline
 
 
