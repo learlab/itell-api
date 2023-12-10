@@ -1,4 +1,3 @@
-from supabase.client import Client
 from typing import Any
 from database import get_vector_store
 
@@ -9,7 +8,7 @@ embedding_pipeline = EmbeddingPipeline()
 db = get_vector_store()
 
 async def generate_embedding(input_body: ChunkInput) -> dict[str, Any]:
-    embed = embedding_pipeline(input_body['content'])
+    embedding = embedding_pipeline(input_body['content'])
     upsert_response = db.embeddings.upsert({
         "text": input_body['text'],
         "module": input_body['module'],
@@ -21,10 +20,9 @@ async def generate_embedding(input_body: ChunkInput) -> dict[str, Any]:
     })
 
     if upsert_response.error:
-        return {'content' : {'message' : response.error}, 'status_code': 500}
-    else:
-        return {'content' : {'message' : response.data}, 'status_code': 200}
-    return None
+        return {'content' : {'message' : upsert_response.error}, 'status_code': 500}
+
+    return {'content' : {'message' : upsert_response.data}, 'status_code': 200}
 
 async def retrieve_chunks(input_body: RetrievalInput, match_threshold: float = 0.3, match_count: int = 1) -> RetrievalResults:
     content_embedding = embedding_pipeline(input_body['content'])
