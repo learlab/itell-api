@@ -1,3 +1,4 @@
+pycld2
 fastapi
 gensim>=4.3
 huggingface_hub
