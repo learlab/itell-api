@@ -9,13 +9,16 @@ This repository defines the api for our digital textbook project. The iTELL API 
 
 ## Development
 
-Since the introduction of the chat model, development requires a CUDA-enabled GPU. We will create a CPU-only workflow in the future.
+This repository can run in three modes: development, gpu-development, and production.
+`development` mode runs without a GPU. Chat is disabled.
+`gpu-development` mode runs with a GPU and a smaller, quantized model for chat.
+`production` mode runs with a GPU and the full chat model.
+Please set ENV=development, ENV=gpu-development, or ENV=production in your .env file. If no ENV is set, the default is production, which will likely fail on your system.
 
-1. Clone the repository and run `pip install -r requirements.txt` (use dev-requirements.txt if you have a GPU and need to test iTELL AI)
+1. Clone the repository and run `pip install -r requirements.txt` (use gpu-requirements.txt if you have a GPU)
  - If you need to adjust the requirements, please install pip-tools: `pip install pip-tools`
- - Make changes to the `requirements.in` file
- - Rebuild the `requirements.txt` file with `pip-compile requirements.in` and/or `pip-compile dev-requirements.in`
-
+ - Make changes to the `requirements.in` file or the `gpu-requirements.in` file
+ - Rebuild the `requirements.txt` file with `pip-compile requirements.in` and/or `pip-compile gpu-requirements.in`
 2. Run `python -m spacy download en_core_web_sm` to download required model from SpaCy
 3. Make sure to create a `.env` file in the application root directory like the following. It should contain all the textbook names defined in the `src/models/textbooks.py`:
 
@@ -25,6 +28,7 @@ MACRO_ECON_PASSWORD=[SupaBase Password]
 CONTAINER_PORT=8001
 ```
 
+4. Load the environment variables with `source .env` or by using the provided devcontainer.
 5. Test `python -m src.test_main` to make sure everything is working.
 
 ### Using Dev Containers

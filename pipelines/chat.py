@@ -9,7 +9,7 @@ import json
 import os
 
 # For local development on an RTX 3060 with 12GiB of VRAM
-if os.environ.get("ENV") == "development":
+if os.environ.get("ENV") == "gpu-development":
     engine_args = AsyncEngineArgs(
         model="TheBloke/OpenOrcaxOpenChat-Preview2-13B-AWQ",
         download_dir="/usr/local/huggingface/hub",

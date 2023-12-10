@@ -2,18 +2,18 @@ import random
 import re
 
 import pycld2 as cld2
+import json
 import spacy
 from gensim.models import Doc2Vec
 
 # from generate_embeddings import generate_embedding, max_similarity
 from nltk import trigrams
 from scipy import spatial
-from supabase.client import Client
 from transformers import logging
 
 from models.summary import SummaryInput, SummaryResults
 from pipelines.summary import SummaryPipeline
-from src.database import get_client
+from src.database import Strapi, get_strapi
 
 nlp = spacy.load("en_core_web_sm", disable=["ner"])
 
@@ -26,42 +26,25 @@ wording_pipe = SummaryPipeline("tiedaar/longformer-wording-global")
 
 
 class Summary:
-    def __init__(self, summary_input: SummaryInput, db: Client):
-        # TODO: Change to use section slug
-        # This process should be the same for all textbooks.
-        if summary_input.textbook_name.name == "THINK_PYTHON":
-            section_index = f"{summary_input.chapter_index:02}"
-        elif summary_input.textbook_name.name in ["MACRO_ECON", "MATHIA"]:
-            section_index = (
-                f"{summary_input.chapter_index:02}-{summary_input.section_index:02}"
-            )
-        else:
-            raise ValueError("Textbook not supported.")
-
+    def __init__(self, summary_input: SummaryInput, db: Strapi):
         # Fetch content and restructure data
-        data = (
-            db.table("subsections")
-            .select("slug", "clean_text", "keyphrases")
-            .eq("section_id", section_index)
-            .execute()
-            .data
-        )
+        slug = summary_input.page_slug
+        response = db.fetch(f"/api/pages?filters[slug][$eq]={slug}&populate[Content]=*")
 
-        clean_text = "\n\n".join([str(row["clean_text"]) for row in data])
+        content = response["data"][0]["attributes"]["Content"]
+
+        clean_text = "\n\n".join([component["clean_text"] for component in content])
 
         # Create SpaCy objects
         self.source = nlp(clean_text)
         self.summary = nlp(summary_input.summary)
 
-        # Organize and Process keyphrases:
-        self.chunks = {}
-        for row in data:
-            self.chunks[row["slug"]] = {
-                "keyphrases": list(nlp.pipe(row["keyphrases"])),
-                # chunks with no focus time record are assigned 1 seconds
-                "focus_time": summary_input.focus_time.get(row["slug"], 1),
-            }
+        for component in content:
+            keyphrases = json.loads(component["KeyPhrase"])
+            component['keyphrases'] = list(nlp.pipe(keyphrases))
+            component['focus_time'] = summary_input.focus_time.get(component["Slug"])
 
+        self.content = content
         self.results = {}
 
         # intermediate objects for scoring
@@ -121,7 +104,7 @@ class Summary:
             [t.lemma_.lower() for t in self.summary if not t.is_stop]
         )
 
-        for chunk in self.chunks.values():
+        for chunk in self.content.values():
             for keyphrase in chunk["keyphrases"]:
                 keyphrase_lemmas = [t.lemma_ for t in keyphrase if not t.is_stop]
                 keyphrase_included = re.search(
@@ -155,7 +138,7 @@ async def summary_score(summary_input: SummaryInput) -> SummaryResults:
     relevance to the source text. If it passes these checks, score the summary
     using a Huggingface pipeline.
     """
-    db = get_client(summary_input.textbook_name)
+    db = get_strapi()
 
     summary = Summary(summary_input, db)
 
