@@ -41,8 +41,9 @@ async def moderated_chat(chat_input: ChatInput) -> AsyncGenerator[bytes, None]:
 
     # Retrieve relevant chunks
     additional_context = ""
-    db = get_client(textbook_name)
-    relevant_chunks = await retrieve_chunks(chat_input.message, db, match_count=1)
+    # changing the input parameter from providing db to including `textbook_name` in `input_body` as `text` to filter chunks in the database
+    # db = get_client(textbook_name)
+    relevant_chunks = await retrieve_chunks({"text": textbook_name, "content": chat_input.message}, match_count=1)
     if relevant_chunks:
         additional_context += "\n# This is some additional context:"
         for chunk in relevant_chunks:

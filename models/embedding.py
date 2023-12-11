@@ -1,5 +1,5 @@
 from models.base import InputBase, ResultsBase
-from typing import List
+from typing import List, Optional
 from pydantic import BaseModel
 
 class ChunkInput(InputBase):
@@ -11,8 +11,8 @@ class ChunkInput(InputBase):
     content: str # Chunk text content
 
 class RetrievalInput(InputBase):
-    text: str
-    page: str
+    text: Optional[str]
+    page: Optional[str]
     content: str # text to compare to (student summary)
 
 class Match(BaseModel):
