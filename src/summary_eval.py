@@ -146,13 +146,10 @@ async def summary_score(summary_input: SummaryInput) -> SummaryResults:
     summary.score_similarity()
     summary.suggest_keyphrases()
 
-    is_detection_reliable, _, _, detected_languages = cld2.detect(summary_input.summary, returnVectors=True)
-    summary.results["english"] = False
-    if is_detection_reliable:
-        for detected_language in detected_languages:
-            if detected_language[2].strip() == 'ENGLISH':
-                summary.results["english"] = True                
-                break
+    summary.results["english"] = True
+    is_detection_reliable, _, details = cld2.detect(summary_input.summary)
+    if not is_detection_reliable or details[0][0] != "ENGLISH":
+        summary.results["english"] = False
 
     junk_filter = (
         summary.results["containment"] > 0.5 or summary.results["similarity"] < 0.3 or not summary.results["english"]
