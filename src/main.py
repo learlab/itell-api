@@ -1,6 +1,6 @@
 import os
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Response
 from fastapi.middleware.cors import CORSMiddleware
 
 from models.summary import SummaryInput, SummaryResults
@@ -68,7 +68,7 @@ async def score_answer(input_body: AnswerInput) -> AnswerResults:
 
 
 @app.post("/generate/embedding")
-async def gen_embedding(input_body: ChunkInput) -> dict[str, Any]:
+async def gen_embedding(input_body: ChunkInput) -> Response:
     return await generate_embedding(input_body)
 
 
