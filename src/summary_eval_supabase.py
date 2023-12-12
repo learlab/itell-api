@@ -165,7 +165,7 @@ async def summary_score_supabase(summary_input: SummaryInput) -> SummaryResults:
 
     summary.results["english"] = True
     is_detection_reliable, _, details = cld2.detect(summary_input.summary)
-    if not is_detection_reliable or details[0][0] != "ENGLISH":
+    if is_detection_reliable and details[0][0] != "ENGLISH":
         summary.results["english"] = False
 
     junk_filter = (
