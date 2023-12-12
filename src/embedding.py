@@ -21,9 +21,9 @@ async def generate_embedding(input_body: ChunkInput) -> Response:
             "content": input_body.content,
             "embedding": embedding
         }).execute()
-        return Response(content={'message' : upsert_response.data}, status_code=201)
+        return Response(content=upsert_response.data[0]['content'], status_code=201)
     except Exception as ex:
-        return Response(content={'message' : ex.message}, status_code=ex.code)
+        return Response(content=str(ex.message), status_code=int(ex.code))
 
 async def retrieve_chunks(input_body: RetrievalInput, match_threshold: float = 0.3, match_count: int = 2) -> RetrievalResults:
     content_embedding = embedding_pipeline(input_body.content)
@@ -40,4 +40,4 @@ async def retrieve_chunks(input_body: RetrievalInput, match_threshold: float = 0
         results = db.rpc("retrieve_chunks", query_params).execute()
         return results.data
     except Exception as ex:
-        return [{'content' : {'message' : ex.message}, 'status_code': ex.code}]
+        return [{'chunk_slug' : "", 'similarity': 0.00, 'content' : ex.message + str(ex.code)}]

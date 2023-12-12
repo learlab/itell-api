@@ -1,6 +1,7 @@
 import os
 from fastapi.testclient import TestClient
 from src.main import app
+from src.embedding import retrieve_chunks
 
 client = TestClient(app)
 
@@ -155,6 +156,64 @@ def test_answer_score():
 def test_transcript():
     test_generate_transcript()
 
+def test_generate_embedding():
+    response = client.post(
+        "/generate/embedding",
+        json={
+            "text": "test_text",
+            "module": "test_module",
+            "chapter": "test_chapter",
+            "page": "test_page",
+            "chunk": "test_chunk_1",
+            "content": '''Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vivamus lacinia odio vitae vestibulum. Sed nec felis pellentesque, faucibus libero vel, dictum justo. Aliquam erat volutpat. Ut et libero magna. Fusce nec turpis vel leo malesuada tincidunt. Nullam non dui vitae diam sollicitudin ullamcorper. Sed ac elit non mi pharetra dictum. Praesent tincidunt, orci ac commodo consequat, augue mauris gravida turpis.'''
+        }
+    )
+
+    assert response.status_code == 201
+
+    response = client.post(
+        "/generate/embedding",
+        json={
+            "text": "test_text",
+            "module": "test_module",
+            "chapter": "test_chapter",
+            "page": "test_page",
+            "chunk": "test_chunk_2",
+            "content": '''In interdum ullamcorper dolor et vulputate. Nulla facilisi. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Vestibulum tortor quam, feugiat vitae, ultricies eget, tempor sit amet, ante. Donec eu libero sit amet quam egestas semper. Aenean ultricies mi vitae est. Mauris placerat eleifend leo. Quisque sit amet est et sapien ullamcorper pharetra.'''
+        }
+    )
+
+    assert response.status_code == 201
+
+    response = client.post(
+        "/generate/embedding",
+        json={
+            "text": "test_text",
+            "module": "test_module",
+            "chapter": "test_chapter",
+            "page": "test_page",
+            "chunk": "test_chunk_3",
+            "content": '''Vestibulum erat wisi, condimentum sed, commodo vitae, ornare sit amet, wisi. Aenean fermentum, elit eget tincidunt condimentum, eros ipsum rutrum orci, sagittis tempus lacus enim ac dui. Donec non enim in turpis pulvinar facilisis. Ut felis. Praesent dapibus, neque id cursus faucibus, tortor neque egestas augue, eu vulputate magna eros eu erat. Aliquam erat volutpat. Nam dui mi, tincidunt quis, accumsan porttitor, facilisis luctus, metus.'''
+        }
+    )
+
+    assert response.status_code == 201
+    return None
+
+def test_retrieve_chunks():
+    query_params = {
+        "text": "test_text",
+        "page": "test_page",
+        "content": "Vestibulum erat wisi, condimentum sed, commodo vitae, ornare sit amet, wisi. Aenean fermentum, elit eget tincidunt condimentum, eros ipsum rutrum orci, sagittis tempus lacus enim ac dui. Donec non enim in turpis pulvinar facilisis. Ut felis. Praesent dapibus, neque id cursus faucibus, tortor neque egestas augue, eu vulputate magna eros eu erat. Aliquam erat volutpat. Nam dui mi, tincidunt quis, accumsan porttitor, facilisis luctus, metus."
+        }
+    
+    response = retrieve_chunks(query_params)
+    print(response)
+    return None
+
+def test_itell_vector_store():
+    test_generate_embedding()
+    test_retrieve_chunks()
 
 if __name__ == "__main__":
     test_main()
