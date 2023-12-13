@@ -10,11 +10,11 @@ RUN apt-get update && \
 
 # Do requirements first so we can cache them
 # This layer only changes when requirements are updated.
-COPY requirements.txt /usr/src/
+COPY gpu-requirements.txt /usr/src/
 
 WORKDIR /usr/src/
 
-RUN pip install -r requirements.txt
+RUN pip install -r gpu-requirements.txt
 
 # Specify where we want nltk and hf to cache downloads
 RUN mkdir /usr/local/nltk_data

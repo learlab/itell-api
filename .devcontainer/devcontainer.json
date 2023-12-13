@@ -8,7 +8,9 @@
 	},
 	"runArgs": [
 		"--env-file",
-		".env"
+		".env",
+		"--gpus",
+		"all"
 	],
 	"features": {
 		"ghcr.io/devcontainers/features/git:1": {
@@ -26,13 +28,13 @@
 		"ghcr.io/devcontainers/features/python:1": {
 			"installTools": true
 		}
-	}
+	},
 
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.
 	// "forwardPorts": [],
 
 	// Use 'postCreateCommand' to run commands after the container is created.
-	// "postCreateCommand": "pip3 install --user -r requirements.txt &&",
+	"postCreateCommand": "pip3 install pip-tools",
 
 	// Configure tool-specific properties.
 	// "customizations": {},

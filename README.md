@@ -13,12 +13,12 @@ This repository can run in three modes: development, gpu-development, and produc
 `development` mode runs without a GPU. Chat is disabled.
 `gpu-development` mode runs with a GPU and a smaller, quantized model for chat.
 `production` mode runs with a GPU and the full chat model.
-Please set ENV=development, ENV=gpu-development, or ENV=production in your .env file. If no ENV is set, the default is production, which will likely fail on your system.
+Please set ENV=development, ENV=gpu-development, or ENV=production in your .env file. **If no ENV is set, the default is production, which will likely fail on your system.**
 
 1. Clone the repository and run `pip install -r requirements.txt` (use gpu-requirements.txt if you have a GPU)
  - If you need to adjust the requirements, please install pip-tools: `pip install pip-tools`
- - Make changes to the `requirements.in` file or the `gpu-requirements.in` file
- - Rebuild the `requirements.txt` file with `pip-compile requirements.in` and/or `pip-compile gpu-requirements.in`
+ - Make changes to `requirements.in` or `gpu-requirements.in` 
+ - Rebuild `requirements.txt` with `pip-compile requirements.in` and then (if you have a GPU) `pip-compile gpu-requirements.in`
 2. Run `python -m spacy download en_core_web_sm` to download required model from SpaCy
 3. Make sure to create a `.env` file in the application root directory like the following. It should contain all the textbook names defined in the `src/models/textbooks.py`:
 
