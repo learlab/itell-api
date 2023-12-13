@@ -10,7 +10,7 @@ from models.chat import ChatInput, ChatResult
 from models.transcript import TranscriptInput, TranscriptResults
 
 from src.summary_eval_supabase import summary_score_supabase
-from src.summary_eval import summary_score_strapi
+from src.summary_eval import summary_score
 from src.answer_eval_supabase import answer_score_supabase
 from src.answer_eval import answer_score
 from src.embedding import generate_embedding
@@ -44,26 +44,19 @@ def hello():
     return {"message": "This is a summary scoring API for iTELL."}
 
 
-@app.get("/gpu")
-def gpu_available():
-    import torch
-
-    return {"message": f"GPU Available: {torch.cuda.is_available()}"}
-
-
 @app.post("/score/summary")
 async def score_summary(input_body: SummaryInput) -> SummaryResults:
-    if input_body.textbook_name:
-        return await summary_score_strapi(input_body)
+    if input_body.textbook_name:  # supabase requires textbook_name (deprecated)
+        return await summary_score_supabase(input_body)
     else:
         return await summary_score(input_body)
 
 
 @app.post("/score/answer")
 async def score_answer(input_body: AnswerInput) -> AnswerResults:
-    if input_body.textbook_name:
+    if input_body.textbook_name:  # supabase requires textbook_name (deprecated)
         return await answer_score_supabase(input_body)
-    else:
+    else: # Strapi method
         return await answer_score(input_body)
 
 
