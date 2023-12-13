@@ -1,4 +1,4 @@
-FROM nvidia/cuda:11.8.0-devel-ubuntu22.04
+FROM nvidia/cuda:12.1.1-devel-ubuntu22.04
 
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -21,8 +21,6 @@ RUN mkdir /usr/local/nltk_data
 
 ENV HF_HOME=/usr/local/huggingface \
     NLTK_DATA=/usr/local/nltk_data
-
-RUN python3 -m spacy download en_core_web_sm
 
 COPY . /usr/src/
 

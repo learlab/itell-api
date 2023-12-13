@@ -13,7 +13,6 @@ from src.summary_eval_supabase import summary_score_supabase
 from src.summary_eval import summary_score
 from src.answer_eval_supabase import answer_score_supabase
 from src.answer_eval import answer_score
-from src.embedding import generate_embedding
 from src.get_transcript import generate_transcript
 
 app = FastAPI()
@@ -60,11 +59,6 @@ async def score_answer(input_body: AnswerInput) -> AnswerResults:
         return await answer_score(input_body)
 
 
-@app.post("/generate/embedding")
-async def gen_embedding(input_body: ChunkInput) -> Response:
-    return await generate_embedding(input_body)
-
-
 @app.post("/generate/question")
 async def gen_question(input_body: ChunkInput) -> None:
     raise HTTPException(status_code=404, detail="Not Implemented")
@@ -80,9 +74,14 @@ async def gen_transcript(input_body: TranscriptInput) -> TranscriptResults:
     return await generate_transcript(input_body)
 
 if os.environ.get("ENV") == "development":
-    print("Skipping chat endpoint in development mode.")
+    print("Skipping chat/embedding endpoints in development mode.")
 else:
+    from src.embedding import generate_embedding
     from src.chat import moderated_chat
+
+    @app.post("/generate/embedding")
+    async def gen_embedding(input_body: ChunkInput) -> Response:
+        return await generate_embedding(input_body)
 
     @app.post("/chat")
     async def chat(input_body: ChatInput) -> ChatResult:

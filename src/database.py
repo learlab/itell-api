@@ -7,7 +7,7 @@ from models.textbook import TextbookNames
 
 class Strapi:
     url: str = os.environ["STRAPI_URL"]
-    key: str = os.environ["STRAPY_KEY"]
+    key: str = os.environ["STRAPI_KEY"]
 
     def fetch(self, query) -> dict:
         headers = {"Authorization": f"Bearer {self.key}"}

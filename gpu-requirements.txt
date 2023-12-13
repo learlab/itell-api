@@ -4,7 +4,7 @@
 #
 #    pip-compile gpu-requirements.in
 #
---extra-index-url https://download.pytorch.org/whl/cu118
+--extra-index-url https://download.pytorch.org/whl/cu121
 
 absl-py==2.0.0
     # via rouge-score
@@ -137,6 +137,8 @@ distro==1.8.0
     # via openai
 einops==0.7.0
     # via vllm
+en-core-web-sm @ https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.7.1/en_core_web_sm-3.7.1-py3-none-any.whl
+    # via -r requirements.txt
 exceptiongroup==1.2.0
     # via
     #   -r requirements.txt
@@ -486,7 +488,9 @@ sniffio==1.3.0
     #   httpx
     #   openai
 spacy==3.7.2
-    # via -r requirements.txt
+    # via
+    #   -r requirements.txt
+    #   en-core-web-sm
 spacy-legacy==3.0.12
     # via
     #   -r requirements.txt
@@ -554,7 +558,7 @@ tomli==2.0.1
     # via
     #   pyproject-api
     #   tox
-torch==2.1.1+cu118
+torch==2.1.1+cu121
     # via
     #   -r gpu-requirements.in
     #   accelerate
@@ -564,7 +568,7 @@ torch==2.1.1+cu118
     #   torchvision
     #   vllm
     #   xformers
-torchvision==0.16.1+cu118
+torchvision==0.16.1+cu121
     # via
     #   autoawq
     #   sentence-transformers
@@ -652,7 +656,7 @@ websockets==10.4
     #   -r requirements.txt
     #   realtime
     #   uvicorn
-xformers==0.0.23+cu118
+xformers==0.0.23
     # via
     #   -r gpu-requirements.in
     #   vllm

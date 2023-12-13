@@ -41,8 +41,8 @@ class Summary:
 
         for component in content:
             keyphrases = json.loads(component["KeyPhrase"])
-            component['keyphrases'] = list(nlp.pipe(keyphrases))
-            component['focus_time'] = summary_input.focus_time.get(component["Slug"])
+            component["keyphrases"] = list(nlp.pipe(keyphrases))
+            component["focus_time"] = summary_input.focus_time.get(component["Slug"])
 
         self.content = content
         self.results = {}
@@ -78,19 +78,13 @@ class Summary:
 
     def score_content(self) -> None:
         """Return content score based on summary and source text."""
-        self.results["content"] = content_pipe(
-            self.input_text, truncation=True, max_length=4096
-        )[0][
-            "score"
-        ]  # type: ignore
+        res = content_pipe(self.input_text, truncation=True, max_length=4096)
+        self.results["content"] = res[0]["score"]  # type: ignore
 
     def score_wording(self) -> None:
         """Return wording score based on summary and source text."""
-        self.results["wording"] = wording_pipe(
-            self.input_text, truncation=True, max_length=4096
-        )[0][
-            "score"
-        ]  # type: ignore
+        res = wording_pipe(self.input_text, truncation=True, max_length=4096)
+        self.results["wording"] = res[0]["score"]  # type: ignore
 
     def suggest_keyphrases(self) -> None:
         """Return keyphrases that were included in the summary and suggests
@@ -152,7 +146,9 @@ async def summary_score(summary_input: SummaryInput) -> SummaryResults:
         summary.results["english"] = False
 
     junk_filter = (
-        summary.results["containment"] > 0.5 or summary.results["similarity"] < 0.3 or not summary.results["english"]
+        summary.results["containment"] > 0.5
+        or summary.results["similarity"] < 0.3
+        or not summary.results["english"]
     )
 
     if junk_filter:
