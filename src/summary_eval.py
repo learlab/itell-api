@@ -1,5 +1,7 @@
 import random
 import re
+
+import pycld2 as cld2
 import json
 import spacy
 from gensim.models import Doc2Vec
@@ -144,8 +146,13 @@ async def summary_score(summary_input: SummaryInput) -> SummaryResults:
     summary.score_similarity()
     summary.suggest_keyphrases()
 
+    summary.results["english"] = True
+    is_detection_reliable, _, details = cld2.detect(summary_input.summary)
+    if is_detection_reliable and details[0][0] != "ENGLISH":
+        summary.results["english"] = False
+
     junk_filter = (
-        summary.results["containment"] > 0.5 or summary.results["similarity"] < 0.3
+        summary.results["containment"] > 0.5 or summary.results["similarity"] < 0.3 or not summary.results["english"]
     )
 
     if junk_filter:

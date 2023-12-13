@@ -1,11 +1,11 @@
 import os
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Response
 from fastapi.middleware.cors import CORSMiddleware
 
 from models.summary import SummaryInput, SummaryResults
 from models.answer import AnswerInput, AnswerResults
-from models.embedding import ChunkInput, ChunkEmbedding
+from models.embedding import ChunkInput
 from models.chat import ChatInput, ChatResult
 from models.transcript import TranscriptInput, TranscriptResults
 
@@ -13,7 +13,7 @@ from src.summary_eval_supabase import summary_score_supabase
 from src.summary_eval import summary_score_strapi
 from src.answer_eval_supabase import answer_score_supabase
 from src.answer_eval import answer_score
-from src.retrieve import generate_embedding
+from src.embedding import generate_embedding
 from src.get_transcript import generate_transcript
 
 app = FastAPI()
@@ -68,7 +68,7 @@ async def score_answer(input_body: AnswerInput) -> AnswerResults:
 
 
 @app.post("/generate/embedding")
-async def gen_embedding(input_body: ChunkInput) -> ChunkEmbedding:
+async def gen_embedding(input_body: ChunkInput) -> Response:
     return await generate_embedding(input_body)
 
 

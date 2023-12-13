@@ -3,6 +3,7 @@ import re
 
 import spacy
 from gensim.models import Doc2Vec
+import pycld2 as cld2
 
 # from generate_embeddings import generate_embedding, max_similarity
 from nltk import trigrams
@@ -162,8 +163,13 @@ async def summary_score_supabase(summary_input: SummaryInput) -> SummaryResults:
     summary.score_similarity()
     summary.suggest_keyphrases()
 
+    summary.results["english"] = True
+    is_detection_reliable, _, details = cld2.detect(summary_input.summary)
+    if is_detection_reliable and details[0][0] != "ENGLISH":
+        summary.results["english"] = False
+
     junk_filter = (
-        summary.results["containment"] > 0.5 or summary.results["similarity"] < 0.3
+        summary.results["containment"] > 0.5 or summary.results["similarity"] < 0.3 or not summary.results["english"]
     )
 
     if junk_filter:

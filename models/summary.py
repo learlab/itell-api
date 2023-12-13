@@ -15,3 +15,4 @@ class SummaryResults(ResultsBase):
     suggested_keyphrases: Set[str]
     content: Optional[float] = None
     wording: Optional[float] = None
+    english: bool
