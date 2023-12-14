@@ -2,7 +2,7 @@ from models.answer import AnswerInput, AnswerResults
 from supabase.client import Client
 from transformers import logging
 from pipelines.answer import AnswerPipeline
-from src.database import get_client
+from connections.database import get_client
 
 logging.set_verbosity_error()
 

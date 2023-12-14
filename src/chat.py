@@ -3,7 +3,7 @@ from vllm.sampling_params import SamplingParams
 from typing import AsyncGenerator
 from fastapi.responses import StreamingResponse
 
-from src.database import get_client
+from connections.database import get_client
 from src.embedding import retrieve_chunks
 from pipelines.chat import ChatPipeline
 

@@ -1,7 +1,7 @@
 from fastapi import Response
 
 from typing import Any
-from src.database import get_vector_store
+from connections.database import get_vector_store
 
 from pipelines.embed import EmbeddingPipeline
 from models.embedding import ChunkInput, RetrievalInput, RetrievalResults

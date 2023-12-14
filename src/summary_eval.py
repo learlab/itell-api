@@ -13,7 +13,7 @@ from transformers import logging
 
 from models.summary import SummaryInput, SummaryResults
 from pipelines.summary import SummaryPipeline
-from src.database import Strapi, get_strapi
+from connections.database import Strapi, get_strapi
 
 nlp = spacy.load("en_core_web_sm", disable=["ner"])
 

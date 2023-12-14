@@ -1,7 +1,7 @@
 from models.answer import AnswerInput, AnswerResults
 from transformers import logging
 from pipelines.answer import AnswerPipeline
-from src.database import Strapi, get_strapi
+from connections.database import Strapi, get_strapi
 
 logging.set_verbosity_error()
 

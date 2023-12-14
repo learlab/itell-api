@@ -13,7 +13,7 @@ from src.summary_eval_supabase import summary_score_supabase
 from src.summary_eval import summary_score
 from src.answer_eval_supabase import answer_score_supabase
 from src.answer_eval import answer_score
-from src.get_transcript import generate_transcript
+from src.transcript import generate_transcript
 
 app = FastAPI()
 
