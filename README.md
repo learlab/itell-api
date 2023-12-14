@@ -1,35 +1,50 @@
-# API for Textbook Summaries
+# iTELL AI API
 
-This repository defines the api for our digital textbook project. The iTELL API provides the frontend with GPU-accelerated natural language processing services. Its principal features are the following:
+Welcome to iTELL AI, a REST API for intelligent textbooks. iTELL AI provides the following principal features:
 
 - Summary scoring
-- Short answer scoring
-- Document embedding
-- Chat bot with guardrails
+- Constructed response item scoring
+- Structured dialogues with conversational AI
+
+iTELL AI also provides some utility endpoints that are used by the content management system. 
+ - Generating transcripts from YouTube videos
+ - Creating chunk embeddings and managing a vector store.
+
+## Usage
+
+The API endpoints are hosted at the [/docs](https://itell-api.learlab.vanderbilt.edu/docs) location.
+ - The endpoints are defined in `src/main.py`.
+ - The Pydantic models are defined in `models/`.
 
 ## Development
 
 This repository can run in three modes: development, gpu-development, and production.
-`development` mode runs without a GPU. Chat is disabled.
-`gpu-development` mode runs with a GPU and a smaller, quantized model for chat.
-`production` mode runs with a GPU and the full chat model.
-Please set ENV=development, ENV=gpu-development, or ENV=production in your .env file. **If no ENV is set, the default is production, which will likely fail on your system.**
+
+ - `development` mode runs without a GPU. Chat is disabled.
+ - `gpu-development` mode runs with a GPU and a smaller, quantized model for chat.
+ - `production` mode runs with a GPU and the full chat model.
+
+Please set ENV=development, ENV=gpu-development, or ENV=production in your .env file.
+ **If no ENV is set, the default is production, which will likely fail on your system.**
 
 1. Clone the repository and run `pip install -r requirements.txt` (use gpu-requirements.txt if you have a GPU)
- - If you need to adjust the requirements, please install pip-tools: `pip install pip-tools`
- - Make changes to `requirements.in` or `gpu-requirements.in` 
- - Rebuild `requirements.txt` with `pip-compile requirements.in` and then (if you have a GPU) `pip-compile gpu-requirements.in`
 2. Run `python -m spacy download en_core_web_sm` to download required model from SpaCy
-3. Make sure to create a `.env` file in the application root directory like the following. It should contain all the textbook names defined in the `src/models/textbooks.py`:
+3. Make sure to create a `.env` file in the application root directory like the following.
+   - If you are testing or working with legacy content databases, be sure to include the appropriate database credentials.
+   - If you are only working with Strapi-based deployments, you need only the Strapi credentials and the Vector-store credentials.
+   - Load the environment variables with `source .env` or by using the provided devcontainer.
+4. Install pytest: `pip install pytest`
+5. Run `pytest` from the root directory to run the test suite.
+   - Please write tests for any new endpoints.
+   - Please run tests **using `pytest`** before requesting a code review.
 
-```
-MACRO_ECON_HOST=https://[SupaBase Database Sub-domain].supabase.co
-MACRO_ECON_PASSWORD=[SupaBase Password]
-CONTAINER_PORT=8001
-```
+### Modifying Requirements
 
-4. Load the environment variables with `source .env` or by using the provided devcontainer.
-5. Test `python -m src.test_main` to make sure everything is working.
+1. Install pip-tools: `pip install pip-tools`
+2. Make changes to `requirements.in` or `gpu-requirements.in`
+   - Only modify `gpu-requirments.in` if you have a GPU for compilation and testing.
+3. Rebuild `requirements.txt` with `pip-compile requirements.in`
+4. If you have a GPU, run `pip-compile gpu-requirements.in`
 
 ### Using Dev Containers
 
@@ -61,10 +76,4 @@ If you need to make any quick fixes to get the deployment working, please do not
 
 The deployment relies on a Kubernetes secret. This was created using `microk8s kubectl create secret generic supabase-itell --from-env-file=.env`. You will need to run this command from within the repository directory whenever environment variables are updated. Since the `.env` file is not pushed to Github, you will also need to manually update this file on the server before running the `create secret` command.
 
-To access the running container, find the pod's id using `microk8s kubectl get pods` then run `microk8s kubectl exec -i -t itell-api-[POD-ID] -- /bin/bash`
-
-## Usage
-
-The API endpoints are defined in `src/main.py`.
-
-The request and response bodies are defined as pydantic objects in the `models` folder.
+To access the running container, find the pod's id using `microk8s kubectl get pods`. Then, run `microk8s kubectl exec -i -t itell-api-[POD-ID] -- /bin/bash`
