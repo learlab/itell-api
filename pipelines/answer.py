@@ -11,16 +11,14 @@ from transformers import pipeline
 
 
 class AnswerPipeline:
-    mpnet_classifier = "tiedaar/short-answer-classification"
-    bleurt_classifier = "vaiibhavgupta/finetuned-bleurt-large"
+    mpnet_model = "tiedaar/short-answer-classification"
+    bleurt_model = "vaiibhavgupta/finetuned-bleurt-large"
     bleurt_threshold = 0.7
 
     def __init__(self):
-        self.mpnet_classifier = pipeline(
-            "text-classification", model=self.mpnet_classifier
-        )
+        self.mpnet_classifier = pipeline("text-classification", model=self.mpnet_model)
         self.bleurt_classifier = pipeline(
-            "text-classification", model=self.bleurt_classifier
+            "text-classification", model=self.bleurt_model
         )
 
     def __call__(self, candidate: str, reference: str) -> int:
@@ -28,20 +26,22 @@ class AnswerPipeline:
         mpnet_sequence = f"{candidate}</s>{reference}"
 
         # Get bleurt results
-        bleurt_score = self.bleurt_classifier(bleurt_sequence)[0]["score"]
-        if bleurt_score >= self.bleurt_threshold:
-            bleurt_passing = True
+        bleurt_result = self.bleurt_classifier(bleurt_sequence)
+        if isinstance(bleurt_result, list) and isinstance(bleurt_result[0], dict):
+            bleurt_score = bleurt_result[0]["score"]
         else:
-            bleurt_passing = False
+            raise ValueError("BLEURT classifier returned an unexpected result.")
 
         # Get MPnet results
-        mpnet_score = self.mpnet_classifier(mpnet_sequence)[0]["label"]
-        if mpnet_score == "correct_answer":
-            mpnet_passing = True
-        elif mpnet_score == "incorrect_answer":
-            mpnet_passing = False
+        result = self.mpnet_classifier(mpnet_sequence)
+        if isinstance(result, list) and isinstance(result[0], dict):
+            mpnet_score = result[0]["label"]
+        else:
+            raise ValueError("MPnet classifier returned an unexpected result.")
 
-        # Majority voting
+        bleurt_passing = True if bleurt_score >= self.bleurt_threshold else False
+        mpnet_passing = True if mpnet_score == "correct_answer" else False
+
         if bleurt_passing and mpnet_passing:
             return 2
         elif bleurt_passing or mpnet_passing:

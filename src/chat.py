@@ -1,16 +1,16 @@
 from models.chat import ChatInput, ChatResult
+from models.embedding import RetrievalInput
 from vllm.sampling_params import SamplingParams
 from typing import AsyncGenerator
 from fastapi.responses import StreamingResponse
 
-from connections.database import get_client
-from src.embedding import retrieve_chunks
+from src.embedding import chunks_retrieve
 from pipelines.chat import ChatPipeline
 
 
 async def moderated_chat(chat_input: ChatInput) -> AsyncGenerator[bytes, None]:
     # Adding in the specific name of the textbook majorly improved response quality
-    textbook_name = chat_input.textbook_name
+    textbook_name = chat_input.text_slug
 
     # Stop generation when the LLM generates the token for "user" (1792)
     # This prevents the LLM from having a conversation with itself
@@ -42,12 +42,13 @@ async def moderated_chat(chat_input: ChatInput) -> AsyncGenerator[bytes, None]:
     # Retrieve relevant chunks
     additional_context = ""
     # changing the input parameter from providing db to including `textbook_name` in `input_body` as `text` to filter chunks in the database
-    # db = get_client(textbook_name)
-    relevant_chunks = await retrieve_chunks({"text": textbook_name, "content": chat_input.message}, match_count=1)
+    relevant_chunks = await chunks_retrieve(
+        RetrievalInput(page_slug=textbook_name, text=chat_input.message, match_count=1)
+    )
     if relevant_chunks:
         additional_context += "\n# This is some additional context:"
-        for chunk in relevant_chunks:
-            additional_context += f"\n{chunk['clean_text']}"
+        for chunk in relevant_chunks.matches:
+            additional_context += f"\n{chunk.content}"
 
     # TODO: Retrieve Examples
     # We can set up a database of a questions and responses

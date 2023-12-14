@@ -1,24 +1,28 @@
-from models.base import InputBase, ResultsBase
-from typing import List, Optional
+from typing import Optional, List
 from pydantic import BaseModel
 
-class ChunkInput(InputBase):
-    text: str
-    module: str
-    chapter: str
-    page: str
-    chunk: str # Chunk slug
-    content: str # Chunk text content
 
-class RetrievalInput(InputBase):
-    text: Optional[str]
-    page: Optional[str]
-    content: str # text to compare to (student summary)
+class ChunkInput(BaseModel):
+    text_slug: str
+    module_slug: Optional[str] = None
+    chapter_slug: Optional[str] = None
+    page_slug: str
+    chunk_slug: str
+    content: str  # Chunk text content
+
+
+class RetrievalInput(BaseModel):
+    page_slug: str
+    text: str  # text to compare to (student summary)
+    similarity_threshold: Optional[float] = 0.3
+    match_count: Optional[int] = 1
+
 
 class Match(BaseModel):
     chunk_slug: str
     content: str
     similarity: float
 
-class RetrievalResults(ResultsBase):
+
+class RetrievalResults(BaseModel):
     matches: List[Match]

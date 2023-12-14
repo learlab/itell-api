@@ -4,8 +4,10 @@ from fastapi.responses import StreamingResponse
 
 
 class ChatInput(InputBase):
+    text_slug: str
+    history: Optional[dict[str, str]]
+    summary: Optional[str] = None
     message: str
-    history: Optional[dict]
 
 
 ChatResult = StreamingResponse

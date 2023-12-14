@@ -13,7 +13,7 @@ from transformers import logging
 
 from models.summary import SummaryInput, SummaryResults
 from pipelines.summary import SummaryPipeline
-from connections.database import Strapi, get_strapi
+from connections.strapi import Strapi
 
 nlp = spacy.load("en_core_web_sm", disable=["ner"])
 
@@ -26,10 +26,14 @@ wording_pipe = SummaryPipeline("tiedaar/longformer-wording-global")
 
 
 class Summary:
-    def __init__(self, summary_input: SummaryInput, db: Strapi):
+    db: Strapi = Strapi()
+
+    def __init__(self, summary_input: SummaryInput):
         # Fetch content and restructure data
         slug = summary_input.page_slug
-        response = db.fetch(f"/api/pages?filters[slug][$eq]={slug}&populate[Content]=*")
+        response = self.db.fetch(
+            f"/api/pages?filters[slug][$eq]={slug}&populate[Content]=*"
+        )
 
         content = response["data"][0]["attributes"]["Content"]
 
@@ -121,7 +125,6 @@ class Summary:
                     weights.append(1 / chunk["focus_time"])
 
         self.results["included_keyphrases"] = included_keyphrases
-        k = max(3, len(suggested_keyphrases))
         self.results["suggested_keyphrases"] = random.choices(
             suggested_keyphrases, k=3, weights=weights
         )
@@ -132,9 +135,8 @@ async def summary_score(summary_input: SummaryInput) -> SummaryResults:
     relevance to the source text. If it passes these checks, score the summary
     using a Huggingface pipeline.
     """
-    db = get_strapi()
 
-    summary = Summary(summary_input, db)
+    summary = Summary(summary_input)
 
     summary.score_containment()
     summary.score_similarity()

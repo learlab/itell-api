@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from models.summary import SummaryInput, SummaryResults
 from models.answer import AnswerInput, AnswerResults
-from models.embedding import ChunkInput
+from models.embedding import ChunkInput, RetrievalInput, RetrievalResults
 from models.chat import ChatInput, ChatResult
 from models.transcript import TranscriptInput, TranscriptResults
 
@@ -13,7 +13,7 @@ from src.summary_eval_supabase import summary_score_supabase
 from src.summary_eval import summary_score
 from src.answer_eval_supabase import answer_score_supabase
 from src.answer_eval import answer_score
-from src.transcript import generate_transcript
+from src.transcript import transcript_generate
 
 app = FastAPI()
 
@@ -45,6 +45,7 @@ def hello():
 
 @app.post("/score/summary")
 async def score_summary(input_body: SummaryInput) -> SummaryResults:
+    input_body = SummaryInput.parse_obj(input_body)
     if input_body.textbook_name:  # supabase requires textbook_name (deprecated)
         return await summary_score_supabase(input_body)
     else:
@@ -55,7 +56,7 @@ async def score_summary(input_body: SummaryInput) -> SummaryResults:
 async def score_answer(input_body: AnswerInput) -> AnswerResults:
     if input_body.textbook_name:  # supabase requires textbook_name (deprecated)
         return await answer_score_supabase(input_body)
-    else: # Strapi method
+    else:  # Strapi method
         return await answer_score(input_body)
 
 
@@ -70,23 +71,27 @@ async def gen_keyphrases(input_body: ChunkInput) -> None:
 
 
 @app.post("/generate/transcript")
-async def gen_transcript(input_body: TranscriptInput) -> TranscriptResults:
-    return await generate_transcript(input_body)
+async def generate_transcript(input_body: TranscriptInput) -> TranscriptResults:
+    return await transcript_generate(input_body)
+
 
 if os.environ.get("ENV") == "development":
     print("Skipping chat/embedding endpoints in development mode.")
 else:
-    from src.embedding import generate_embedding
+    from src.embedding import embedding_generate, chunks_retrieve
     from src.chat import moderated_chat
-
-    @app.post("/generate/embedding")
-    async def gen_embedding(input_body: ChunkInput) -> Response:
-        return await generate_embedding(input_body)
 
     @app.post("/chat")
     async def chat(input_body: ChatInput) -> ChatResult:
         return ChatResult(await moderated_chat(input_body))
 
+    @app.post("/generate/embedding")
+    async def generate_embedding(input_body: ChunkInput) -> Response:
+        return await embedding_generate(input_body)
+
+    @app.post("/retrieve/chunks")
+    async def retrieve_chunks(input_body: RetrievalInput) -> RetrievalResults:
+        return await chunks_retrieve(input_body)
 
 if __name__ == "__main__":
     import uvicorn

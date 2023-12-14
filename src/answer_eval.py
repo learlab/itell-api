@@ -1,7 +1,7 @@
 from models.answer import AnswerInput, AnswerResults
 from transformers import logging
 from pipelines.answer import AnswerPipeline
-from connections.database import Strapi, get_strapi
+from connections.strapi import Strapi
 
 logging.set_verbosity_error()
 
@@ -9,8 +9,10 @@ answer_pipe = AnswerPipeline()
 
 
 class Answer:
-    def __init__(self, answer_input: AnswerInput, db: Strapi):
-        response = db.fetch(
+    db: Strapi = Strapi()
+
+    def __init__(self, answer_input: AnswerInput):
+        response = self.db.fetch(
             f"/api/pages?populate[Content][filters][slug][$eq]={AnswerInput.chunk_slug}"
         )
 
@@ -35,9 +37,7 @@ class Answer:
 
 
 async def answer_score(answer_input: AnswerInput) -> AnswerResults:
-    db = get_strapi()
-
-    answer = Answer(answer_input, db)
+    answer = Answer(answer_input)
     answer.score_answer()
 
     return AnswerResults(**answer.results)

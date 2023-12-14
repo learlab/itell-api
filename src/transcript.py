@@ -4,9 +4,8 @@ from fastapi import HTTPException
 from urllib import parse
 
 
-async def generate_transcript(transcript_input: TranscriptInput) -> TranscriptResults:
-    url_parsed = parse.urlparse(transcript_input.url)
-    qsl = parse.parse_qs(url_parsed.query)
+async def transcript_generate(transcript_input: TranscriptInput) -> TranscriptResults:
+    qsl = parse.parse_qs(transcript_input.url.query)
     video_code = qsl["v"][0]
 
     srt = YouTubeTranscriptApi.get_transcript(video_code)

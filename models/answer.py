@@ -2,6 +2,7 @@ from models.base import InputBase, ResultsBase
 
 
 class AnswerInput(InputBase):
+    chunk_slug: str
     answer: str
 
 
