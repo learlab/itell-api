@@ -38,8 +38,9 @@ async def chunks_retrieve(input_body: RetrievalInput) -> RetrievalResults:
         "page": input_body.page_slug,
     }
 
-    results = db.rpc("retrieve_chunks", query_params).execute()
     try:
-        return RetrievalResults(results.data)  # type: ignore
+        matches = db.rpc("retrieve_chunks", query_params).execute().data
     except (TypeError, AttributeError) as error:
         raise HTTPException(status_code=500, detail=str(error))
+
+    return RetrievalResults(matches=matches)

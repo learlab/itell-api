@@ -1,4 +1,4 @@
-def test_containment(client):
+def test_summary_eval_supabase(client):
     response = client.post(
         "/score/summary",
         json={

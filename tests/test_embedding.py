@@ -49,3 +49,4 @@ def test_retrieve_chunks(client):
         },
     )
     print(response)
+    assert response.status_code == 200

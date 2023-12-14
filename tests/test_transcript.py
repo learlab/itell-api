@@ -8,4 +8,4 @@ def test_generate_transcript(client):
         },
     )
     print("Transcript:", response.json())
-    return
+    assert response.status_code == 200

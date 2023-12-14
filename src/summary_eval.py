@@ -29,26 +29,22 @@ class Summary:
     db: Strapi = Strapi()
 
     def __init__(self, summary_input: SummaryInput):
+        self.focus_time = summary_input.focus_time
         # Fetch content and restructure data
         slug = summary_input.page_slug
+
         response = self.db.fetch(
             f"/api/pages?filters[slug][$eq]={slug}&populate[Content]=*"
         )
 
-        content = response["data"][0]["attributes"]["Content"]
+        self.content = response["data"][0]["attributes"]["Content"]
 
-        clean_text = "\n\n".join([component["clean_text"] for component in content])
+        clean_text = "\n\n".join([component["CleanText"] for component in self.content])
 
         # Create SpaCy objects
         self.source = nlp(clean_text)
         self.summary = nlp(summary_input.summary)
 
-        for component in content:
-            keyphrases = json.loads(component["KeyPhrase"])
-            component["keyphrases"] = list(nlp.pipe(keyphrases))
-            component["focus_time"] = summary_input.focus_time.get(component["Slug"])
-
-        self.content = content
         self.results = {}
 
         # intermediate objects for scoring
@@ -101,9 +97,16 @@ class Summary:
         summary_lemmas = " ".join(
             [t.lemma_.lower() for t in self.summary if not t.is_stop]
         )
+            
+        for chunk in self.content:
+            if not chunk.get("KeyPhrase"):
+                continue
+            
+            chunk_slug = chunk["Slug"]
+            # avoid zero division
+            focus_time = max(self.focus_time.get(chunk_slug, 1), 1)
 
-        for chunk in self.content.values():
-            for keyphrase in chunk["keyphrases"]:
+            for keyphrase in nlp.pipe(chunk["KeyPhrase"]):
                 keyphrase_lemmas = [t.lemma_ for t in keyphrase if not t.is_stop]
                 keyphrase_included = re.search(
                     re.escape(r" ".join(keyphrase_lemmas)),
@@ -117,12 +120,12 @@ class Summary:
                     # keyphrase has already been suggested
                     # increase the weight of this keyphrase suggestion
                     keyphrase_index = suggested_keyphrases.index(keyphrase.text)
-                    weights[keyphrase_index] += 1 / chunk["focus_time"]
+                    weights[keyphrase_index] += 1 / focus_time
                 else:
                     # New keyphrase suggestion
                     suggested_keyphrases.append(keyphrase.text)
                     # weight keyphrase suggestions by inverse focus time
-                    weights.append(1 / chunk["focus_time"])
+                    weights.append(1 / focus_time)
 
         self.results["included_keyphrases"] = included_keyphrases
         self.results["suggested_keyphrases"] = random.choices(

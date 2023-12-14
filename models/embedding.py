@@ -1,4 +1,4 @@
-from typing import Optional, List
+from typing import Optional, List, Union
 from pydantic import BaseModel
 
 
@@ -12,6 +12,7 @@ class ChunkInput(BaseModel):
 
 
 class RetrievalInput(BaseModel):
+    text_slug: Optional[str]
     page_slug: str
     text: str  # text to compare to (student summary)
     similarity_threshold: Optional[float] = 0.3
@@ -25,4 +26,4 @@ class Match(BaseModel):
 
 
 class RetrievalResults(BaseModel):
-    matches: List[Match]
+    matches: Union[List, List[Match]]

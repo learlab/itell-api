@@ -6,7 +6,6 @@ from models.textbook import TextbookNames
 class InputBase(BaseModel):
     page_slug: Optional[str] = None
     textbook_name: Optional[TextbookNames] = Field(
-        0,
         description="This field is deprecated and should only be used for legacy textbooks that are not in Strapi.",
     )
     chapter_index: Optional[int] = Field(

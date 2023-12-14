@@ -2,6 +2,7 @@ from models.base import InputBase, ResultsBase
 
 
 class AnswerInput(InputBase):
+    page_slug: str
     chunk_slug: str
     answer: str
 
