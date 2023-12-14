@@ -6,5 +6,4 @@ def test_chat(client):
             "message": "What is the meaning of life?",
         },
     )
-    print(response.json())
     assert response.status_code == 200
