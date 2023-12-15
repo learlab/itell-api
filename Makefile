@@ -14,7 +14,7 @@ test:
 push:
 	docker push ${user}/${image_name}
 
-build-push: build push
+build-test-push: build test push
 
 help:
 	@echo "Makefile arguments:"
@@ -25,5 +25,6 @@ help:
 	@echo "Makefile commands:"
 	@echo "build"
 	@echo "test"
+	@echo "push"
 
-.DEFAULT_GOAL := build-push
+.DEFAULT_GOAL := build-test-push
