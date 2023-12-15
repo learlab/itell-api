@@ -29,7 +29,7 @@ Please set ENV=development, ENV=gpu-development, or ENV=production in your .env 
 
 1. Clone the repository and run `pip install -r requirements.txt` (use gpu-requirements.txt if you have a GPU)
 2. Run `python -m spacy download en_core_web_sm` to download required model from SpaCy
-3. Make sure to create a `.env` file in the application root directory like the following.
+3. Make sure to create a `.env` file in the application root directory like `.env.example`
    - If you are testing or working with legacy content databases, be sure to include the appropriate database credentials.
    - If you are only working with Strapi-based deployments, you need only the Strapi credentials and the Vector-store credentials.
    - Load the environment variables with `source .env` or by using the provided devcontainer.
