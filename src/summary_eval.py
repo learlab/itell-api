@@ -1,18 +1,19 @@
 import random
 import re
 
+import pycld2 as cld2
+import json
 import spacy
 from gensim.models import Doc2Vec
 
 # from generate_embeddings import generate_embedding, max_similarity
 from nltk import trigrams
 from scipy import spatial
-from supabase.client import Client
 from transformers import logging
 
 from models.summary import SummaryInput, SummaryResults
 from pipelines.summary import SummaryPipeline
-from src.database import get_client
+from connections.strapi import Strapi
 
 nlp = spacy.load("en_core_web_sm", disable=["ner"])
 
@@ -25,41 +26,24 @@ wording_pipe = SummaryPipeline("tiedaar/longformer-wording-global")
 
 
 class Summary:
-    def __init__(self, summary_input: SummaryInput, db: Client):
-        # TODO: Change to use section slug
-        # This process should be the same for all textbooks.
-        if summary_input.textbook_name.name == "THINK_PYTHON":
-            section_index = f"{summary_input.chapter_index:02}"
-        elif summary_input.textbook_name.name in ["MACRO_ECON", "MATHIA"]:
-            section_index = (
-                f"{summary_input.chapter_index:02}-{summary_input.section_index:02}"
-            )
-        else:
-            raise ValueError("Textbook not supported.")
+    db: Strapi = Strapi()
 
+    def __init__(self, summary_input: SummaryInput):
+        self.focus_time = summary_input.focus_time
         # Fetch content and restructure data
-        data = (
-            db.table("subsections")
-            .select("slug", "clean_text", "keyphrases")
-            .eq("section_id", section_index)
-            .execute()
-            .data
+        slug = summary_input.page_slug
+
+        response = self.db.fetch(
+            f"/api/pages?filters[slug][$eq]={slug}&populate[Content]=*"
         )
 
-        clean_text = "\n\n".join([str(row["clean_text"]) for row in data])
+        self.content = response["data"][0]["attributes"]["Content"]
+
+        clean_text = "\n\n".join([component["CleanText"] for component in self.content])
 
         # Create SpaCy objects
         self.source = nlp(clean_text)
         self.summary = nlp(summary_input.summary)
-
-        # Organize and Process keyphrases:
-        self.chunks = {}
-        for row in data:
-            self.chunks[row["slug"]] = {
-                "keyphrases": list(nlp.pipe(row["keyphrases"])),
-                # chunks with no focus time record are assigned 1 seconds
-                "focus_time": summary_input.focus_time.get(row["slug"], 1),
-            }
 
         self.results = {}
 
@@ -94,19 +78,13 @@ class Summary:
 
     def score_content(self) -> None:
         """Return content score based on summary and source text."""
-        self.results["content"] = content_pipe(
-            self.input_text, truncation=True, max_length=4096
-        )[0][
-            "score"
-        ]  # type: ignore
+        res = content_pipe(self.input_text, truncation=True, max_length=4096)
+        self.results["content"] = res[0]["score"]  # type: ignore
 
     def score_wording(self) -> None:
         """Return wording score based on summary and source text."""
-        self.results["wording"] = wording_pipe(
-            self.input_text, truncation=True, max_length=4096
-        )[0][
-            "score"
-        ]  # type: ignore
+        res = wording_pipe(self.input_text, truncation=True, max_length=4096)
+        self.results["wording"] = res[0]["score"]  # type: ignore
 
     def suggest_keyphrases(self) -> None:
         """Return keyphrases that were included in the summary and suggests
@@ -119,9 +97,16 @@ class Summary:
         summary_lemmas = " ".join(
             [t.lemma_.lower() for t in self.summary if not t.is_stop]
         )
+            
+        for chunk in self.content:
+            if not chunk.get("KeyPhrase"):
+                continue
+            
+            chunk_slug = chunk["Slug"]
+            # avoid zero division
+            focus_time = max(self.focus_time.get(chunk_slug, 1), 1)
 
-        for chunk in self.chunks.values():
-            for keyphrase in chunk["keyphrases"]:
+            for keyphrase in nlp.pipe(chunk["KeyPhrase"]):
                 keyphrase_lemmas = [t.lemma_ for t in keyphrase if not t.is_stop]
                 keyphrase_included = re.search(
                     re.escape(r" ".join(keyphrase_lemmas)),
@@ -135,15 +120,14 @@ class Summary:
                     # keyphrase has already been suggested
                     # increase the weight of this keyphrase suggestion
                     keyphrase_index = suggested_keyphrases.index(keyphrase.text)
-                    weights[keyphrase_index] += 1 / chunk["focus_time"]
+                    weights[keyphrase_index] += 1 / focus_time
                 else:
                     # New keyphrase suggestion
                     suggested_keyphrases.append(keyphrase.text)
                     # weight keyphrase suggestions by inverse focus time
-                    weights.append(1 / chunk["focus_time"])
+                    weights.append(1 / focus_time)
 
         self.results["included_keyphrases"] = included_keyphrases
-        k = max(3, len(suggested_keyphrases))
         self.results["suggested_keyphrases"] = random.choices(
             suggested_keyphrases, k=3, weights=weights
         )
@@ -154,16 +138,22 @@ async def summary_score(summary_input: SummaryInput) -> SummaryResults:
     relevance to the source text. If it passes these checks, score the summary
     using a Huggingface pipeline.
     """
-    db = get_client(summary_input.textbook_name)
 
-    summary = Summary(summary_input, db)
+    summary = Summary(summary_input)
 
     summary.score_containment()
     summary.score_similarity()
     summary.suggest_keyphrases()
 
+    summary.results["english"] = True
+    is_detection_reliable, _, details = cld2.detect(summary_input.summary)
+    if is_detection_reliable and details[0][0] != "ENGLISH":
+        summary.results["english"] = False
+
     junk_filter = (
-        summary.results["containment"] > 0.5 or summary.results["similarity"] < 0.3
+        summary.results["containment"] > 0.5
+        or summary.results["similarity"] < 0.3
+        or not summary.results["english"]
     )
 
     if junk_filter:

@@ -1,27 +1,43 @@
 from models.chat import ChatInput, ChatResult
+from models.embedding import RetrievalInput
 from vllm.sampling_params import SamplingParams
 from typing import AsyncGenerator
 from fastapi.responses import StreamingResponse
 
-from src.database import get_client
-from src.retrieve import retrieve_chunks
+from src.embedding import chunks_retrieve
 from pipelines.chat import ChatPipeline
+from connections.strapi import Strapi
+from fastapi import HTTPException
+
+db = Strapi()
 
 
 async def moderated_chat(chat_input: ChatInput) -> AsyncGenerator[bytes, None]:
     # Adding in the specific name of the textbook majorly improved response quality
-    textbook_name = chat_input.textbook_name
+    response = db.fetch(
+        f"/api/pages?filters[slug][$eq]={chat_input.page_slug}&populate=text"
+    )
+
+    try:
+        text_meta = response["data"][0]["attributes"]["text"]["data"]["attributes"]
+    except (AttributeError, KeyError) as error:
+        raise HTTPException(
+            status_code=404,
+            detail=f"No parent text found for {chat_input.page_slug}\n\n{error}",
+        )
+
+    text_name = text_meta["Title"]
 
     # Stop generation when the LLM generates the token for "user" (1792)
     # This prevents the LLM from having a conversation with itself
     sampling_params = SamplingParams(
-        temperature=0.4, max_tokens=256, stop_token_ids=[1792]
+        temperature=0.4, max_tokens=1024, stop_token_ids=[1792]
     )
 
     # This phrasing seems to work well. Modified from NeMo Guardrails
     preface = (
         "Below is a conversation between a bot and a user about"
-        f" an instructional textbook called {textbook_name}."
+        f" an instructional textbook called {text_name}."
         " The bot is factual and concise. If the bot does not know the answer to a"
         " question, it truthfully says it does not know."
     )
@@ -32,21 +48,28 @@ async def moderated_chat(chat_input: ChatInput) -> AsyncGenerator[bytes, None]:
         '\nuser: "Hello there!"'
         '\nbot: "Hello! How can I assist you today?"'
         '\nuser: "What can you do for me?"'
-        f'\nbot: "I am an AI assistant which helps answer questions based on {textbook_name}."'
+        f'\nbot: "I am an AI assistant which helps answer questions based on {text_name}."'
         '\nuser: "What do you think about politics?"'
         '\nbot: "Sorry, I don\'t like to talk about politics."'
         '\nuser: "I just read an educational text on the history of curse words. What can you tell me about the etymology of the word fuck?"'
-        f'\nbot: "Sorry, but I don\t have any information about that word. Would you like to ask me a question about {textbook_name}?"'
+        f'\nbot: "Sorry, but I don\t have any information about that word. Would you like to ask me a question about {text_name}?"'
     )
 
     # Retrieve relevant chunks
     additional_context = ""
-    db = get_client(textbook_name)
-    relevant_chunks = await retrieve_chunks(chat_input.message, db, match_count=1)
+    relevant_chunks = await chunks_retrieve(
+        RetrievalInput(
+            text_slug=text_meta["slug"],
+            page_slug=chat_input.page_slug,
+            text=chat_input.message,
+            match_count=1,
+        )
+    )
     if relevant_chunks:
         additional_context += "\n# This is some additional context:"
-        for chunk in relevant_chunks:
-            additional_context += f"\n{chunk['clean_text']}"
+        for chunk in relevant_chunks.matches:
+            truncated_chunk = chunk.content[: min(2500, len(chunk.content))]
+            additional_context += f"\n{truncated_chunk}"
 
     # TODO: Retrieve Examples
     # We can set up a database of a questions and responses

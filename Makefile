@@ -2,10 +2,13 @@
 user=localhost:32000
 image_name=itell-score-api
 
-.PHONY: help build push run build-push
+.PHONY: help build test push build-test-push
 
 build:
-	docker build . -t ${user}/${image_name}
+	docker build --target base . -t ${user}/${image_name}
+
+test:
+    docker build --progress=plain --no-cache --target test .
 
 push:
 	docker push ${user}/${image_name}
@@ -18,9 +21,10 @@ help:
 	@echo ""
 	@echo "Makefile commands:"
 	@echo "build"
+	@echo "test"
 	@echo "push"
-	@echo "build-push"
+	@echo "build-test-push"
 
-.DEFAULT_GOAL := build-push
+.DEFAULT_GOAL := build-test-push
 
-build-push: build push
+build-test-push: build test push

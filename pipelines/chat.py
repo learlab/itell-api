@@ -9,18 +9,18 @@ import json
 import os
 
 # For local development on an RTX 3060 with 12GiB of VRAM
-if os.environ.get("ENV") == "development":
+if os.environ.get("ENV") == "gpu-development":
     engine_args = AsyncEngineArgs(
-        model="TheBloke/OpenOrcaxOpenChat-Preview2-13B-AWQ",
+        model="TheBloke/Orca-2-7B-AWQ",
         download_dir="/usr/local/huggingface/hub",
-        gpu_memory_utilization=0.85,
+        gpu_memory_utilization=0.75,
         dtype="half",
         quantization="awq",
     )
 else:
     # For deployment an an RTX A6000 with 48GiB of VRAM
     engine_args = AsyncEngineArgs(
-        model="Open-Orca/OpenOrcaxOpenChat-Preview2-13B",
+        model="microsoft/Orca-2-13b",
         download_dir="/usr/local/huggingface/hub",
         gpu_memory_utilization=0.80,  # this leaves room for batching and other models
     )

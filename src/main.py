@@ -1,19 +1,19 @@
 import os
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Response
 from fastapi.middleware.cors import CORSMiddleware
 
 from models.summary import SummaryInput, SummaryResults
 from models.answer import AnswerInput, AnswerResults
-from models.embedding import ChunkInput, ChunkEmbedding
+from models.embedding import ChunkInput, RetrievalInput, RetrievalResults
 from models.chat import ChatInput, ChatResult
 from models.transcript import TranscriptInput, TranscriptResults
 
+from src.summary_eval_supabase import summary_score_supabase
 from src.summary_eval import summary_score
+from src.answer_eval_supabase import answer_score_supabase
 from src.answer_eval import answer_score
-from src.retrieve import generate_embedding
-from src.chat import moderated_chat
-from src.get_transcript import generate_transcript
+from src.transcript import transcript_generate
 
 app = FastAPI()
 
@@ -43,26 +43,21 @@ def hello():
     return {"message": "This is a summary scoring API for iTELL."}
 
 
-@app.get("/gpu")
-def gpu_available():
-    import torch
-
-    return {"message": f"GPU Available: {torch.cuda.is_available()}"}
-
-
 @app.post("/score/summary")
 async def score_summary(input_body: SummaryInput) -> SummaryResults:
-    return await summary_score(input_body)
+    input_body = SummaryInput.parse_obj(input_body)
+    if input_body.textbook_name:  # supabase requires textbook_name (deprecated)
+        return await summary_score_supabase(input_body)
+    else:
+        return await summary_score(input_body)
 
 
 @app.post("/score/answer")
 async def score_answer(input_body: AnswerInput) -> AnswerResults:
-    return await answer_score(input_body)
-
-
-@app.post("/generate/embedding")
-async def gen_embedding(input_body: ChunkInput) -> ChunkEmbedding:
-    return await generate_embedding(input_body)
+    if input_body.textbook_name:  # supabase requires textbook_name (deprecated)
+        return await answer_score_supabase(input_body)
+    else:  # Strapi method
+        return await answer_score(input_body)
 
 
 @app.post("/generate/question")
@@ -76,14 +71,27 @@ async def gen_keyphrases(input_body: ChunkInput) -> None:
 
 
 @app.post("/generate/transcript")
-async def gen_transcript(input_body: TranscriptInput) -> TranscriptResults:
-    return await generate_transcript(input_body)
+async def generate_transcript(input_body: TranscriptInput) -> TranscriptResults:
+    return await transcript_generate(input_body)
 
 
-@app.post("/chat")
-async def chat(input_body: ChatInput) -> ChatResult:
-    return ChatResult(await moderated_chat(input_body))
+if os.environ.get("ENV") == "development":
+    print("Skipping chat/embedding endpoints in development mode.")
+else:
+    from src.embedding import embedding_generate, chunks_retrieve
+    from src.chat import moderated_chat
 
+    @app.post("/chat")
+    async def chat(input_body: ChatInput) -> ChatResult:
+        return ChatResult(await moderated_chat(input_body))
+
+    @app.post("/generate/embedding")
+    async def generate_embedding(input_body: ChunkInput) -> Response:
+        return await embedding_generate(input_body)
+
+    @app.post("/retrieve/chunks")
+    async def retrieve_chunks(input_body: RetrievalInput) -> RetrievalResults:
+        return await chunks_retrieve(input_body)
 
 if __name__ == "__main__":
     import uvicorn

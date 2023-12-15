@@ -10,7 +10,6 @@ __pycache__/
 *.so
 
 # VS Code
-.devcontainer
 .vscode
 
 # Distribution / packaging
