@@ -57,7 +57,6 @@ async def moderated_chat(chat_input: ChatInput) -> AsyncGenerator[bytes, None]:
 
     # Retrieve relevant chunks
     additional_context = ""
-    # changing the input parameter from providing db to including `textbook_name` in `input_body` as `text` to filter chunks in the database
     relevant_chunks = await chunks_retrieve(
         RetrievalInput(
             text_slug=text_meta["slug"],
@@ -69,7 +68,8 @@ async def moderated_chat(chat_input: ChatInput) -> AsyncGenerator[bytes, None]:
     if relevant_chunks:
         additional_context += "\n# This is some additional context:"
         for chunk in relevant_chunks.matches:
-            additional_context += f"\n{chunk.content}"
+            truncated_chunk = chunk.content[: min(2500, len(chunk.content))]
+            additional_context += f"\n{truncated_chunk}"
 
     # TODO: Retrieve Examples
     # We can set up a database of a questions and responses
