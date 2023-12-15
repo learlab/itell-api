@@ -17,7 +17,6 @@ ENV HF_HOME=/usr/local/huggingface \
 COPY . /usr/src/
 CMD ["python3", "-m", "src.main"]
 
-
 FROM base as test
-RUN pip install pytest && \
-    pytest
+RUN pip install pytest
+CMD ["pytest"]
