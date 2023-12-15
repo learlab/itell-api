@@ -7,5 +7,4 @@ def test_generate_transcript(client):
             "end_time": 200,
         },
     )
-    print("Transcript:", response.json())
     assert response.status_code == 200

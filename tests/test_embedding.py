@@ -1,4 +1,4 @@
-def test_generate_embedding(client):
+def test_generate_embeddings(client):
     response = client.post(
         "/generate/embedding",
         json={
