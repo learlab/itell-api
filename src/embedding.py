@@ -6,10 +6,11 @@ from pipelines.embed import EmbeddingPipeline
 from models.embedding import ChunkInput, RetrievalInput, RetrievalResults
 
 embedding_pipeline = EmbeddingPipeline()
-db = get_vector_store()
 
 
 async def embedding_generate(input_body: ChunkInput) -> Response:
+    db = get_vector_store()
+
     embedding = embedding_pipeline(input_body.content)
     upsert_response = (
         db.table("embeddings")
@@ -30,6 +31,8 @@ async def embedding_generate(input_body: ChunkInput) -> Response:
 
 
 async def chunks_retrieve(input_body: RetrievalInput) -> RetrievalResults:
+    db = get_vector_store()
+
     content_embedding = embedding_pipeline(input_body.text)
     query_params = {
         "embedding": content_embedding,
