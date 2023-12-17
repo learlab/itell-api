@@ -3,23 +3,18 @@ from .pipelines.summary import SummaryPipeline
 from .pipelines.similarity import semantic_similarity
 from .connections.strapi import Strapi
 
-
 import random
 import re
-
 import pycld2 as cld2
 import spacy
-
-# from generate_embeddings import generate_embedding, max_similarity
 from nltk import trigrams
 from transformers import logging
 
-
-nlp = spacy.load("en_core_web_sm", disable=["ner"])
-
 logging.set_verbosity_error()
 
+strapi = Strapi()
 
+nlp = spacy.load("en_core_web_sm", disable=["ner"])
 content_pipe = SummaryPipeline("tiedaar/longformer-content-global")
 wording_pipe = SummaryPipeline("tiedaar/longformer-wording-global")
 
@@ -127,10 +122,11 @@ async def summary_score(summary_input: SummaryInputStrapi) -> SummaryResults:
     relevance to the source text. If it passes these checks, score the summary
     using a Huggingface pipeline.
     """
-    strapi = Strapi()
 
-    response = await strapi.fetch(
-        f"/api/pages?filters[slug][$eq]={summary_input.page_slug}&populate[Content]=*"
+    response = await strapi.get_entries(
+        plural_api_id="pages",
+        filters={"slug": {"$eq": summary_input.page_slug}},
+        populate={"Content": "*"},
     )
 
     content = response["data"][0]["attributes"]["Content"]
