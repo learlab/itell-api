@@ -13,7 +13,7 @@ if os.environ.get("ENV") == "gpu-development":
     engine_args = AsyncEngineArgs(
         model="TheBloke/Orca-2-7B-AWQ",
         download_dir="/usr/local/huggingface/hub",
-        gpu_memory_utilization=0.75,
+        gpu_memory_utilization=0.85,
         dtype="half",
         quantization="awq",
     )

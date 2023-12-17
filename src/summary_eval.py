@@ -1,48 +1,42 @@
+from .models.summary import SummaryInputStrapi, SummaryResults
+from .pipelines.summary import SummaryPipeline
+from .pipelines.similarity import semantic_similarity
+from .connections.strapi import Strapi
+
+
 import random
 import re
 
 import pycld2 as cld2
 import spacy
-from gensim.models import Doc2Vec
 
 # from generate_embeddings import generate_embedding, max_similarity
 from nltk import trigrams
-from scipy import spatial
 from transformers import logging
 
-from .models.summary import SummaryInputStrapi, SummaryResults
-from .pipelines.summary import SummaryPipeline
-from .connections.strapi import Strapi
 
 nlp = spacy.load("en_core_web_sm", disable=["ner"])
 
 logging.set_verbosity_error()
 
-doc2vec_model = Doc2Vec.load("assets/doc2vec-model")
 
 content_pipe = SummaryPipeline("tiedaar/longformer-content-global")
 wording_pipe = SummaryPipeline("tiedaar/longformer-wording-global")
 
 
 class Summary:
-    db: Strapi = Strapi()
-
-    def __init__(self, summary_input: SummaryInputStrapi):
-        self.focus_time = summary_input.focus_time
-        # Fetch content and restructure data
-        slug = summary_input.page_slug
-
-        response = self.db.fetch(
-            f"/api/pages?filters[slug][$eq]={slug}&populate[Content]=*"
+    def __init__(
+        self, summary: str, components: list[dict[str, str]], focus_time: dict[str, int]
+    ):
+        self.focus_time = focus_time
+        self.components = components
+        clean_text = "\n\n".join(
+            [component["CleanText"] for component in self.components]
         )
-
-        self.content = response["data"][0]["attributes"]["Content"]
-
-        clean_text = "\n\n".join([component["CleanText"] for component in self.content])
 
         # Create SpaCy objects
         self.source = nlp(clean_text)
-        self.summary = nlp(summary_input.summary)
+        self.summary = nlp(summary)
 
         self.results = {}
 
@@ -65,14 +59,10 @@ class Summary:
 
     def score_similarity(self) -> None:
         """Return semantic similarity score based on summary and source text"""
-        source_embed = doc2vec_model.infer_vector(  # type: ignore
-            [t.text for t in self.source if not t.is_stop]
-        )
-        summary_embed = doc2vec_model.infer_vector(  # type: ignore
-            [t.text for t in self.summary if not t.is_stop]
-        )
-        self.results["similarity"] = 1 - spatial.distance.cosine(
-            summary_embed, source_embed
+
+        self.results["similarity"] = semantic_similarity(
+            [t.text for t in self.source if not t.is_stop],
+            [t.text for t in self.summary if not t.is_stop],
         )
 
     def score_content(self) -> None:
@@ -97,7 +87,7 @@ class Summary:
             [t.lemma_.lower() for t in self.summary if not t.is_stop]
         )
 
-        for chunk in self.content:
+        for chunk in self.components:
             if not chunk.get("KeyPhrase"):
                 continue
 
@@ -137,8 +127,19 @@ async def summary_score(summary_input: SummaryInputStrapi) -> SummaryResults:
     relevance to the source text. If it passes these checks, score the summary
     using a Huggingface pipeline.
     """
+    strapi = Strapi()
 
-    summary = Summary(summary_input)
+    response = await strapi.fetch(
+        f"/api/pages?filters[slug][$eq]={summary_input.page_slug}&populate[Content]=*"
+    )
+
+    content = response["data"][0]["attributes"]["Content"]
+
+    summary = Summary(
+        summary_input.summary,
+        content,
+        summary_input.focus_time,
+    )
 
     summary.score_containment()
     summary.score_similarity()

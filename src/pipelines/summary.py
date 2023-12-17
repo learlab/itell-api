@@ -15,17 +15,21 @@ class SummaryPipeline(TextClassificationPipeline):
             function_to_apply="None",
             device="cuda" if torch.cuda.is_available() else "cpu",
             *args,
-            **kwargs
+            **kwargs,
         )
 
-    def preprocess(self, inputs, **tokenizer_kwargs) -> Dict[str, torch.Tensor]:
+    def preprocess(self, input_str: str, **tokenizer_kwargs) -> Dict[str, torch.Tensor]:
         """Only works with a single input, not a list of inputs."""
-        input_dict = self.tokenizer(inputs, **tokenizer_kwargs)  # type: ignore
+        input_dict = self.tokenizer(input_str, **tokenizer_kwargs)  # type: ignore
 
-        sep_index = input_dict["input_ids"].index(2)  # type: ignore
+        input_ids = input_dict["input_ids"]
+        if not isinstance(input_ids, list):
+            raise TypeError(f"Expected list, got {type(input_ids)}")
+
+        sep_index = input_ids.index(2)
 
         input_dict["global_attention_mask"] = [1] * (sep_index + 1) + [0] * (
-            len(input_dict["input_ids"]) - (sep_index + 1)  # type: ignore
+            len(input_ids) - (sep_index + 1)
         )
 
         return {k: torch.tensor([v]) for k, v in input_dict.items()}

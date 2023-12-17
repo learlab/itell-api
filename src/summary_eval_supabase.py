@@ -1,3 +1,8 @@
+from .models.summary import SummaryInputSupaBase, SummaryResults
+from .pipelines.summary import SummaryPipeline
+from .pipelines.similarity import semantic_similarity
+from .connections.supabase import get_client
+
 import random
 import re
 
@@ -5,15 +10,10 @@ import spacy
 from gensim.models import Doc2Vec
 import pycld2 as cld2
 
-# from generate_embeddings import generate_embedding, max_similarity
 from nltk import trigrams
-from scipy import spatial
 from supabase.client import Client
 from transformers import logging
 
-from .models.summary import SummaryInputSupaBase, SummaryResults
-from .pipelines.summary import SummaryPipeline
-from .connections.supabase import get_client
 
 nlp = spacy.load("en_core_web_sm", disable=["ner"])
 
@@ -83,31 +83,21 @@ class Summary:
 
     def score_similarity(self) -> None:
         """Return semantic similarity score based on summary and source text"""
-        source_embed = doc2vec_model.infer_vector(  # type: ignore
-            [t.text for t in self.source if not t.is_stop]
-        )
-        summary_embed = doc2vec_model.infer_vector(  # type: ignore
-            [t.text for t in self.summary if not t.is_stop]
-        )
-        self.results["similarity"] = 1 - spatial.distance.cosine(
-            summary_embed, source_embed
+
+        self.results["similarity"] = semantic_similarity(
+            [t.text for t in self.source if not t.is_stop],
+            [t.text for t in self.summary if not t.is_stop],
         )
 
     def score_content(self) -> None:
         """Return content score based on summary and source text."""
-        self.results["content"] = content_pipe(
-            self.input_text, truncation=True, max_length=4096
-        )[0][
-            "score"
-        ]  # type: ignore
+        res = content_pipe(self.input_text, truncation=True, max_length=4096)
+        self.results["content"] = res[0]["score"]  # type: ignore
 
     def score_wording(self) -> None:
         """Return wording score based on summary and source text."""
-        self.results["wording"] = wording_pipe(
-            self.input_text, truncation=True, max_length=4096
-        )[0][
-            "score"
-        ]  # type: ignore
+        res = wording_pipe(self.input_text, truncation=True, max_length=4096)
+        self.results["wording"] = res[0]["score"]  # type: ignore
 
     def suggest_keyphrases(self) -> None:
         """Return keyphrases that were included in the summary and suggests
@@ -144,7 +134,6 @@ class Summary:
                     weights.append(1 / chunk["focus_time"])
 
         self.results["included_keyphrases"] = included_keyphrases
-        k = max(3, len(suggested_keyphrases))
         self.results["suggested_keyphrases"] = random.choices(
             suggested_keyphrases, k=3, weights=weights
         )
