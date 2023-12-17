@@ -1,3 +1,8 @@
+import pytest
+import os
+
+
+@pytest.mark.skipif(os.getenv("ENV") == "development", reason="Requires GPU.")
 def test_generate_embeddings(client):
     response = client.post(
         "/generate/embedding",
@@ -39,6 +44,7 @@ def test_generate_embeddings(client):
     assert response.status_code == 201
 
 
+@pytest.mark.skipif(os.getenv("ENV") == "development", reason="Requires GPU.")
 def test_retrieve_chunks(client):
     response = client.post(
         "/retrieve/chunks",

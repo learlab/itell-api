@@ -37,6 +37,7 @@ Please set ENV=development, ENV=gpu-development, or ENV=production in your .env 
 5. Run `pytest` from the root directory to run the test suite.
    - Please write tests for any new endpoints.
    - Please run tests **using `pytest`** before requesting a code review.
+   - Pytest will run the tests appropriate to your environment.
 
 ### Modifying Requirements
 
