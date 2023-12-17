@@ -1,7 +1,7 @@
-from models.answer import AnswerInput, AnswerResults
+from .models.answer import AnswerInput, AnswerResults
+from .pipelines.answer import AnswerPipeline
+from .connections.strapi import Strapi
 from transformers import logging
-from pipelines.answer import AnswerPipeline
-from connections.strapi import Strapi
 from fastapi import HTTPException
 
 logging.set_verbosity_error()

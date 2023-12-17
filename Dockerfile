@@ -6,17 +6,18 @@ RUN apt-get update && \
         python3-pip
 
 # Do requirements first so we can cache them
-COPY gpu-requirements.txt /usr/src/
+COPY requirements/gpu.txt /usr/src/requirements/
 WORKDIR /usr/src/
-RUN pip install -r gpu-requirements.txt
+RUN pip install -r requirements/gpu.txt
 
 RUN mkdir /usr/local/nltk_data
 ENV HF_HOME=/usr/local/huggingface \
     NLTK_DATA=/usr/local/nltk_data
 
-COPY . /usr/src/
+COPY assets src /usr/src/
 CMD ["python3", "-m", "src.main"]
 
 FROM base as test
+COPY tests pyproject.toml /usr/src/
 RUN pip install pytest
 CMD ["pytest"]

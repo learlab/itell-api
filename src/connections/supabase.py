@@ -1,6 +1,6 @@
 import os
 from supabase.client import create_client, Client
-from models.textbook import TextbookNames
+from ..models.textbook import TextbookNames
 
 
 def get_client(textbook_name: TextbookNames):

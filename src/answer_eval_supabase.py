@@ -1,8 +1,9 @@
-from models.answer import AnswerInput, AnswerResults
+from .models.answer import AnswerInput, AnswerResults
+from .pipelines.answer import AnswerPipeline
+from .connections.supabase import get_client
+
 from supabase.client import Client
 from transformers import logging
-from pipelines.answer import AnswerPipeline
-from connections.supabase import get_client
 
 logging.set_verbosity_error()
 

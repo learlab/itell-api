@@ -11,9 +11,9 @@ from scipy import spatial
 from supabase.client import Client
 from transformers import logging
 
-from models.summary import SummaryInput, SummaryResults
-from pipelines.summary import SummaryPipeline
-from connections.supabase import get_client
+from .models.summary import SummaryInput, SummaryResults
+from .pipelines.summary import SummaryPipeline
+from .connections.supabase import get_client
 
 nlp = spacy.load("en_core_web_sm", disable=["ner"])
 

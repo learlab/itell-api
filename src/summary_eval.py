@@ -10,9 +10,9 @@ from nltk import trigrams
 from scipy import spatial
 from transformers import logging
 
-from models.summary import SummaryInput, SummaryResults
-from pipelines.summary import SummaryPipeline
-from connections.strapi import Strapi
+from .models.summary import SummaryInput, SummaryResults
+from .pipelines.summary import SummaryPipeline
+from .connections.strapi import Strapi
 
 nlp = spacy.load("en_core_web_sm", disable=["ner"])
 

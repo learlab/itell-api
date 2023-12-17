@@ -1,12 +1,12 @@
-from models.chat import ChatInput
-from models.embedding import RetrievalInput
+from .models.chat import ChatInput
+from .models.embedding import RetrievalInput
+from .embedding import chunks_retrieve
+from .pipelines.chat import ChatPipeline
+from .connections.strapi import Strapi
+
+from fastapi import HTTPException
 from vllm.sampling_params import SamplingParams
 from typing import AsyncGenerator
-
-from src.embedding import chunks_retrieve
-from pipelines.chat import ChatPipeline
-from connections.strapi import Strapi
-from fastapi import HTTPException
 
 db = Strapi()
 

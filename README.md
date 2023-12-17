@@ -27,7 +27,7 @@ This repository can run in three modes: development, gpu-development, and produc
 Please set ENV=development, ENV=gpu-development, or ENV=production in your .env file.
  **If no ENV is set, the default is production, which will likely fail on your system.**
 
-1. Clone the repository and run `pip install -r requirements.txt` (use gpu-requirements.txt if you have a GPU)
+1. Clone the repository and run `pip install -r requirements/base.txt` (use `requirements/gpu.txt` if you have a GPU)
 2. Run `python -m spacy download en_core_web_sm` to download required model from SpaCy
 3. Make sure to create a `.env` file in the application root directory like `.env.example`
    - If you are testing or working with legacy content databases, be sure to include the appropriate database credentials.
@@ -41,10 +41,10 @@ Please set ENV=development, ENV=gpu-development, or ENV=production in your .env 
 ### Modifying Requirements
 
 1. Install pip-tools: `pip install pip-tools`
-2. Make changes to `requirements.in` or `gpu-requirements.in`
-   - Only modify `gpu-requirments.in` if you have a GPU for compilation and testing.
-3. Rebuild `requirements.txt` with `pip-compile requirements.in`
-4. If you have a GPU, run `pip-compile gpu-requirements.in`
+2. Make changes to `requirements/base.in` or `requirements/gpu.in`
+   - Only modify `requirements/gpu.in` if you have a GPU for compilation and testing.
+3. Rebuild `requirements/base.txt` with `pip-compile requirements/base.in`
+4. If you have a GPU, run `pip-compile requirements/gpu.in`
 
 ### Using Dev Containers
 
