@@ -1,5 +1,5 @@
 from sentence_transformers import SentenceTransformer
-from torch import Tensor
+import numpy as np
 
 
 class EmbeddingPipeline:
@@ -9,7 +9,7 @@ class EmbeddingPipeline:
         self.model = SentenceTransformer(self.model_name)
 
     def __call__(self, text_input: str) -> list[float]:
-        tensor = self.model.encode(text_input)
-        if not isinstance(tensor, Tensor):
-            raise TypeError(f"Expected Tensor, got {type(tensor)}")
-        return tensor.tolist()
+        embed = self.model.encode(text_input)
+        if not isinstance(embed, np.ndarray):
+            raise TypeError(f"Expected np.ndarray, got {type(embed)}")
+        return embed.tolist()

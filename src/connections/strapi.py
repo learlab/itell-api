@@ -40,7 +40,7 @@ class Strapi:
         plural_api_id: str,
         sort: Optional[list[str]] = None,
         filters: Optional[dict] = None,
-        populate: Optional[dict] = None,
+        populate: Optional[Union[dict, list[str]]] = None,
         fields: Optional[list[str]] = None,
         pagination: Optional[dict] = None,
         publication_state: Optional[str] = None,

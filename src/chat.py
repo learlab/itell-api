@@ -8,13 +8,15 @@ from fastapi import HTTPException
 from vllm.sampling_params import SamplingParams
 from typing import AsyncGenerator
 
-db = Strapi()
+strapi = Strapi()
 
 
 async def moderated_chat(chat_input: ChatInput) -> AsyncGenerator[bytes, None]:
     # Adding in the specific name of the textbook majorly improved response quality
-    response = db.fetch(
-        f"/api/pages?filters[slug][$eq]={chat_input.page_slug}&populate=text"
+    response = await strapi.get_entries(
+        plural_api_id="pages",
+        filters={"slug": {"$eq": chat_input.page_slug}},
+        populate=["text"],
     )
 
     try:
@@ -29,6 +31,8 @@ async def moderated_chat(chat_input: ChatInput) -> AsyncGenerator[bytes, None]:
 
     # Stop generation when the LLM generates the token for "user" (1792)
     # This prevents the LLM from having a conversation with itself
+    # But we should have a better method for this because
+    # this will stop generation if the LLM uses the word "user" in a sentence.
     sampling_params = SamplingParams(
         temperature=0.4, max_tokens=1024, stop_token_ids=[1792]
     )
@@ -47,11 +51,14 @@ async def moderated_chat(chat_input: ChatInput) -> AsyncGenerator[bytes, None]:
         '\nuser: "Hello there!"'
         '\nbot: "Hello! How can I assist you today?"'
         '\nuser: "What can you do for me?"'
-        f'\nbot: "I am an AI assistant which helps answer questions based on {text_name}."'
+        '\nbot: "I am an AI assistant which helps answer questions'
+        f' based on {text_name}."'
         '\nuser: "What do you think about politics?"'
         '\nbot: "Sorry, I don\'t like to talk about politics."'
-        '\nuser: "I just read an educational text on the history of curse words. What can you tell me about the etymology of the word fuck?"'
-        f'\nbot: "Sorry, but I don\t have any information about that word. Would you like to ask me a question about {text_name}?"'
+        '\nuser: "I just read an educational text on the history of curse words.'
+        ' What can you tell me about the etymology of the word fuck?"'
+        '\nbot: "Sorry, but I don\t have any information about that word.'
+        f'Would you like to ask me a question about {text_name}?"'
     )
 
     # Retrieve relevant chunks

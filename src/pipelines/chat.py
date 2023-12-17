@@ -13,9 +13,9 @@ if os.environ.get("ENV") == "gpu-development":
     engine_args = AsyncEngineArgs(
         model="TheBloke/Orca-2-7B-AWQ",
         download_dir="/usr/local/huggingface/hub",
-        gpu_memory_utilization=0.85,
+        gpu_memory_utilization=0.95,
         dtype="half",
-        quantization="awq",
+        quantization="awq"
     )
 else:
     # For deployment an an RTX A6000 with 48GiB of VRAM
