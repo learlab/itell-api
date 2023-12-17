@@ -1,8 +1,7 @@
-from models.chat import ChatInput, ChatResult
+from models.chat import ChatInput
 from models.embedding import RetrievalInput
 from vllm.sampling_params import SamplingParams
 from typing import AsyncGenerator
-from fastapi.responses import StreamingResponse
 
 from src.embedding import chunks_retrieve
 from pipelines.chat import ChatPipeline
@@ -89,23 +88,3 @@ async def moderated_chat(chat_input: ChatInput) -> AsyncGenerator[bytes, None]:
     prompt = "".join([preface, sample_conversation, additional_context, history, msg])
 
     return await ChatPipeline(prompt, sampling_params)
-
-
-if __name__ == "__main__":
-    from fastapi import FastAPI
-    import uvicorn
-    import os
-
-    app = FastAPI()
-
-    @app.post("/chat")
-    async def chat(input_body: ChatInput) -> ChatResult:
-        return StreamingResponse(await moderated_chat(input_body))
-
-    uvicorn.run(
-        app,
-        host="0.0.0.0",
-        port=int(os.getenv("port", 8001)),
-        reload=False,
-        timeout_keep_alive=30,
-    )

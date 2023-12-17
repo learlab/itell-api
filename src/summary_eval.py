@@ -2,7 +2,6 @@ import random
 import re
 
 import pycld2 as cld2
-import json
 import spacy
 from gensim.models import Doc2Vec
 

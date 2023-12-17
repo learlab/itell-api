@@ -15,7 +15,34 @@ from src.answer_eval_supabase import answer_score_supabase
 from src.answer_eval import answer_score
 from src.transcript import transcript_generate
 
-app = FastAPI()
+description = """
+Welcome to iTELL AI, a REST API for intelligent textbooks. iTELL AI provides the following principal features:
+
+- Summary scoring
+- Constructed response item scoring
+- Structured dialogues with conversational AI
+
+iTELL AI also provides some utility endpoints that are used by the content management system. 
+- Generating transcripts from YouTube videos
+- Creating chunk embeddings and managing a vector store.
+"""
+
+app = FastAPI(
+    title="iTELL AI",
+    description=description,
+    summary="AI for intelligent textbooks",
+    version="0.0.2",
+    contact={
+        "name": "LEAR Lab",
+        "url": "https://learlab.org/contact",
+        "email": "lear.lab.vu@gmail.com",
+    },
+    license_info={
+        "name": "Apache 2.0",
+        "identifier": "MIT",
+    },
+)
+
 
 origins = [
     "*",
@@ -43,7 +70,24 @@ def hello():
     return {"message": "This is a summary scoring API for iTELL."}
 
 
-@app.post("/score/summary")
+@app.get("/gpu", description="Check if GPU is available.")
+def gpu() -> dict[str, str | bool]:
+    if os.environ.get("ENV") == "development":
+        return {"message": "Not available in development mode."}
+    else:
+        import torch
+
+        return {"message": torch.cuda.is_available()}
+
+
+@app.post(
+    "/score/summary",
+    description=(
+        "Score a summary."
+        " Requires a textbook name if the textbook content is on SupaBase."
+        " Requires a page_slug if the textbook content is in our Strapi CMS."
+    ),
+)
 async def score_summary(input_body: SummaryInput) -> SummaryResults:
     input_body = SummaryInput.parse_obj(input_body)
     if input_body.textbook_name:  # supabase requires textbook_name (deprecated)
@@ -52,7 +96,14 @@ async def score_summary(input_body: SummaryInput) -> SummaryResults:
         return await summary_score(input_body)
 
 
-@app.post("/score/answer")
+@app.post(
+    "/score/answer",
+    description=(
+        "Score a constructed response item."
+        " Requires a textbook name and location IDs if the textbook content is on SupaBase."
+        " Requires a page_slug and chunk_slug if the textbook content is in our Strapi CMS."
+    ),
+)
 async def score_answer(input_body: AnswerInput) -> AnswerResults:
     if input_body.textbook_name:  # supabase requires textbook_name (deprecated)
         return await answer_score_supabase(input_body)
@@ -92,6 +143,7 @@ else:
     @app.post("/retrieve/chunks")
     async def retrieve_chunks(input_body: RetrievalInput) -> RetrievalResults:
         return await chunks_retrieve(input_body)
+
 
 if __name__ == "__main__":
     import uvicorn
