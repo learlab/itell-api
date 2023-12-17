@@ -11,7 +11,7 @@ from scipy import spatial
 from supabase.client import Client
 from transformers import logging
 
-from .models.summary import SummaryInput, SummaryResults
+from .models.summary import SummaryInputSupaBase, SummaryResults
 from .pipelines.summary import SummaryPipeline
 from .connections.supabase import get_client
 
@@ -26,7 +26,7 @@ wording_pipe = SummaryPipeline("tiedaar/longformer-wording-global")
 
 
 class Summary:
-    def __init__(self, summary_input: SummaryInput, db: Client):
+    def __init__(self, summary_input: SummaryInputSupaBase, db: Client):
         # TODO: Change to use section slug
         # This process should be the same for all textbooks.
         if summary_input.textbook_name.name == "THINK_PYTHON":
@@ -150,7 +150,7 @@ class Summary:
         )
 
 
-async def summary_score_supabase(summary_input: SummaryInput) -> SummaryResults:
+async def summary_score_supabase(summary_input: SummaryInputSupaBase) -> SummaryResults:
     """Checks summary for text copied from the source and for semantic
     relevance to the source text. If it passes these checks, score the summary
     using a Huggingface pipeline.
@@ -169,7 +169,9 @@ async def summary_score_supabase(summary_input: SummaryInput) -> SummaryResults:
         summary.results["english"] = False
 
     junk_filter = (
-        summary.results["containment"] > 0.5 or summary.results["similarity"] < 0.3 or not summary.results["english"]
+        summary.results["containment"] > 0.5
+        or summary.results["similarity"] < 0.3
+        or not summary.results["english"]
     )
 
     if junk_filter:

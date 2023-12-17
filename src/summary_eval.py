@@ -10,7 +10,7 @@ from nltk import trigrams
 from scipy import spatial
 from transformers import logging
 
-from .models.summary import SummaryInput, SummaryResults
+from .models.summary import SummaryInputStrapi, SummaryResults
 from .pipelines.summary import SummaryPipeline
 from .connections.strapi import Strapi
 
@@ -27,7 +27,7 @@ wording_pipe = SummaryPipeline("tiedaar/longformer-wording-global")
 class Summary:
     db: Strapi = Strapi()
 
-    def __init__(self, summary_input: SummaryInput):
+    def __init__(self, summary_input: SummaryInputStrapi):
         self.focus_time = summary_input.focus_time
         # Fetch content and restructure data
         slug = summary_input.page_slug
@@ -96,11 +96,11 @@ class Summary:
         summary_lemmas = " ".join(
             [t.lemma_.lower() for t in self.summary if not t.is_stop]
         )
-            
+
         for chunk in self.content:
             if not chunk.get("KeyPhrase"):
                 continue
-            
+
             chunk_slug = chunk["Slug"]
             # avoid zero division
             focus_time = max(self.focus_time.get(chunk_slug, 1), 1)
@@ -132,7 +132,7 @@ class Summary:
         )
 
 
-async def summary_score(summary_input: SummaryInput) -> SummaryResults:
+async def summary_score(summary_input: SummaryInputStrapi) -> SummaryResults:
     """Checks summary for text copied from the source and for semantic
     relevance to the source text. If it passes these checks, score the summary
     using a Huggingface pipeline.

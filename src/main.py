@@ -1,10 +1,5 @@
-import os
-
-from fastapi import FastAPI, HTTPException, Response
-from fastapi.middleware.cors import CORSMiddleware
-
-from .models.summary import SummaryInput, SummaryResults
-from .models.answer import AnswerInput, AnswerResults
+from .models.summary import SummaryInputStrapi, SummaryInputSupaBase, SummaryResults
+from .models.answer import AnswerInputStrapi, AnswerInputSupaBase, AnswerResults
 from .models.embedding import ChunkInput, RetrievalInput, RetrievalResults
 from .models.chat import ChatInput, ChatResult
 from .models.transcript import TranscriptInput, TranscriptResults
@@ -14,6 +9,11 @@ from .summary_eval import summary_score
 from .answer_eval_supabase import answer_score_supabase
 from .answer_eval import answer_score
 from .transcript import transcript_generate
+
+import os
+from fastapi import FastAPI, HTTPException, Response
+from fastapi.middleware.cors import CORSMiddleware
+from typing import Union
 
 description = """
 Welcome to iTELL AI, a REST API for intelligent textbooks. iTELL AI provides the following principal features:
@@ -81,25 +81,28 @@ def gpu() -> dict[str, str | bool]:
 
 
 @app.post("/score/summary")
-async def score_summary(input_body: SummaryInput) -> SummaryResults:
+async def score_summary(
+    input_body: Union[SummaryInputStrapi, SummaryInputSupaBase]
+) -> SummaryResults:
     """Score a summary.
     Requires a textbook name if the textbook content is on SupaBase.
     Requires a page_slug if the textbook content is in our Strapi CMS.
     """
-    input_body = SummaryInput.parse_obj(input_body)
-    if input_body.textbook_name:  # supabase requires textbook_name (deprecated)
+    if isinstance(input_body, SummaryInputSupaBase):
         return await summary_score_supabase(input_body)
-    else:
+    else:  # Strapi method
         return await summary_score(input_body)
 
 
 @app.post("/score/answer")
-async def score_answer(input_body: AnswerInput) -> AnswerResults:
+async def score_answer(
+    input_body: Union[AnswerInputStrapi, AnswerInputSupaBase]
+) -> AnswerResults:
     """Score a constructed response item.
     Requires a textbook name and location IDs if the textbook content is on SupaBase.
     Requires a page_slug and chunk_slug if the textbook content is in our Strapi CMS.
     """
-    if input_body.textbook_name:  # supabase requires textbook_name (deprecated)
+    if isinstance(input_body, AnswerInputSupaBase):
         return await answer_score_supabase(input_body)
     else:  # Strapi method
         return await answer_score(input_body)

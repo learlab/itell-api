@@ -1,4 +1,4 @@
-from .models.answer import AnswerInput, AnswerResults
+from .models.answer import AnswerInputSupaBase, AnswerResults
 from .pipelines.answer import AnswerPipeline
 from .connections.supabase import get_client
 
@@ -11,7 +11,7 @@ answer_pipe = AnswerPipeline()
 
 
 class Answer:
-    def __init__(self, answer_input: AnswerInput, db: Client):
+    def __init__(self, answer_input: AnswerInputSupaBase, db: Client):
         # TODO: Change to use section slug
         # This process should be the same for all textbooks.
         if answer_input.textbook_name.name == "THINK_PYTHON":
@@ -50,7 +50,7 @@ class Answer:
             self.results["is_passing"] = True
 
 
-async def answer_score_supabase(answer_input: AnswerInput) -> AnswerResults:
+async def answer_score_supabase(answer_input: AnswerInputSupaBase) -> AnswerResults:
     db = get_client(answer_input.textbook_name)
 
     answer = Answer(answer_input, db)

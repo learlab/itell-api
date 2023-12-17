@@ -1,4 +1,4 @@
-from .models.answer import AnswerInput, AnswerResults
+from .models.answer import AnswerInputStrapi, AnswerResults
 from .pipelines.answer import AnswerPipeline
 from .connections.strapi import Strapi
 from transformers import logging
@@ -12,13 +12,13 @@ answer_pipe = AnswerPipeline()
 class Answer:
     db: Strapi = Strapi()
 
-    def __init__(self, answer_input: AnswerInput):
+    async def __init__(self, answer_input: AnswerInputStrapi):
         response = self.db.fetch(
             f"/api/pages?filters[slug][$eq]={answer_input.page_slug}"
             f"&populate[Content][filters][Slug][$eq]={answer_input.chunk_slug}"
         )
 
-        self.content = response["data"][0]["attributes"]["Content"]
+        self.content = await response["data"][0]["attributes"]["Content"]
 
         if len(self.content) == 0:
             raise HTTPException(
@@ -47,7 +47,7 @@ class Answer:
             self.results["is_passing"] = True
 
 
-async def answer_score(answer_input: AnswerInput) -> AnswerResults:
+async def answer_score(answer_input: AnswerInputStrapi) -> AnswerResults:
     answer = Answer(answer_input)
     answer.score_answer()
 

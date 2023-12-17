@@ -27,17 +27,17 @@ class AnswerPipeline:
 
         # Get bleurt results
         bleurt_result = self.bleurt_classifier(bleurt_sequence)
-        if isinstance(bleurt_result, list) and isinstance(bleurt_result[0], dict):
-            bleurt_score = bleurt_result[0]["score"]
-        else:
-            raise ValueError("BLEURT classifier returned an unexpected result.")
+        if not isinstance(bleurt_result, list) or not isinstance(
+            bleurt_result[0], dict
+        ):
+            raise TypeError("Expected list[dict], got {type(bleurt_result)}")
+        bleurt_score = bleurt_result[0]["score"]
 
         # Get MPnet results
         result = self.mpnet_classifier(mpnet_sequence)
-        if isinstance(result, list) and isinstance(result[0], dict):
-            mpnet_score = result[0]["label"]
-        else:
-            raise ValueError("MPnet classifier returned an unexpected result.")
+        if not isinstance(result, list) or not isinstance(result[0], dict):
+            raise TypeError("Expected list[dict], got {type(result)}")
+        mpnet_score = result[0]["label"]
 
         bleurt_passing = True if bleurt_score >= self.bleurt_threshold else False
         mpnet_passing = True if mpnet_score == "correct_answer" else False
