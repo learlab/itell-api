@@ -34,7 +34,7 @@ async def moderated_chat(chat_input: ChatInput) -> AsyncGenerator[bytes, None]:
     # But we should have a better method for this because
     # this will stop generation if the LLM uses the word "user" in a sentence.
     sampling_params = SamplingParams(
-        temperature=0.4, max_tokens=1024, stop_token_ids=[1792]
+        temperature=0.4, max_tokens=4096, stop_token_ids=[1792]
     )
 
     # This phrasing seems to work well. Modified from NeMo Guardrails
