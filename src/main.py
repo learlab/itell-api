@@ -2,8 +2,8 @@ from .models.summary import SummaryInputStrapi, SummaryInputSupaBase, SummaryRes
 from .models.answer import AnswerInputStrapi, AnswerInputSupaBase, AnswerResults
 from .models.embedding import ChunkInput, RetrievalInput, RetrievalResults
 from .models.chat import ChatInput, ChatResult
+from .models.message import Message
 from .models.transcript import TranscriptInput, TranscriptResults
-
 from .summary_eval_supabase import summary_score_supabase
 from .summary_eval import summary_score
 from .answer_eval_supabase import answer_score_supabase
@@ -12,6 +12,7 @@ from .transcript import transcript_generate
 
 import os
 from fastapi import FastAPI, HTTPException, Response
+from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from typing import Union
 
@@ -66,18 +67,18 @@ app.add_middleware(
 
 
 @app.get("/")
-def hello():
-    return {"message": "This is a summary scoring API for iTELL."}
+def hello() -> Message:
+    return Message(message="This is a summary scoring API for iTELL.")
 
 
 @app.get("/gpu", description="Check if GPU is available.")
-def gpu() -> dict[str, str | bool]:
+def gpu_is_available() -> Message:
     if os.environ.get("ENV") == "development":
-        return {"message": "Not available in development mode."}
+        return Message(message="Running in development mode.")
     else:
         import torch
 
-        return {"message": torch.cuda.is_available()}
+        return Message(message=torch.cuda.is_available())
 
 
 @app.post("/score/summary")
@@ -109,12 +110,12 @@ async def score_answer(
 
 
 @app.post("/generate/question")
-async def gen_question(input_body: ChunkInput) -> None:
+async def generate_question(input_body: ChunkInput) -> None:
     raise HTTPException(status_code=404, detail="Not Implemented")
 
 
 @app.post("/generate/keyphrases")
-async def gen_keyphrases(input_body: ChunkInput) -> None:
+async def generate_keyphrases(input_body: ChunkInput) -> None:
     raise HTTPException(status_code=404, detail="Not Implemented")
 
 
