@@ -12,18 +12,19 @@ from .transcript import transcript_generate
 
 import os
 from fastapi import FastAPI, HTTPException, Response
-from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from typing import Union
 
 description = """
-Welcome to iTELL AI, a REST API for intelligent textbooks. iTELL AI provides the following principal features:
+Welcome to iTELL AI, a REST API for intelligent textbooks. 
+iTELL AI provides the following principal features:
 
 - Summary scoring
 - Constructed response item scoring
 - Structured dialogues with conversational AI
 
-iTELL AI also provides some utility endpoints that are used by the content management system. 
+iTELL AI also provides some utility endpoints 
+that are used by the content management system. 
 - Generating transcripts from YouTube videos
 - Creating chunk embeddings and managing a vector store.
 """
@@ -45,17 +46,7 @@ app = FastAPI(
 )
 
 
-origins = [
-    "*",
-    # TODO: Remove wildcard. Add authentication methods.
-    "http://localhost:8000",
-    "http://localhost:3000",
-    "http://localhost:3001",
-    "https://textbook-demo.web.app",
-    "https://itell.vercel.app",
-    "https://itell-poe.vercel.app",
-    "https://itell-think-python.vercel.app",
-]
+origins = ["*"]
 
 app.add_middleware(
     CORSMiddleware,
@@ -77,8 +68,10 @@ def gpu_is_available() -> Message:
         return Message(message="Running in development mode.")
     else:
         import torch
-
-        return Message(message=torch.cuda.is_available())
+        if torch.cuda.is_available():
+            return Message(message="GPU is available.")
+        else:
+            return Message(message="GPU is not available.")
 
 
 @app.post("/score/summary")

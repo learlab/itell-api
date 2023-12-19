@@ -7,6 +7,7 @@ import random
 import re
 import pycld2 as cld2
 import spacy
+import json
 from nltk import trigrams
 from transformers import logging
 
@@ -90,7 +91,7 @@ class Summary:
             # avoid zero division
             focus_time = max(self.focus_time.get(chunk_slug, 1), 1)
 
-            for keyphrase in nlp.pipe(chunk["KeyPhrase"]):
+            for keyphrase in nlp.pipe(json.loads(chunk["KeyPhrase"])):
                 keyphrase_lemmas = [t.lemma_ for t in keyphrase if not t.is_stop]
                 keyphrase_included = re.search(
                     re.escape(r" ".join(keyphrase_lemmas)),
