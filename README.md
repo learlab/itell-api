@@ -31,7 +31,7 @@ Please set ENV=development, ENV=gpu-development, or ENV=production in your .env 
 2. Run `python -m spacy download en_core_web_sm` to download required model from SpaCy
 3. Make sure to create a `.env` file in the application root directory like `.env.example`
    - Ask a team member for the values to use in the `.env` file.
-   - Load the environment variables with `source .env` or by using the provided devcontainer.
+   - Load the environment variables with `source .env` or by using the provided [devcontainer](#using-dev-containers).
 4. Install pytest: `pip install pytest`
 5. Run `pytest` from the root directory to run the test suite.
    - Please write tests for any new endpoints.
