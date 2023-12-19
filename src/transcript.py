@@ -1,4 +1,5 @@
-from models.transcript import TranscriptInput, TranscriptResults
+from .models.transcript import TranscriptInput, TranscriptResults
+
 from youtube_transcript_api import YouTubeTranscriptApi
 from fastapi import HTTPException
 from urllib import parse

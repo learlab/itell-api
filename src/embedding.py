@@ -1,9 +1,8 @@
+from .connections.vectorstore import get_vector_store
+from .pipelines.embed import EmbeddingPipeline
+from .models.embedding import ChunkInput, RetrievalInput, RetrievalResults
+
 from fastapi import Response, HTTPException
-
-from connections.vectorstore import get_vector_store
-
-from pipelines.embed import EmbeddingPipeline
-from models.embedding import ChunkInput, RetrievalInput, RetrievalResults
 
 embedding_pipeline = EmbeddingPipeline()
 

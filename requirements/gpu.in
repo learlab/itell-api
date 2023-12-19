@@ -1,0 +1,8 @@
+-r base.txt
+autoawq
+sentence-transformers
+vllm
+xformers
+
+--extra-index-url https://download.pytorch.org/whl/cu121
+torch

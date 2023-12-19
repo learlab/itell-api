@@ -1,3 +1,8 @@
+import pytest
+import os
+
+
+@pytest.mark.skipif(os.getenv("ENV") == "development", reason="Requires GPU.")
 def test_chat(client):
     response = client.post(
         "/chat",
