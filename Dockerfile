@@ -6,18 +6,24 @@ RUN apt-get update && \
         python3-pip
 
 # Do requirements first so we can cache them
-COPY requirements/gpu.txt /usr/src/requirements/
-WORKDIR /usr/src/
-RUN pip install -r requirements/gpu.txt
+RUN mkdir /usr/src/itell-ai && \
+    mkdir /usr/src/itell-ai/assets && \
+    mkdir /usr/src/itell-ai/src
+WORKDIR /usr/src/itell-ai
+COPY requirements/gpu.txt /usr/src/itell-ai/requirements.txt
+RUN pip install -r requirements.txt
 
 RUN mkdir /usr/local/nltk_data
 ENV HF_HOME=/usr/local/huggingface \
     NLTK_DATA=/usr/local/nltk_data
 
-COPY assets src /usr/src/
+COPY assets /usr/src/itell-ai/assets/
+COPY src /usr/src/itell-ai/src/
 CMD ["python3", "-m", "src.main"]
 
 FROM base as test
-COPY tests pyproject.toml /usr/src/
+COPY pyproject.toml /usr/src/itell-ai/
+RUN mkdir /usr/src/itell-ai/tests
+COPY tests /usr/src/itell-ai/tests/
 RUN pip install pytest
-CMD ["pytest"]
+CMD ["pytest", "-s"]
