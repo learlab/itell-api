@@ -1,4 +1,4 @@
-from ..models.strapi import Chunk, ChunksByPage
+from ..models.strapi import Chunk, PageWithChunks, PageWithText, Text
 
 import os
 import httpx
@@ -91,8 +91,6 @@ class Strapi:
             else:
                 yield f"[{key}]", value
 
-    # TODO: implement these and handle error cases to move this logic out of
-    # the main src/*.py code
     async def get_chunk(
         self, page_slug: str, chunk_slug: str
     ) -> Chunk:
@@ -105,25 +103,24 @@ class Strapi:
         )
 
         try:
-            return ChunksByPage(**json_response).data[0].attributes.Content[0]
-        except ValidationError as e:
-            raise HTTPException(status_code=404, detail=str(e))
+            return PageWithChunks(**json_response).data[0].attributes.Content[0]
+        except ValidationError as error:
+            raise HTTPException(status_code=404, detail=str(error))
 
-    async def text_meta_from_page_slug(self, page_slug) -> None:
-        response = await self.get_entries(
+    async def get_text_meta(self, page_slug) -> Text:
+        json_response = await self.get_entries(
             plural_api_id="pages",
             filters={"slug": {"$eq": page_slug}},
             populate=["text"],
         )
 
         try:
-            text_meta = response["data"][0]["attributes"]["text"]["data"]["attributes"]
+            return PageWithText(**json_response).data[0].attributes.text.data.attributes
         except (AttributeError, KeyError) as error:
             raise HTTPException(
                 status_code=404,
-                detail=f"No parent text found for {chat_input.page_slug}\n\n{error}",
+                detail=f"No parent text found for {page_slug}\n\n{error}",
             )
-        raise NotImplementedError
 
     async def get_chunks(self, page_slug: str) -> list[Chunk]:
         """Used for summary scoring.
@@ -134,6 +131,6 @@ class Strapi:
             populate={"Content": "*"},
         )
         try:
-            return ChunksByPage(**json_response).data[0].attributes.Content
-        except ValidationError as e:
-            raise HTTPException(status_code=404, detail=str(e))
+            return PageWithChunks(**json_response).data[0].attributes.Content
+        except ValidationError as error:
+            raise HTTPException(status_code=404, detail=str(error))

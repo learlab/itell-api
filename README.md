@@ -38,7 +38,6 @@ Please set ENV=development, ENV=gpu-development, or ENV=production in your .env 
    - Please write tests for any new endpoints.
    - Please run tests **using `pytest`** before requesting a code review.
    - Pytest will run the tests appropriate to your environment.
-   - You can also run `ENV=development pytest` to temporarily disable GPU tests.
 
 ### Modifying Requirements
 
