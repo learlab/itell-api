@@ -17,7 +17,7 @@ class Strapi:
             self.url = self.url + "/"
         self.headers = {"Authorization": f"Bearer {self.key}"}
 
-    async def get(self, url: str, params: dict) -> dict:
+    async def _get(self, url: str, params: dict) -> dict:
         async with httpx.AsyncClient() as client:
             r = await client.get(url, headers=self.headers, params=params)
             if r.status_code != 200:
@@ -37,7 +37,7 @@ class Strapi:
         fields_param: dict = self._stringify_parameters("fields", fields)
         params: dict = {**populate_param, **fields_param}
         url: str = f"{self.url}api/{plural_api_id}/{document_id}"
-        return await self.get(url, params)  # type: ignore
+        return await self._get(url, params)  # type: ignore
 
     async def get_entries(
         self,
@@ -67,7 +67,7 @@ class Strapi:
             **fields_param,
             **publication_state_param,
         }
-        return await self.get(url, params)
+        return await self._get(url, params)
 
     def _stringify_parameters(
         self, name: str, parameters: Union[dict, list[str], str, None]
