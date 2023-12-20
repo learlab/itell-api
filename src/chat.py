@@ -13,21 +13,19 @@ strapi = Strapi()
 
 async def moderated_chat(chat_input: ChatInput) -> AsyncGenerator[bytes, None]:
     # Adding in the specific name of the textbook majorly improved response quality
-    response = await strapi.get_entries(
-        plural_api_id="pages",
-        filters={"slug": {"$eq": chat_input.page_slug}},
-        populate=["text"],
-    )
+    text_meta = await strapi.get_text_meta(chat_input.page_slug)
 
-    try:
-        text_meta = response["data"][0]["attributes"]["text"]["data"]["attributes"]
-    except (AttributeError, KeyError) as error:
+    if text_meta.Title is None:
         raise HTTPException(
             status_code=404,
-            detail=f"No parent text found for {chat_input.page_slug}\n\n{error}",
+            detail="Requested page does not have a parent text with a title.",
         )
-
-    text_name = text_meta["Title"]
+    
+    if text_meta.slug is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Requested page does not have a parent text with a slug.",
+        )
 
     # Stop generation when the LLM generates the token for "user" (1792)
     # This prevents the LLM from having a conversation with itself
@@ -40,7 +38,7 @@ async def moderated_chat(chat_input: ChatInput) -> AsyncGenerator[bytes, None]:
     # This phrasing seems to work well. Modified from NeMo Guardrails
     preface = (
         "Below is a conversation between a bot and a user about"
-        f" an instructional textbook called {text_name}."
+        f" an instructional textbook called {text_meta.Title}."
         " The bot is factual and concise. If the bot does not know the answer to a"
         " question, it truthfully says it does not know."
     )
@@ -52,20 +50,20 @@ async def moderated_chat(chat_input: ChatInput) -> AsyncGenerator[bytes, None]:
         '\nbot: "Hello! How can I assist you today?"'
         '\nuser: "What can you do for me?"'
         '\nbot: "I am an AI assistant which helps answer questions'
-        f' based on {text_name}."'
+        f' based on {text_meta.Title}."'
         '\nuser: "What do you think about politics?"'
         '\nbot: "Sorry, I don\'t like to talk about politics."'
         '\nuser: "I just read an educational text on the history of curse words.'
         ' What can you tell me about the etymology of the word fuck?"'
         '\nbot: "Sorry, but I don\t have any information about that word.'
-        f'Would you like to ask me a question about {text_name}?"'
+        f'Would you like to ask me a question about {text_meta.Title}?"'
     )
 
     # Retrieve relevant chunks
     additional_context = ""
     relevant_chunks = await chunks_retrieve(
         RetrievalInput(
-            text_slug=text_meta["slug"],
+            text_slug=text_meta.slug,
             page_slug=chat_input.page_slug,
             text=chat_input.message,
             match_count=1,

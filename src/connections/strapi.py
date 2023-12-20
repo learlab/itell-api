@@ -1,6 +1,10 @@
+from ..models.strapi import Chunk, PageWithChunks, PageWithText, Text
+
 import os
 import httpx
 from typing import Union, Optional
+from pydantic import ValidationError
+from fastapi import HTTPException
 
 
 class Strapi:
@@ -13,7 +17,7 @@ class Strapi:
             self.url = self.url + "/"
         self.headers = {"Authorization": f"Bearer {self.key}"}
 
-    async def get(self, url: str, params: dict) -> dict:
+    async def _get(self, url: str, params: dict) -> dict:
         async with httpx.AsyncClient() as client:
             r = await client.get(url, headers=self.headers, params=params)
             if r.status_code != 200:
@@ -33,7 +37,7 @@ class Strapi:
         fields_param: dict = self._stringify_parameters("fields", fields)
         params: dict = {**populate_param, **fields_param}
         url: str = f"{self.url}api/{plural_api_id}/{document_id}"
-        return await self.get(url, params)  # type: ignore
+        return await self._get(url, params)  # type: ignore
 
     async def get_entries(
         self,
@@ -63,7 +67,7 @@ class Strapi:
             **fields_param,
             **publication_state_param,
         }
-        return await self.get(url, params)
+        return await self._get(url, params)
 
     def _stringify_parameters(
         self, name: str, parameters: Union[dict, list[str], str, None]
@@ -87,17 +91,46 @@ class Strapi:
             else:
                 yield f"[{key}]", value
 
-    # TODO: implement these and handle error cases to move this logic out of
-    # the main src/*.py code
-    def chunk_from_page_and_chunk_slug(self) -> dict[str, Union[int, str]]:
+    async def get_chunk(
+        self, page_slug: str, chunk_slug: str
+    ) -> Chunk:
         """Used for answer scoring.
         Should return a component dictionary."""
-        raise NotImplementedError
+        json_response = await self.get_entries(
+            plural_api_id="pages",
+            filters={"slug": {"$eq": page_slug}},
+            populate={"Content": {"filters": {"Slug": {"$eq": chunk_slug}}}},
+        )
 
-    def text_meta_from_page_slug(self) -> None:
-        raise NotImplementedError
+        try:
+            return PageWithChunks(**json_response).data[0].attributes.Content[0]
+        except ValidationError as error:
+            raise HTTPException(status_code=404, detail=str(error))
 
-    def chunks_from_page_slug(self) -> list[dict[str, Union[int, str]]]:
+    async def get_text_meta(self, page_slug) -> Text:
+        json_response = await self.get_entries(
+            plural_api_id="pages",
+            filters={"slug": {"$eq": page_slug}},
+            populate=["text"],
+        )
+
+        try:
+            return PageWithText(**json_response).data[0].attributes.text.data.attributes
+        except (AttributeError, KeyError) as error:
+            raise HTTPException(
+                status_code=404,
+                detail=f"No parent text found for {page_slug}\n\n{error}",
+            )
+
+    async def get_chunks(self, page_slug: str) -> list[Chunk]:
         """Used for summary scoring.
         Should return a list of component dictionaries."""
-        raise NotImplementedError
+        json_response = await self.get_entries(
+            plural_api_id="pages",
+            filters={"slug": {"$eq": page_slug}},
+            populate={"Content": "*"},
+        )
+        try:
+            return PageWithChunks(**json_response).data[0].attributes.Content
+        except ValidationError as error:
+            raise HTTPException(status_code=404, detail=str(error))

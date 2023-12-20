@@ -1,4 +1,5 @@
 from .models.summary import SummaryInputStrapi, SummaryResults
+from .models.strapi import Chunk
 from .pipelines.summary import SummaryPipeline
 from .pipelines.similarity import semantic_similarity
 from .connections.strapi import Strapi
@@ -7,7 +8,6 @@ import random
 import re
 import pycld2 as cld2
 import spacy
-import json
 from nltk import trigrams
 from transformers import logging
 
@@ -21,14 +21,10 @@ wording_pipe = SummaryPipeline("tiedaar/longformer-wording-global")
 
 
 class Summary:
-    def __init__(
-        self, summary: str, components: list[dict[str, str]], focus_time: dict[str, int]
-    ):
+    def __init__(self, summary: str, chunks: list[Chunk], focus_time: dict[str, int]):
         self.focus_time = focus_time
-        self.components = components
-        clean_text = "\n\n".join(
-            [component["CleanText"] for component in self.components]
-        )
+        self.chunks = chunks
+        clean_text = "\n\n".join([chunk.CleanText for chunk in self.chunks])
 
         # Create SpaCy objects
         self.source = nlp(clean_text)
@@ -83,15 +79,14 @@ class Summary:
             [t.lemma_.lower() for t in self.summary if not t.is_stop]
         )
 
-        for chunk in self.components:
-            if not chunk.get("KeyPhrase"):
+        for chunk in self.chunks:
+            if not chunk.KeyPhrase:
                 continue
 
-            chunk_slug = chunk["Slug"]
             # avoid zero division
-            focus_time = max(self.focus_time.get(chunk_slug, 1), 1)
+            focus_time = max(self.focus_time.get(chunk.Slug, 1), 1)
 
-            for keyphrase in nlp.pipe(json.loads(chunk["KeyPhrase"])):
+            for keyphrase in nlp.pipe(chunk.KeyPhrase):
                 keyphrase_lemmas = [t.lemma_ for t in keyphrase if not t.is_stop]
                 keyphrase_included = re.search(
                     re.escape(r" ".join(keyphrase_lemmas)),
@@ -124,17 +119,11 @@ async def summary_score(summary_input: SummaryInputStrapi) -> SummaryResults:
     using a Huggingface pipeline.
     """
 
-    response = await strapi.get_entries(
-        plural_api_id="pages",
-        filters={"slug": {"$eq": summary_input.page_slug}},
-        populate={"Content": "*"},
-    )
-
-    content = response["data"][0]["attributes"]["Content"]
+    chunks = await strapi.get_chunks(summary_input.page_slug)
 
     summary = Summary(
         summary_input.summary,
-        content,
+        chunks,
         summary_input.focus_time,
     )
 
