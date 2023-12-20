@@ -1,6 +1,10 @@
+from ..models.strapi import Chunk, ChunksByPage
+
 import os
 import httpx
 from typing import Union, Optional
+from pydantic import ValidationError
+from fastapi import HTTPException
 
 
 class Strapi:
@@ -89,15 +93,47 @@ class Strapi:
 
     # TODO: implement these and handle error cases to move this logic out of
     # the main src/*.py code
-    def chunk_from_page_and_chunk_slug(self) -> dict[str, Union[int, str]]:
+    async def get_chunk(
+        self, page_slug: str, chunk_slug: str
+    ) -> Chunk:
         """Used for answer scoring.
         Should return a component dictionary."""
+        json_response = await self.get_entries(
+            plural_api_id="pages",
+            filters={"slug": {"$eq": page_slug}},
+            populate={"Content": {"filters": {"Slug": {"$eq": chunk_slug}}}},
+        )
+
+        try:
+            return ChunksByPage(**json_response).data[0].attributes.Content[0]
+        except ValidationError as e:
+            raise HTTPException(status_code=404, detail=str(e))
+
+    async def text_meta_from_page_slug(self, page_slug) -> None:
+        response = await self.get_entries(
+            plural_api_id="pages",
+            filters={"slug": {"$eq": page_slug}},
+            populate=["text"],
+        )
+
+        try:
+            text_meta = response["data"][0]["attributes"]["text"]["data"]["attributes"]
+        except (AttributeError, KeyError) as error:
+            raise HTTPException(
+                status_code=404,
+                detail=f"No parent text found for {chat_input.page_slug}\n\n{error}",
+            )
         raise NotImplementedError
 
-    def text_meta_from_page_slug(self) -> None:
-        raise NotImplementedError
-
-    def chunks_from_page_slug(self) -> list[dict[str, Union[int, str]]]:
+    async def get_chunks(self, page_slug: str) -> list[Chunk]:
         """Used for summary scoring.
         Should return a list of component dictionaries."""
-        raise NotImplementedError
+        json_response = await self.get_entries(
+            plural_api_id="pages",
+            filters={"slug": {"$eq": page_slug}},
+            populate={"Content": "*"},
+        )
+        try:
+            return ChunksByPage(**json_response).data[0].attributes.Content
+        except ValidationError as e:
+            raise HTTPException(status_code=404, detail=str(e))
