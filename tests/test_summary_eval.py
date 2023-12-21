@@ -1,5 +1,5 @@
-def test_summary_eval_strapi(client):
-    response = client.post(
+async def test_summary_eval_strapi(client):
+    response = await client.post(
         "/score/summary",
         json={
             "page_slug": "what-is-law",

@@ -1,9 +1,16 @@
 import pytest
-from fastapi.testclient import TestClient
+from httpx import AsyncClient
+
+
+@pytest.fixture(scope="session")
+def anyio_backend():
+    return "asyncio"
 
 
 @pytest.fixture(scope="session", autouse=True)
-def client():
+async def client(anyio_backend):
     from src.main import app
 
-    return TestClient(app)
+    client = AsyncClient(app=app, base_url="http://test")
+    yield client
+    await client.aclose()

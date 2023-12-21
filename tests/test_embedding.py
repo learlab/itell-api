@@ -3,8 +3,8 @@ import os
 
 
 @pytest.mark.skipif(os.getenv("ENV") == "development", reason="Requires GPU.")
-def test_generate_embeddings(client):
-    response = client.post(
+async def test_generate_embeddings(client):
+    response = await client.post(
         "/generate/embedding",
         json={
             "text_slug": "test_text",
@@ -17,7 +17,7 @@ def test_generate_embeddings(client):
     )
     assert response.status_code == 201
 
-    response = client.post(
+    response = await client.post(
         "/generate/embedding",
         json={
             "text_slug": "test_text",
@@ -30,7 +30,7 @@ def test_generate_embeddings(client):
     )
     assert response.status_code == 201
 
-    response = client.post(
+    response = await client.post(
         "/generate/embedding",
         json={
             "text_slug": "test_text",
@@ -45,8 +45,8 @@ def test_generate_embeddings(client):
 
 
 @pytest.mark.skipif(os.getenv("ENV") == "development", reason="Requires GPU.")
-def test_retrieve_chunks(client):
-    response = client.post(
+async def test_retrieve_chunks(client):
+    response = await client.post(
         "/retrieve/chunks",
         json={
             "text_slug": "test_text",
