@@ -1,5 +1,5 @@
-def test_summary_eval_supabase(client):
-    response = client.post(
+async def test_summary_eval_supabase(client):
+    response = await client.post(
         "/score/summary",
         json={
             "textbook_name": "macroeconomics-2e",

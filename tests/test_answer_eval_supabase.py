@@ -1,5 +1,5 @@
-def test_short_answer_supabase(client):
-    response = client.post(
+async def test_short_answer_supabase(client):
+    response = await client.post(
         "/score/answer",
         json={
             "textbook_name": "macroeconomics-2e",
@@ -12,8 +12,8 @@ def test_short_answer_supabase(client):
     assert response.status_code == 200
 
 
-def test_short_answer_missing_subsection_index(client):
-    response = client.post(
+async def test_short_answer_missing_subsection_index(client):
+    response = await client.post(
         "/score/answer",
         json={
             "textbook_name": "macroeconomics-2e",

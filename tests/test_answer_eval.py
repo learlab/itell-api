@@ -1,5 +1,5 @@
-def test_short_answer_strapi(client):
-    response = client.post(
+async def test_short_answer_strapi(client):
+    response = await client.post(
         "/score/answer",
         json={
             "page_slug": "what-is-law",
@@ -10,8 +10,8 @@ def test_short_answer_strapi(client):
     assert response.status_code == 200
 
 
-def test_short_answer_missing_chunk_slug(client):
-    response = client.post(
+async def test_short_answer_missing_chunk_slug(client):
+    response = await client.post(
         "/score/answer",
         json={
             "page_slug": "what-is-law",
@@ -21,8 +21,8 @@ def test_short_answer_missing_chunk_slug(client):
     assert response.status_code == 422
 
 
-def test_bad_slug(client):
-    response = client.post(
+async def test_bad_slug(client):
+    response = await client.post(
         "/score/answer",
         json={
             "page_slug": "i-am-a-string-but-not-a-slug",
