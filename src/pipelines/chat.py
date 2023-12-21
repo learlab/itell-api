@@ -11,11 +11,9 @@ import os
 # For local development on an RTX 3060 with 12GiB of VRAM
 if os.environ.get("ENV") == "gpu-development":
     engine_args = AsyncEngineArgs(
-        model="TheBloke/Orca-2-7B-AWQ",
+        model="gpt2",
         download_dir="/usr/local/huggingface/hub",
-        gpu_memory_utilization=0.95,
-        dtype="half",
-        quantization="awq"
+        gpu_memory_utilization=0.80,
     )
 else:
     # For deployment an an RTX A6000 with 48GiB of VRAM
