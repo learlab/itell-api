@@ -21,33 +21,32 @@ The API endpoints are hosted at the [/docs](https://itell-api.learlab.vanderbilt
 This repository can run in three modes: development, gpu-development, and production.
 
  - `development` mode runs without a GPU. Chat is disabled.
- - `gpu-development` mode runs with a GPU and a smaller, quantized model for chat.
+ - `gpu-development` mode runs with a GPU and a smaller model for testing chat.
  - `production` mode runs with a GPU and the full chat model.
 
 Please set ENV=development, ENV=gpu-development, or ENV=production in your .env file and make sure these environment variables are loaded in the shell session where you run the API.
  **If no ENV is set, the default is production, which will likely fail on your system.**
 
-1. Clone the repository and run `pip install -r requirements/base.txt` (use `requirements/gpu.txt` if you have a GPU)
-2. Run `python -m spacy download en_core_web_sm` to download required model from SpaCy
+1. Install `protobuf-compiler` on your system. This is a requirement to build `gcld3`.
+2. Clone the repository and run `pip install -r requirements/dev.in` or `pip install -r requirements/gpu.in` depending on your environment.
 3. Make sure to create a `.env` file in the application root directory like `.env.example`
    - Ask a team member for the values to use in the `.env` file.
    - If you are on Mac, you will need to add `export ` before each line in the `.env` file.
    - Load the environment variables with `source .env` or by using the provided [devcontainer](#using-dev-containers).
-4. Install pytest: `pip install pytest`
+4. Install development dependencies: `pip install pip-tools pytest rich`
 5. Run `pytest` from the root directory to run the test suite.
    - Please write tests for any new endpoints.
    - Please run tests **using `pytest`** before requesting a code review.
    - Pytest will run the tests appropriate to your environment.
 
 ### Modifying Requirements
+An NVidia GPU is required to pin dependencies for our production environment. If you do not have a GPU and you have changed the dependencies, ask a team member to rebuild the requirements file before deploying. There is no need to compile `requirements/base.in`.
 
-1. Install pip-tools: `pip install pip-tools`
-2. Make changes to `requirements/base.in` or `requirements/gpu.in`
-   - Only modify `requirements/gpu.in` if you have a GPU for compilation and testing.
-3. Rebuild `requirements/base.txt` with `pip-compile requirements/base.in`
-4. If you have a GPU, run `pip-compile requirements/gpu.in`
+1. Make changes to `requirements/base.in` and/or `requirements/gpu.in`
+2. Run `pip-compile requirements/gpu.in` with a GPU.
 
 ### Using Dev Containers
+This devcontainer only works on machines with an NVidia GPU.
 
 1. Install the [Remote - Containers](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers) extension for VSCode.
 2. Open the repository in VSCode.
@@ -67,7 +66,6 @@ The repository is located at `/srv/repos/itell-api` on the lab server. You shoul
 1. `git fetch`  
 2. `git pull`  
 3. `make`  
-4. `microk8s kubectl rollout restart deployment/itell-api`  
 
 If you need to make any quick fixes to get the deployment working, please do not forget to push those changes directly to main:  
 1. Make your changes to the files

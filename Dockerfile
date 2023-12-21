@@ -3,7 +3,9 @@ ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && \
     apt-get install -y \
         python3 \
-        python3-pip
+        python3-pip \
+        protobuf-compiler \
+        libprotobuf-dev
 
 # Do requirements first so we can cache them
 RUN mkdir /usr/src/itell-ai && \
@@ -24,6 +26,7 @@ CMD ["python3", "-m", "src.main"]
 FROM base as test
 COPY pyproject.toml /usr/src/itell-ai/
 RUN mkdir /usr/src/itell-ai/tests
+
 COPY tests /usr/src/itell-ai/tests/
 RUN pip install pytest
 CMD ["pytest", "-s"]
