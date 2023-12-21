@@ -12,22 +12,33 @@ from .transcript import transcript_generate
 
 import os
 from fastapi import FastAPI, HTTPException, Response
-from fastapi.middleware.cors import CORSMiddleware
+import sentry_sdk
 from typing import Union
 
 description = """
-Welcome to iTELL AI, a REST API for intelligent textbooks. 
+Welcome to iTELL AI, a REST API for intelligent textbooks.
 iTELL AI provides the following principal features:
 
 - Summary scoring
 - Constructed response item scoring
 - Structured dialogues with conversational AI
 
-iTELL AI also provides some utility endpoints 
-that are used by the content management system. 
+iTELL AI also provides some utility endpoints
+that are used by the content management system.
 - Generating transcripts from YouTube videos
 - Creating chunk embeddings and managing a vector store.
 """
+
+sentry_sdk.init(
+    dsn="https://d8e406671b4ca30dcecb4d7c4e0a9b0c@o4506435193405440.ingest.sentry.io/4506435194650624",
+    # Set traces_sample_rate to 1.0 to capture 100%
+    # of transactions for performance monitoring.
+    traces_sample_rate=1.0,
+    # Set profiles_sample_rate to 1.0 to profile 100%
+    # of sampled transactions.
+    # We recommend adjusting this value in production.
+    profiles_sample_rate=1.0,
+)
 
 app = FastAPI(
     title="iTELL AI",
@@ -46,32 +57,14 @@ app = FastAPI(
 )
 
 
-origins = ["*"]
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=origins,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-
 @app.get("/")
 def hello() -> Message:
     return Message(message="This is a summary scoring API for iTELL.")
 
 
-@app.get("/gpu", description="Check if GPU is available.")
-def gpu_is_available() -> Message:
-    if os.environ.get("ENV") == "development":
-        return Message(message="Running in development mode.")
-    else:
-        import torch
-        if torch.cuda.is_available():
-            return Message(message="GPU is available.")
-        else:
-            return Message(message="GPU is not available.")
+@app.get("/sentry-debug", description="Raises a ZeroDivisionError when called.")
+async def trigger_error():
+    return 1 / 0
 
 
 @app.post("/score/summary")
@@ -117,11 +110,17 @@ async def generate_transcript(input_body: TranscriptInput) -> TranscriptResults:
     return await transcript_generate(input_body)
 
 
-if os.environ.get("ENV") == "development":
-    print("Skipping chat/embedding endpoints in development mode.")
-else:
+if not os.environ.get("ENV") == "development":
+    import torch
     from src.embedding import embedding_generate, chunks_retrieve
     from src.chat import moderated_chat
+
+    @app.get("/gpu", description="Check if GPU is available.")
+    def gpu_is_available() -> Message:
+        if torch.cuda.is_available():
+            return Message(message="GPU is available.")
+        else:
+            return Message(message="GPU is not available.")
 
     @app.post("/chat")
     async def chat(input_body: ChatInput) -> ChatResult:
