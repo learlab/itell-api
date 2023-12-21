@@ -6,255 +6,132 @@
 #
 --extra-index-url https://download.pytorch.org/whl/cu121
 
-absl-py==2.0.0
-    # via rouge-score
-accelerate==0.25.0
-    # via autoawq
-aiohttp==3.9.1
-    # via
-    #   datasets
-    #   fsspec
 aioprometheus[starlette]==23.3.0
     # via vllm
 aiosignal==1.3.1
-    # via
-    #   aiohttp
-    #   ray
+    # via ray
 anyio==3.7.1
     # via
-    #   -r requirements/base.txt
     #   fastapi
     #   httpcore
-    #   openai
     #   starlette
     #   watchfiles
-async-timeout==4.0.3
-    # via aiohttp
-attributedict==0.3.0
-    # via autoawq
 attrs==23.1.0
     # via
-    #   aiohttp
-    #   jsonlines
     #   jsonschema
     #   referencing
-autoawq==0.1.7
-    # via -r requirements/gpu.in
-blessings==1.7
-    # via colour-runner
 blis==0.7.11
-    # via
-    #   -r requirements/base.txt
-    #   thinc
-cachetools==5.3.2
-    # via tox
+    # via thinc
 catalogue==2.0.10
     # via
-    #   -r requirements/base.txt
     #   spacy
     #   srsly
     #   thinc
 certifi==2023.11.17
     # via
-    #   -r requirements/base.txt
     #   httpcore
     #   httpx
     #   requests
-chardet==5.2.0
-    # via
-    #   mbstrdecoder
-    #   tox
+    #   sentry-sdk
 charset-normalizer==3.3.2
-    # via
-    #   -r requirements/base.txt
-    #   requests
+    # via requests
 click==8.1.7
     # via
-    #   -r requirements/base.txt
     #   nltk
     #   ray
     #   typer
     #   uvicorn
 cloudpathlib==0.16.0
-    # via
-    #   -r requirements/base.txt
-    #   weasel
-codecov==2.1.13
-    # via
-    #   attributedict
-    #   inspecta
-    #   rootpath
-colorama==0.4.6
-    # via
-    #   tox
-    #   tqdm-multiprocess
-coloredlogs==15.0.1
-    # via rootpath
-colour-runner==0.1.1
-    # via
-    #   attributedict
-    #   inspecta
-    #   rootpath
+    # via weasel
 confection==0.1.4
     # via
-    #   -r requirements/base.txt
     #   thinc
     #   weasel
-coverage==7.3.3
-    # via
-    #   attributedict
-    #   codecov
-    #   inspecta
-    #   rootpath
 cymem==2.0.8
     # via
-    #   -r requirements/base.txt
     #   preshed
     #   spacy
     #   thinc
-dataproperty==1.0.1
-    # via
-    #   pytablewriter
-    #   tabledata
-datasets==2.14.4
-    # via lm-eval
-deepdiff==6.7.1
-    # via
-    #   attributedict
-    #   inspecta
-    #   rootpath
 deprecation==2.1.0
-    # via
-    #   -r requirements/base.txt
-    #   postgrest
-dill==0.3.7
-    # via
-    #   datasets
-    #   multiprocess
-distlib==0.3.8
-    # via virtualenv
-distro==1.8.0
-    # via openai
+    # via postgrest
 en-core-web-sm @ https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.7.1/en_core_web_sm-3.7.1-py3-none-any.whl
-    # via -r requirements/base.txt
+    # via -r requirements/base.in
 exceptiongroup==1.2.0
-    # via
-    #   -r requirements/base.txt
-    #   anyio
+    # via anyio
 fastapi==0.105.0
     # via
-    #   -r requirements/base.txt
+    #   -r requirements/base.in
+    #   sentry-sdk
     #   vllm
 filelock==3.13.1
     # via
-    #   -r requirements/base.txt
     #   huggingface-hub
     #   ray
     #   torch
-    #   tox
     #   transformers
     #   triton
-    #   virtualenv
 frozenlist==1.4.1
     # via
-    #   aiohttp
     #   aiosignal
     #   ray
-fsspec[http]==2023.12.2
+fsspec==2023.12.2
     # via
-    #   -r requirements/base.txt
-    #   datasets
     #   huggingface-hub
     #   torch
+gcld3==3.0.13
+    # via -r requirements/base.in
 gensim==4.3.2
-    # via -r requirements/base.txt
+    # via -r requirements/base.in
 gotrue==2.1.0
-    # via
-    #   -r requirements/base.txt
-    #   supabase
+    # via supabase
 h11==0.14.0
     # via
-    #   -r requirements/base.txt
     #   httpcore
     #   uvicorn
 httpcore==0.17.3
-    # via
-    #   -r requirements/base.txt
-    #   httpx
+    # via httpx
 httptools==0.6.1
     # via uvicorn
 httpx==0.24.1
     # via
-    #   -r requirements/base.txt
+    #   -r requirements/base.in
     #   gotrue
-    #   openai
     #   postgrest
     #   storage3
     #   supabase
     #   supafunc
 huggingface-hub==0.19.4
     # via
-    #   -r requirements/base.txt
-    #   accelerate
-    #   datasets
     #   sentence-transformers
     #   tokenizers
     #   transformers
-humanfriendly==10.0
-    # via coloredlogs
 idna==3.6
     # via
-    #   -r requirements/base.txt
     #   anyio
     #   httpx
     #   requests
-    #   yarl
-inspecta==0.1.3
-    # via attributedict
 jinja2==3.1.2
     # via
-    #   -r requirements/base.txt
     #   spacy
     #   torch
 joblib==1.3.2
     # via
-    #   -r requirements/base.txt
     #   nltk
     #   scikit-learn
-jsonlines==4.0.0
-    # via lm-eval
 jsonschema==4.20.0
     # via ray
 jsonschema-specifications==2023.11.2
     # via jsonschema
 langcodes==3.3.0
-    # via
-    #   -r requirements/base.txt
-    #   spacy
-lm-eval==0.3.0
-    # via autoawq
+    # via spacy
 markupsafe==2.1.3
-    # via
-    #   -r requirements/base.txt
-    #   jinja2
-mbstrdecoder==1.1.3
-    # via
-    #   dataproperty
-    #   pytablewriter
-    #   typepy
+    # via jinja2
 mpmath==1.3.0
     # via sympy
 msgpack==1.0.7
     # via ray
-multidict==6.0.4
-    # via
-    #   aiohttp
-    #   yarl
-multiprocess==0.70.15
-    # via datasets
 murmurhash==1.0.10
     # via
-    #   -r requirements/base.txt
     #   preshed
     #   spacy
     #   thinc
@@ -264,23 +141,15 @@ ninja==1.11.1.1
     # via vllm
 nltk==3.8.1
     # via
-    #   -r requirements/base.txt
-    #   rouge-score
+    #   -r requirements/base.in
     #   sentence-transformers
-numexpr==2.8.8
-    # via lm-eval
 numpy==1.26.2
     # via
-    #   -r requirements/base.txt
-    #   accelerate
     #   blis
-    #   datasets
     #   gensim
-    #   numexpr
     #   pandas
     #   pyarrow
     #   ray
-    #   rouge-score
     #   scikit-learn
     #   scipy
     #   sentence-transformers
@@ -290,110 +159,57 @@ numpy==1.26.2
     #   transformers
     #   vllm
     #   xformers
-openai==1.5.0
-    # via lm-eval
-ordered-set==4.1.0
-    # via deepdiff
 orjson==3.9.10
     # via aioprometheus
 packaging==23.2
     # via
-    #   -r requirements/base.txt
-    #   accelerate
-    #   datasets
     #   deprecation
     #   huggingface-hub
-    #   pyproject-api
     #   ray
     #   spacy
     #   thinc
-    #   tox
     #   transformers
-    #   typepy
     #   weasel
 pandas==2.1.4
-    # via
-    #   datasets
-    #   vllm
-pathvalidate==3.2.0
-    # via pytablewriter
+    # via vllm
 pillow==10.1.0
     # via torchvision
-platformdirs==4.1.0
-    # via
-    #   tox
-    #   virtualenv
-pluggy==1.3.0
-    # via tox
-portalocker==2.8.2
-    # via sacrebleu
 postgrest==0.13.0
-    # via
-    #   -r requirements/base.txt
-    #   supabase
+    # via supabase
 preshed==3.0.9
     # via
-    #   -r requirements/base.txt
     #   spacy
     #   thinc
 protobuf==3.20.3
     # via
-    #   -r requirements/base.txt
-    #   autoawq
+    #   -r requirements/base.in
     #   ray
 psutil==5.9.7
-    # via
-    #   accelerate
-    #   vllm
+    # via vllm
 pyarrow==14.0.1
-    # via
-    #   datasets
-    #   vllm
-pybind11==2.11.1
-    # via lm-eval
-pycld2==0.41
-    # via -r requirements/base.txt
-pycountry==23.12.11
-    # via lm-eval
+    # via vllm
 pydantic==1.10.13
     # via
-    #   -r requirements/base.txt
+    #   -r requirements/base.in
     #   confection
     #   fastapi
     #   gotrue
-    #   openai
     #   postgrest
     #   spacy
     #   thinc
     #   vllm
     #   weasel
-pygments==2.17.2
-    # via
-    #   colour-runner
-    #   inspecta
-    #   rootpath
-pyproject-api==1.6.1
-    # via tox
-pytablewriter==1.2.0
-    # via lm-eval
 python-dateutil==2.8.2
     # via
-    #   -r requirements/base.txt
     #   pandas
     #   realtime
     #   storage3
-    #   typepy
 python-dotenv==1.0.0
     # via uvicorn
 pytz==2023.3.post1
-    # via
-    #   pandas
-    #   typepy
+    # via pandas
 pyyaml==6.0.1
     # via
-    #   -r requirements/base.txt
-    #   accelerate
-    #   datasets
     #   huggingface-hub
     #   ray
     #   transformers
@@ -403,24 +219,17 @@ quantile-python==1.1
 ray==2.8.1
     # via vllm
 realtime==1.0.2
-    # via
-    #   -r requirements/base.txt
-    #   supabase
+    # via supabase
 referencing==0.32.0
     # via
     #   jsonschema
     #   jsonschema-specifications
 regex==2023.10.3
     # via
-    #   -r requirements/base.txt
     #   nltk
     #   transformers
 requests==2.31.0
     # via
-    #   -r requirements/base.txt
-    #   codecov
-    #   datasets
-    #   fsspec
     #   huggingface-hub
     #   ray
     #   spacy
@@ -428,191 +237,105 @@ requests==2.31.0
     #   transformers
     #   weasel
     #   youtube-transcript-api
-rootpath==0.1.1
-    # via
-    #   attributedict
-    #   inspecta
-rouge-score==0.1.2
-    # via lm-eval
 rpds-py==0.14.2
     # via
     #   jsonschema
     #   referencing
-sacrebleu==1.5.0
-    # via lm-eval
 safetensors==0.4.1
-    # via
-    #   -r requirements/base.txt
-    #   accelerate
-    #   transformers
+    # via transformers
 scikit-learn==1.3.2
-    # via
-    #   lm-eval
-    #   sentence-transformers
+    # via sentence-transformers
 scipy==1.11.4
     # via
-    #   -r requirements/base.txt
     #   gensim
     #   scikit-learn
     #   sentence-transformers
 sentence-transformers==2.2.2
-    # via -r requirements/gpu.in
+    # via -r requirements/base.in
 sentencepiece==0.1.99
     # via
-    #   autoawq
     #   sentence-transformers
     #   vllm
+sentry-sdk[fastapi]==1.39.1
+    # via -r requirements/base.in
 six==1.16.0
-    # via
-    #   -r requirements/base.txt
-    #   blessings
-    #   inspecta
-    #   python-dateutil
-    #   rootpath
-    #   rouge-score
+    # via python-dateutil
 smart-open==6.4.0
     # via
-    #   -r requirements/base.txt
     #   gensim
     #   spacy
     #   weasel
 sniffio==1.3.0
     # via
-    #   -r requirements/base.txt
     #   anyio
     #   httpcore
     #   httpx
-    #   openai
 spacy==3.7.2
     # via
-    #   -r requirements/base.txt
+    #   -r requirements/base.in
     #   en-core-web-sm
 spacy-legacy==3.0.12
-    # via
-    #   -r requirements/base.txt
-    #   spacy
+    # via spacy
 spacy-loggers==1.0.5
-    # via
-    #   -r requirements/base.txt
-    #   spacy
-sqlitedict==2.1.0
-    # via lm-eval
+    # via spacy
 srsly==2.4.8
     # via
-    #   -r requirements/base.txt
     #   confection
     #   spacy
     #   thinc
     #   weasel
 starlette==0.27.0
     # via
-    #   -r requirements/base.txt
     #   aioprometheus
     #   fastapi
 storage3==0.7.0
-    # via
-    #   -r requirements/base.txt
-    #   supabase
+    # via supabase
 strenum==0.4.15
-    # via
-    #   -r requirements/base.txt
-    #   postgrest
+    # via postgrest
 supabase==2.3.0
-    # via -r requirements/base.txt
+    # via -r requirements/base.in
 supafunc==0.3.1
-    # via
-    #   -r requirements/base.txt
-    #   supabase
+    # via supabase
 sympy==1.12
     # via torch
-tabledata==1.3.3
-    # via pytablewriter
-tabulate==0.9.0
-    # via autoawq
-tcolorpy==0.1.4
-    # via pytablewriter
-termcolor==2.4.0
-    # via
-    #   inspecta
-    #   rootpath
-texttable==1.7.0
-    # via autoawq
 thinc==8.2.2
-    # via
-    #   -r requirements/base.txt
-    #   spacy
+    # via spacy
 threadpoolctl==3.2.0
     # via scikit-learn
 tokenizers==0.15.0
-    # via
-    #   -r requirements/base.txt
-    #   autoawq
-    #   transformers
-toml==0.10.2
-    # via autoawq
-tomli==2.0.1
-    # via
-    #   pyproject-api
-    #   tox
+    # via transformers
 torch==2.1.2+cu121
     # via
     #   -r requirements/gpu.in
-    #   accelerate
-    #   autoawq
-    #   lm-eval
     #   sentence-transformers
     #   torchvision
     #   vllm
     #   xformers
 torchvision==0.16.2+cu121
-    # via
-    #   autoawq
-    #   sentence-transformers
-tox==4.11.4
-    # via
-    #   attributedict
-    #   inspecta
-    #   rootpath
+    # via sentence-transformers
 tqdm==4.66.1
     # via
-    #   -r requirements/base.txt
-    #   datasets
     #   huggingface-hub
     #   nltk
-    #   openai
     #   sentence-transformers
     #   spacy
-    #   tqdm-multiprocess
     #   transformers
-tqdm-multiprocess==0.0.11
-    # via lm-eval
 transformers==4.36.1
     # via
-    #   -r requirements/base.txt
-    #   autoawq
-    #   lm-eval
+    #   -r requirements/base.in
     #   sentence-transformers
     #   vllm
 triton==2.1.0
     # via torch
-typepy[datetime]==1.3.2
-    # via
-    #   dataproperty
-    #   pytablewriter
-    #   tabledata
-    #   typepy
 typer==0.9.0
     # via
-    #   -r requirements/base.txt
     #   spacy
     #   weasel
 typing-extensions==4.9.0
     # via
-    #   -r requirements/base.txt
     #   cloudpathlib
     #   fastapi
     #   huggingface-hub
-    #   openai
     #   pydantic
     #   realtime
     #   storage3
@@ -623,47 +346,31 @@ tzdata==2023.3
     # via pandas
 urllib3==2.1.0
     # via
-    #   -r requirements/base.txt
     #   requests
+    #   sentry-sdk
 uvicorn[standard]==0.24.0.post1
-    # via
-    #   -r requirements/base.txt
-    #   vllm
+    # via vllm
 uvloop==0.19.0
     # via uvicorn
-virtualenv==20.25.0
-    # via tox
 vllm==0.2.5
     # via -r requirements/gpu.in
 wasabi==1.1.2
     # via
-    #   -r requirements/base.txt
     #   spacy
     #   thinc
     #   weasel
 watchfiles==0.21.0
     # via uvicorn
 weasel==0.3.4
-    # via
-    #   -r requirements/base.txt
-    #   spacy
+    # via spacy
 websockets==11.0.3
     # via
-    #   -r requirements/base.txt
     #   realtime
     #   uvicorn
 xformers==0.0.23.post1
-    # via
-    #   -r requirements/gpu.in
-    #   vllm
-xxhash==3.4.1
-    # via datasets
-yarl==1.9.4
-    # via aiohttp
+    # via vllm
 youtube-transcript-api==0.6.1
-    # via -r requirements/base.txt
-zstandard==0.22.0
-    # via lm-eval
+    # via -r requirements/base.in
 
 # The following packages are considered to be unsafe in a requirements file:
 # setuptools

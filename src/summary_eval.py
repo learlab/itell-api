@@ -6,7 +6,7 @@ from .connections.strapi import Strapi
 
 import random
 import re
-import pycld2 as cld2
+import gcld3
 import spacy
 from nltk import trigrams
 from transformers import logging
@@ -18,6 +18,7 @@ strapi = Strapi()
 nlp = spacy.load("en_core_web_sm", disable=["ner"])
 content_pipe = SummaryPipeline("tiedaar/longformer-content-global")
 wording_pipe = SummaryPipeline("tiedaar/longformer-wording-global")
+detector = gcld3.NNetLanguageIdentifier(min_num_bytes=0, max_num_bytes=1000)
 
 
 class Summary:
@@ -132,8 +133,8 @@ async def summary_score(summary_input: SummaryInputStrapi) -> SummaryResults:
     summary.suggest_keyphrases()
 
     summary.results["english"] = True
-    is_detection_reliable, _, details = cld2.detect(summary_input.summary)
-    if is_detection_reliable and details[0][0] != "ENGLISH":
+    result = detector.FindLanguage(text=summary_input.summary)
+    if result.is_reliable and result.language != "en":
         summary.results["english"] = False
 
     junk_filter = (
