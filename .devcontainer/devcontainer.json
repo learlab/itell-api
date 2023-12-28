@@ -12,6 +12,7 @@
 		"--gpus",
 		"all"
 	],
+	"hostRequirements": {"gpu": true},
 	"features": {
 		"ghcr.io/devcontainers/features/git:1": {
 			"ppa": true,

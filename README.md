@@ -27,7 +27,7 @@ This repository can run in three modes: development, gpu-development, and produc
 Please set ENV=development, ENV=gpu-development, or ENV=production in your .env file and make sure these environment variables are loaded in the shell session where you run the API.
  **If no ENV is set, the default is production, which will likely fail on your system.**
 
-1. Install `protobuf-compiler` on your system. This is a requirement to build `gcld3`.
+1. Install `protobuf-compiler` and/or `libprotobuf-dev` on your system. The requirements are system specific. They are a dependency of `gcld3`, which is used for language detection.
 2. Clone the repository and run `pip install -r requirements/dev.in` or `pip install -r requirements/gpu.in` depending on your environment.
 3. Make sure to create a `.env` file in the application root directory like `.env.example`
    - Ask a team member for the values to use in the `.env` file.
