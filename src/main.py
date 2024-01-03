@@ -12,6 +12,7 @@ from .transcript import transcript_generate
 
 import os
 from fastapi import FastAPI, HTTPException, Response
+from fastapi.middleware.cors import CORSMiddleware
 import sentry_sdk
 from typing import Union
 
@@ -40,6 +41,7 @@ sentry_sdk.init(
     profiles_sample_rate=1.0,
 )
 
+
 app = FastAPI(
     title="iTELL AI",
     description=description,
@@ -56,6 +58,15 @@ app = FastAPI(
     },
 )
 
+origins = ["*"]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 @app.get("/")
 def hello() -> Message:
