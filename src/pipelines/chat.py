@@ -28,7 +28,7 @@ engine = AsyncLLMEngine.from_engine_args(engine_args)
 
 
 async def ChatPipeline(
-    prompt: str, sampling_params: SamplingParams
+    prompt: str, sampling_params: SamplingParams, stream: bool = True
 ) -> AsyncGenerator[bytes, None]:
     """Generate completion for the request.
     - prompt: the prompt to use for the generation.
@@ -46,4 +46,14 @@ async def ChatPipeline(
             }
             yield (json.dumps(ret) + "\0").encode("utf-8")
 
-    return stream_results()
+    if stream:
+        return stream_results()
+
+    # Collect the final byte string from the streaming response generator
+    # And return a single string
+    final_output = None
+    async for request_output in stream_results():
+        final_output = request_output
+
+    assert final_output is not None
+    return json.loads(final_output)

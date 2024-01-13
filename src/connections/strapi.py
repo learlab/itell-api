@@ -91,9 +91,7 @@ class Strapi:
             else:
                 yield f"[{key}]", value
 
-    async def get_chunk(
-        self, page_slug: str, chunk_slug: str
-    ) -> Chunk:
+    async def get_chunk(self, page_slug: str, chunk_slug: str) -> Chunk:
         """Used for answer scoring.
         Should return a component dictionary."""
         json_response = await self.get_entries(
@@ -115,12 +113,28 @@ class Strapi:
         )
 
         try:
-            return PageWithText(**json_response).data[0].attributes.text.data.attributes
-        except (AttributeError, KeyError) as error:
+            text_meta = (
+                PageWithText(**json_response).data[0].attributes.text.data.attributes
+            )
+        except AttributeError as error:
             raise HTTPException(
                 status_code=404,
                 detail=f"No parent text found for {page_slug}\n\n{error}",
             )
+
+        if text_meta.Title is None:
+            raise HTTPException(
+                status_code=404,
+                detail="Requested page does not have a parent text with a title.",
+            )
+
+        if text_meta.slug is None:
+            raise HTTPException(
+                status_code=404,
+                detail="Requested page does not have a parent text with a slug.",
+            )
+
+        return text_meta
 
     async def get_chunks(self, page_slug: str) -> list[Chunk]:
         """Used for summary scoring.

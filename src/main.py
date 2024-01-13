@@ -2,8 +2,10 @@ from .models.summary import SummaryInputStrapi, SummaryInputSupaBase, SummaryRes
 from .models.answer import AnswerInputStrapi, AnswerInputSupaBase, AnswerResults
 from .models.embedding import ChunkInput, RetrievalInput, RetrievalResults
 from .models.chat import ChatInput, ChatResult
+from .models.sert import SertInput
 from .models.message import Message
 from .models.transcript import TranscriptInput, TranscriptResults
+from .sert import sert_generate
 from .summary_eval_supabase import summary_score_supabase
 from .summary_eval import summary_score
 from .answer_eval_supabase import answer_score_supabase
@@ -31,13 +33,9 @@ that are used by the content management system.
 """
 
 sentry_sdk.init(
-    dsn="https://d8e406671b4ca30dcecb4d7c4e0a9b0c@o4506435193405440.ingest.sentry.io/4506435194650624",
-    # Set traces_sample_rate to 1.0 to capture 100%
-    # of transactions for performance monitoring.
+    dsn=os.environ.get("SENTRY_DSN"),
     traces_sample_rate=1.0,
-    # Set profiles_sample_rate to 1.0 to profile 100%
-    # of sampled transactions.
-    # We recommend adjusting this value in production.
+    # Samples 100% of transactions. We should decrease this value in the future.
     profiles_sample_rate=1.0,
 )
 
@@ -68,14 +66,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
 @app.get("/")
 def hello() -> Message:
     return Message(message="This is a summary scoring API for iTELL.")
-
-
-@app.get("/sentry-debug", description="Raises a ZeroDivisionError when called.")
-async def trigger_error():
-    return 1 / 0
 
 
 @app.post("/score/summary")
@@ -136,6 +130,10 @@ if not os.environ.get("ENV") == "development":
     @app.post("/chat")
     async def chat(input_body: ChatInput) -> ChatResult:
         return ChatResult(await moderated_chat(input_body))
+
+    @app.post("/generate/sert")
+    async def generate_sert(input_body: SertInput) -> ChatResult:
+        return ChatResult(await sert_generate(input_body))
 
     @app.post("/generate/embedding")
     async def generate_embedding(input_body: ChunkInput) -> Response:
