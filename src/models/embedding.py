@@ -1,5 +1,6 @@
 from typing import Optional, List, Union
 from pydantic import BaseModel
+from enum import Enum
 
 
 class ChunkInput(BaseModel):
@@ -11,19 +12,25 @@ class ChunkInput(BaseModel):
     content: str  # Chunk text content
 
 
-class RetrievalInput(BaseModel):
+class RetrievalStrategy(str, Enum):
+    most_similar = "most_similar"
+    least_similar = "least_similar"
+
+
+class RetrievalInput(BaseModel, use_enum_values=True):
     text_slug: Optional[str]
     page_slug: str
     text: str  # text to compare to (student summary)
-    similarity_threshold: Optional[float] = 0.3
+    similarity_threshold: Optional[float] = 0.0
+    retrieve_strategy: Optional[RetrievalStrategy] = RetrievalStrategy.most_similar
     match_count: Optional[int] = 1
 
 
 class Match(BaseModel):
-    chunk_slug: str
+    chunk: str
     content: str
     similarity: float
 
 
 class RetrievalResults(BaseModel):
-    matches: Union[List, List[Match]]
+    matches: List[Match] = []
