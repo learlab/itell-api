@@ -4,7 +4,6 @@ from .embedding import chunks_retrieve
 from .pipelines.chat import ChatPipeline
 from .connections.strapi import Strapi
 
-from fastapi import HTTPException
 from vllm.sampling_params import SamplingParams
 from typing import AsyncGenerator
 
@@ -14,18 +13,6 @@ strapi = Strapi()
 async def moderated_chat(chat_input: ChatInput) -> AsyncGenerator[bytes, None]:
     # Adding in the specific name of the textbook majorly improved response quality
     text_meta = await strapi.get_text_meta(chat_input.page_slug)
-
-    if text_meta.Title is None:
-        raise HTTPException(
-            status_code=404,
-            detail="Requested page does not have a parent text with a title.",
-        )
-    
-    if text_meta.slug is None:
-        raise HTTPException(
-            status_code=404,
-            detail="Requested page does not have a parent text with a slug.",
-        )
 
     # Stop generation when the LLM generates the token for "user" (1792)
     # This prevents the LLM from having a conversation with itself
@@ -66,6 +53,7 @@ async def moderated_chat(chat_input: ChatInput) -> AsyncGenerator[bytes, None]:
             text_slug=text_meta.slug,
             page_slug=chat_input.page_slug,
             text=chat_input.message,
+            similarity_threshold=0.2,
             match_count=1,
         )
     )
