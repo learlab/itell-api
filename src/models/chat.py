@@ -4,7 +4,7 @@ from fastapi.responses import StreamingResponse
 
 
 class ChatInput(BaseModel):
-    """Strapi Only."""
+    """Only works with texts that have their content stored in Strapi."""
 
     page_slug: str
     history: Optional[dict[str, str]]
