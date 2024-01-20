@@ -1,6 +1,5 @@
 from pydantic import BaseModel
 from typing import Optional
-from fastapi.responses import StreamingResponse
 
 
 class ChatInput(BaseModel):
@@ -10,6 +9,3 @@ class ChatInput(BaseModel):
     history: Optional[dict[str, str]]
     summary: Optional[str] = None
     message: str
-
-
-ChatResult = StreamingResponse

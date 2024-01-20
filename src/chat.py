@@ -1,11 +1,11 @@
 from .models.chat import ChatInput
 from .models.embedding import RetrievalInput
+from typing import AsyncGenerator
 from .embedding import chunks_retrieve
 from .pipelines.chat import ChatPipeline
 from .connections.strapi import Strapi
 
 from vllm.sampling_params import SamplingParams
-from typing import AsyncGenerator
 
 strapi = Strapi()
 

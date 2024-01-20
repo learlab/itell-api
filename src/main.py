@@ -1,7 +1,7 @@
 from .models.summary import SummaryInputStrapi, SummaryInputSupaBase, SummaryResults
 from .models.answer import AnswerInputStrapi, AnswerInputSupaBase, AnswerResults
 from .models.embedding import ChunkInput, RetrievalInput, RetrievalResults
-from .models.chat import ChatInput, ChatResult
+from .models.chat import ChatInput
 from .models.sert import SertInput
 from .models.message import Message
 from .models.transcript import TranscriptInput, TranscriptResults
@@ -14,6 +14,7 @@ from .transcript import transcript_generate
 
 import os
 from fastapi import FastAPI, HTTPException, Response
+from fastapi.responses import StreamingResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 import sentry_sdk
 from typing import Union
@@ -128,12 +129,25 @@ if not os.environ.get("ENV") == "development":
             return Message(message="GPU is not available.")
 
     @app.post("/chat")
-    async def chat(input_body: ChatInput) -> ChatResult:
-        return ChatResult(await moderated_chat(input_body))
+    async def chat(input_body: ChatInput) -> StreamingResponse:
+        return StreamingResponse(await moderated_chat(input_body))
 
     @app.post("/generate/sert")
-    async def generate_sert(input_body: SertInput) -> ChatResult:
-        return ChatResult(await sert_generate(input_body))
+    async def generate_sert(
+        input_body: SertInput,
+    ):
+        stream = await sert_generate(input_body)
+        if input_body.stream:
+            return StreamingResponse(stream)
+        else:
+            # Collect the final byte string from the AsyncGenerator
+            # And encode to JSON
+            final_output = None
+            async for request_output in stream:
+                final_output = request_output
+
+            assert final_output is not None
+            return JSONResponse(content=final_output)
 
     @app.post("/generate/embedding")
     async def generate_embedding(input_body: ChunkInput) -> Response:

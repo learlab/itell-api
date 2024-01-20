@@ -1,4 +1,5 @@
 from pydantic import BaseModel
+from typing import Dict
 
 
 class SertInput(BaseModel):
@@ -7,3 +8,5 @@ class SertInput(BaseModel):
 
     page_slug: str
     summary: str
+    stream: bool = True
+    focus_time: Dict[str, int] = dict()  # {"chunk_slug": "seconds", ...}

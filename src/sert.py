@@ -32,6 +32,7 @@ prompt_template = (
     "\n\n[END OF EXCERPT]"
     "\n\nI will now generate a {question_type} question based on the excerpt above."
     " I know that {question_type} means {question_type_definition}"
+    " I will write only one question."
     "\n\nQuestion: "
 )
 
@@ -51,24 +52,33 @@ async def sert_generate(sert_input: SertInput) -> AsyncGenerator[bytes, None]:
 
     # Retrieve the chunk that is the least similar to the student's summary
     # This chunk will be used to generate a question
-    least_similar_chunk = await chunks_retrieve(
+    least_similar_chunks = await chunks_retrieve(
         RetrievalInput(
             text_slug=text_meta.slug,
             page_slug=sert_input.page_slug,
             text=sert_input.summary,
             retrieve_strategy=RetrievalStrategy.least_similar,
-            match_count=1,
+            match_count=3,
         )
     )
 
-    try:
-        chunk = least_similar_chunk.matches[0].content
-    except (IndexError, AttributeError):
+    if len(least_similar_chunks.matches) == 0:
         raise Exception(
             "No chunks found for {sert_input.page_slug} in the vector store."
         )
 
-    truncated_chunk = chunk[: min(2500, len(chunk))]
+    best_chunk_score = 100
+    match = least_similar_chunks.matches[0]
+    for candidate_match in least_similar_chunks.matches:
+        # if no focus time is provided, use a default of 20 seconds
+        focus_time = sert_input.focus_time.get(candidate_match.chunk, 20)
+        # we want the chunk with the lowest similarity and focus time
+        score = candidate_match.similarity * focus_time
+        if score < best_chunk_score:
+            best_chunk_score = score
+            match = candidate_match
+
+    truncated_chunk = match.content[: min(1000, len(match.content))]
 
     question_type = random.choice(list(question_type_definitions.keys()))
 
@@ -81,7 +91,7 @@ async def sert_generate(sert_input: SertInput) -> AsyncGenerator[bytes, None]:
 
     sampling_params = SamplingParams(temperature=0.4, max_tokens=4096)
 
-    return await ChatPipeline(prompt, sampling_params)
+    return await ChatPipeline(prompt, sampling_params, chunk=match.chunk)
 
 
 if __name__ == "__main__":
