@@ -1,5 +1,6 @@
 from .models.summary import SummaryInputStrapi, SummaryResults
 from .models.strapi import Chunk
+from typing import Union
 from .pipelines.summary import SummaryPipeline
 from .pipelines.similarity import semantic_similarity
 from .connections.strapi import Strapi
@@ -8,6 +9,7 @@ import random
 import re
 import gcld3
 import spacy
+from spacy.tokens import Doc
 from nltk import trigrams
 from transformers import logging
 
@@ -21,8 +23,28 @@ wording_pipe = SummaryPipeline("tiedaar/longformer-wording-global")
 detector = gcld3.NNetLanguageIdentifier(min_num_bytes=0, max_num_bytes=1000)
 
 
+def score_containment(source: Doc, derivative: Doc) -> float:
+    """Calculate containment score between a source text and a derivative
+    text. Calculated as the intersection of unique trigrams divided by the
+    number of unique trigrams in the derivative text. Values range from 0
+    to 1, with 1 being completely copied."""
+    src = set(trigrams([t.text for t in source if not t.is_stop]))
+    deriv = set(trigrams([t.text for t in derivative if not t.is_stop]))
+    try:
+        containment = len(src.intersection(deriv)) / len(deriv)
+        return round(containment, 4)
+    except ZeroDivisionError:
+        return 1.0
+
+
 class Summary:
-    def __init__(self, summary: str, chunks: list[Chunk], focus_time: dict[str, int]):
+    def __init__(
+        self,
+        summary: str,
+        chunks: list[Chunk],
+        focus_time: dict[str, int],
+        chat_history: Union[str, None] = None,
+    ):
         self.focus_time = focus_time
         self.chunks = chunks
         clean_text = "\n\n".join([chunk.CleanText for chunk in self.chunks])
@@ -30,25 +52,15 @@ class Summary:
         # Create SpaCy objects
         self.source = nlp(clean_text)
         self.summary = nlp(summary)
+        if chat_history:
+            self.chat_history = nlp(chat_history)
+        else:
+            self.chat_history = None
 
         self.results = {}
 
         # intermediate objects for scoring
         self.input_text = self.summary.text + "</s>" + self.source.text
-
-    def score_containment(self) -> None:
-        """Calculate containment score between a source text and a derivative
-        text. Calculated as the intersection of unique trigrams divided by the
-        number of unique trigrams in the derivative text. Values range from 0
-        to 1, with 1 being completely copied."""
-
-        src = set(trigrams([t.text for t in self.source if not t.is_stop]))
-        txt = set(trigrams([t.text for t in self.summary if not t.is_stop]))
-        try:
-            containment = len(src.intersection(txt)) / len(txt)
-            self.results["containment"] = round(containment, 4)
-        except ZeroDivisionError:
-            self.results["containment"] = 1.0
 
     def score_similarity(self) -> None:
         """Return semantic similarity score based on summary and source text"""
@@ -126,9 +138,14 @@ async def summary_score(summary_input: SummaryInputStrapi) -> SummaryResults:
         summary_input.summary,
         chunks,
         summary_input.focus_time,
+        summary_input.chat_history
     )
 
-    summary.score_containment()
+    summary.results["containment"] = score_containment(summary.source, summary.summary)
+    if summary.chat_history:
+        summary.results["containment_chat"] = score_containment(
+            summary.chat_history, summary.summary
+        )
     summary.score_similarity()
     summary.suggest_keyphrases()
 
@@ -139,6 +156,7 @@ async def summary_score(summary_input: SummaryInputStrapi) -> SummaryResults:
 
     junk_filter = (
         summary.results["containment"] > 0.5
+        or summary.results.get("containment_chat", 0) > 0.5
         or summary.results["similarity"] < 0.3
         or not summary.results["english"]
     )

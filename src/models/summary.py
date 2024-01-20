@@ -7,6 +7,7 @@ class SummaryInputStrapi(BaseModel):
     page_slug: str
     summary: str
     focus_time: Dict[str, int] = dict()  # {"chunk_slug": "seconds", ...}
+    chat_history: Optional[str] = None
 
 
 class SummaryInputSupaBase(BaseModel):
@@ -19,6 +20,7 @@ class SummaryInputSupaBase(BaseModel):
 
 class SummaryResults(BaseModel):
     containment: float
+    containment_chat: Optional[float] = None
     similarity: float
     english: bool
     included_keyphrases: Set[str]
