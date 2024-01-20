@@ -130,12 +130,26 @@ if not os.environ.get("ENV") == "development":
 
     @app.post("/chat")
     async def chat(input_body: ChatInput) -> StreamingResponse:
+        """Responds to user queries incorporating relevant chunks from the current page.
+
+        The response is a StreamingResponse wih the following fields:
+        - **request_id**: a unique identifier for the request
+        - **text**: the response text
+        """
         return StreamingResponse(await moderated_chat(input_body))
 
     @app.post("/generate/sert")
     async def generate_sert(
         input_body: SertInput,
     ):
+        """Selects a chunk for re-reading and
+        generates a self-explanation (SERT) question about the chunk.
+
+        The response is a StreamingResponse with the following fields:
+        - **request_id**: a unique identifier for the request
+        - **text**: the self-explanation question text
+        - **chunk**: the slug of the chunk selected for re-reading
+        """
         stream = await sert_generate(input_body)
         if input_body.stream:
             return StreamingResponse(stream)

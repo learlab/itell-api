@@ -138,7 +138,7 @@ async def summary_score(summary_input: SummaryInputStrapi) -> SummaryResults:
         summary_input.summary,
         chunks,
         summary_input.focus_time,
-        summary_input.chat_history
+        summary_input.chat_history,
     )
 
     summary.results["containment"] = score_containment(summary.source, summary.summary)

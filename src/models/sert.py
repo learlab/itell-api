@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import Dict
 
 
@@ -8,5 +8,9 @@ class SertInput(BaseModel):
 
     page_slug: str
     summary: str
-    stream: bool = True
-    focus_time: Dict[str, int] = dict()  # {"chunk_slug": "seconds", ...}
+    stream: bool = Field(default=True, description="Whether to stream the response.")
+    focus_time: Dict[str, int] = Field(
+        default=dict(),
+        description="Keys are chunk slugs and values are focus times in seconds.",
+        example={"introduction-to-law-79t": 20},
+    )

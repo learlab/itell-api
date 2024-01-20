@@ -1,13 +1,21 @@
 from .textbook import TextbookNames
 from typing import Optional, Dict, Set
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class SummaryInputStrapi(BaseModel):
-    page_slug: str
+    page_slug: str = Field(
+        description="The slug of the current page.", example="the-first-chunk-99t"
+    )
     summary: str
-    focus_time: Dict[str, int] = dict()  # {"chunk_slug": "seconds", ...}
-    chat_history: Optional[str] = None
+    focus_time: Dict[str, int] = Field(
+        default=dict(),
+        description="Keys are chunk slugs and values are focus times in seconds.",
+        example={"introduction-to-law-79t": 20},
+    )
+    chat_history: Optional[str] = Field(
+        default=None, description="The full chat history as a single string."
+    )
 
 
 class SummaryInputSupaBase(BaseModel):
@@ -15,7 +23,11 @@ class SummaryInputSupaBase(BaseModel):
     chapter_index: int
     section_index: Optional[int] = None
     summary: str
-    focus_time: Dict[str, int] = dict()  # {"chunk_slug": "seconds", ...}
+    focus_time: Dict[str, int] = Field(
+        default=dict(),
+        description="Keys are chunk slugs and values are focus times in seconds.",
+        example={"introduction-to-law-79t": 20},
+    )
 
 
 class SummaryResults(BaseModel):
