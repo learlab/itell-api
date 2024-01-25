@@ -15,9 +15,7 @@ WORKDIR /usr/src/itell-ai
 COPY requirements/gpu.txt /usr/src/itell-ai/requirements.txt
 RUN pip install -r requirements.txt
 
-RUN mkdir /usr/local/nltk_data
-ENV HF_HOME=/usr/local/huggingface \
-    NLTK_DATA=/usr/local/nltk_data
+ENV HF_HOME=/usr/local/huggingface
 
 COPY assets /usr/src/itell-ai/assets/
 COPY src /usr/src/itell-ai/src/

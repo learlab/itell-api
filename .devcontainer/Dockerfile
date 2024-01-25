@@ -6,8 +6,6 @@ RUN apt-get update \
     protobuf-compiler \
     libprotobuf-dev
 
-# Specify where we want nltk and hf to cache downloads
-RUN mkdir /usr/local/nltk_data
+# Specify where we want hf to cache downloads
 
-ENV HF_HOME=/usr/local/huggingface \
-    NLTK_DATA=/usr/local/nltk_data
+ENV HF_HOME=/usr/local/huggingface
