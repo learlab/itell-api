@@ -1,4 +1,5 @@
 from sentence_transformers import SentenceTransformer
+from scipy import spatial
 import numpy as np
 
 
@@ -13,3 +14,12 @@ class EmbeddingPipeline:
         if not isinstance(embed, np.ndarray):
             raise TypeError(f"Expected np.ndarray, got {type(embed)}")
         return embed.tolist()
+
+    def score_similarity(self, a: str, b: str) -> float:
+        """Return semantic similarity score based on summary and source text"""
+        a_embed = self.model.encode(a)
+        b_embed = self.model.encode(b)
+
+        cosine = spatial.distance.cosine(a_embed, b_embed)
+
+        return np.subtract(1, cosine)

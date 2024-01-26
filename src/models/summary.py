@@ -1,6 +1,9 @@
 from .textbook import TextbookNames
-from typing import Optional, Dict, Set
+from .strapi import Chunk
+from typing import Optional, Dict, Set, Union
 from pydantic import BaseModel, Field
+from dataclasses import dataclass, field
+from spacy.tokens import Doc
 
 
 class SummaryInputStrapi(BaseModel):
@@ -39,3 +42,15 @@ class SummaryResults(BaseModel):
     suggested_keyphrases: Set[str]
     content: Optional[float] = None
     wording: Optional[float] = None
+
+
+@dataclass
+class Summary:
+    """An intermediate object used for scoring summaries."""
+
+    summary: Doc
+    source: Doc
+    chunks: list[Chunk]
+    page_slug: str
+    chat_history: Union[Doc, None]
+    results: dict = field(default_factory=dict)

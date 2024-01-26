@@ -15,6 +15,7 @@ class Chunk(BaseModel):
     QuestionAnswerResponse: Optional[Optional[str]] = None
     Question: Optional[str] = None
     ConstructedResponse: Optional[str] = None
+    weight: Optional[float] = None
 
 
 class Page(BaseModel):
@@ -68,6 +69,7 @@ class PageWithChunks(BaseModel):
 
 if __name__ == "__main__":
     from rich import print
+
     test_strings = [
         (
             "rich_response",

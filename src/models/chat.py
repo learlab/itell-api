@@ -9,3 +9,10 @@ class ChatInput(BaseModel):
     history: Optional[dict[str, str]]
     summary: Optional[str] = None
     message: str
+
+
+class PromptInput(BaseModel):
+    """Used for testing purposes. The user provides the full prompt that is
+    sent to the model for generation."""
+
+    message: str
