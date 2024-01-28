@@ -15,7 +15,6 @@ class Chunk(BaseModel):
     QuestionAnswerResponse: Optional[Optional[str]] = None
     Question: Optional[str] = None
     ConstructedResponse: Optional[str] = None
-    weight: Optional[float] = None
 
 
 class Page(BaseModel):
