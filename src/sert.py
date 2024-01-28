@@ -1,7 +1,7 @@
 """SERT: Self-Explanation and Reading Strategy Training.
 """
 
-from .models.sert import SertInput
+from .models.summary import Summary, ChunkWithWeight
 from .models.embedding import RetrievalInput, RetrievalStrategy
 from .embedding import chunks_retrieve
 from .pipelines.chat import ChatPipeline
@@ -47,51 +47,62 @@ def generate_sert_prompt(excerpt_chunk, text_name, question_type):
     )
 
 
-async def sert_generate(sert_input: SertInput) -> AsyncGenerator[bytes, None]:
-    text_meta = await strapi.get_text_meta(sert_input.page_slug)
+def weight_chunks_with_similarity(reading_time_score, similarity):
+    return reading_time_score * similarity
 
-    # Retrieve the chunk that is the least similar to the student's summary
-    # This chunk will be used to generate a question
+
+async def sert_generate(summary: Summary) -> AsyncGenerator[bytes, None]:
+    text_meta = await strapi.get_text_meta(summary.page_slug)
+
+    # Retrieve the chunks that are the least similar to the student's summary
     least_similar_chunks = await chunks_retrieve(
         RetrievalInput(
             text_slug=text_meta.slug,
-            page_slug=sert_input.page_slug,
-            text=sert_input.summary,
+            page_slug=summary.page_slug,
+            text=summary.summary.text,
             retrieve_strategy=RetrievalStrategy.least_similar,
-            match_count=3,
+            match_count=5,
         )
     )
 
     if len(least_similar_chunks.matches) == 0:
         raise Exception(
-            "No chunks found for {sert_input.page_slug} in the vector store."
+            "No chunks found for {summary_input.page_slug} in the vector store."
         )
 
-    best_chunk_score = 100
-    match = least_similar_chunks.matches[0]
-    for candidate_match in least_similar_chunks.matches:
-        # if no focus time is provided, use a default of 20 seconds
-        focus_time = sert_input.focus_time.get(candidate_match.chunk, 20)
-        # we want the chunk with the lowest similarity and focus time
-        score = candidate_match.similarity * focus_time
-        if score < best_chunk_score:
-            best_chunk_score = score
-            match = candidate_match
+    # Make a dictionary to look up similarity scores by Slug
+    similarity_dict = {
+        match.chunk: match.similarity for match in least_similar_chunks.matches
+    }
 
-    truncated_chunk = match.content[: min(1000, len(match.content))]
+    # Calculate final score for rereading: reading_time_score * similarity
+    chunks: list[tuple[ChunkWithWeight, float]] = [
+        (chunk, (chunk.weight * similarity_dict[chunk.Slug]))
+        for chunk in summary.chunks
+        if chunk.Slug in similarity_dict
+    ]
+
+    # Select the chunk with the lowest score
+    selected_chunk, _ = min(chunks, key=lambda x: x[1])
+
+    chunk_text = selected_chunk.CleanText[
+        : min(2000, len(selected_chunk.CleanText))  # first 2,000 characters
+    ]
 
     question_type = random.choice(list(question_type_definitions.keys()))
 
-    # Join the prompt components together, ending with the (modified) user message
+    # Construct the SERT prompt
     prompt = generate_sert_prompt(
-        excerpt_chunk=truncated_chunk,
+        excerpt_chunk=chunk_text,
         text_name=text_meta.Title,
         question_type=question_type,
     )
 
     sampling_params = SamplingParams(temperature=0.4, max_tokens=4096)
 
-    return await ChatPipeline(prompt, sampling_params, chunk=match.chunk)
+    return await ChatPipeline(
+        prompt, sampling_params, chunk=selected_chunk.Slug, question_type=question_type
+    )
 
 
 if __name__ == "__main__":

@@ -1,11 +1,12 @@
-from .models.summary import SummaryInputStrapi, Summary
+from .models.summary import SummaryInputStrapi, Summary, ChunkWithWeight, SummaryResults
+from .models.strapi import Chunk
 from spacy.tokens import Doc
 
 from .pipelines.nlp import nlp
 from .pipelines.embed import EmbeddingPipeline
 from .pipelines.containment import score_containment
 from .pipelines.summary import SummaryPipeline
-from .pipelines.suggest_keyphrases import suggest_keyphrases
+from .pipelines.keyphrases import suggest_keyphrases
 from .connections.strapi import Strapi
 
 import gcld3
@@ -23,7 +24,21 @@ detector = gcld3.NNetLanguageIdentifier(  # type: ignore
 )
 
 
-async def summary_score(summary_input: SummaryInputStrapi, do_stairs=False) -> Summary:
+def weight_chunks(
+    chunks: list[Chunk], chunk_docs: list[Doc], focus_time_dict: dict
+) -> list[ChunkWithWeight]:
+    """Weight chunks based on focus time"""
+    weighted_chunks = []
+    for chunk, chunk_doc in zip(chunks, chunk_docs):
+        focus_time = max(focus_time_dict.get(chunk.Slug, 1), 1)
+        weight = 3.33 * (focus_time / len(chunk_doc))
+        weighted_chunks.append(ChunkWithWeight(**chunk.dict(), weight=weight))
+    return weighted_chunks
+
+
+async def summary_score(
+    summary_input: SummaryInputStrapi, do_stairs=False
+) -> tuple[Summary, SummaryResults]:
     """Checks summary for text copied from the source and for semantic
     relevance to the source text. If it passes these checks, score the summary
     using a Huggingface pipeline.
@@ -33,60 +48,61 @@ async def summary_score(summary_input: SummaryInputStrapi, do_stairs=False) -> S
     # 3.33 words per second is an average reading pace
     chunks = await strapi.get_chunks(summary_input.page_slug)
     chunk_docs = list(nlp.pipe([chunk.CleanText for chunk in chunks]))
-    for chunk, chunk_doc in zip(chunks, chunk_docs):
-        focus_time = max(summary_input.focus_time.get(chunk.Slug, 1), 1)
-        chunk.weight = 3.33 * (focus_time / len(chunk_doc))
+
+    weighted_chunks = weight_chunks(chunks, chunk_docs, summary_input.focus_time)
 
     # Create summary data object
     summary = Summary(
         summary=nlp(summary_input.summary),
         source=Doc.from_docs(chunk_docs),  # combine into a single doc
-        chunks=chunks,
+        chunks=weighted_chunks,
         page_slug=summary_input.page_slug,
         chat_history=nlp(summary_input.chat_history)
         if summary_input.chat_history
         else None,
     )
 
+    results = {}
+
     # Check if summary borrows language from source
-    summary.results["containment"] = score_containment(summary.source, summary.summary)
+    results["containment"] = score_containment(summary.source, summary.summary)
 
     # Check if summary borrows language from chat history
     if summary.chat_history:
-        summary.results["containment_chat"] = score_containment(
+        results["containment_chat"] = score_containment(
             summary.chat_history, summary.summary
         )
 
     # Check if summary is similar to source text
-    summary.results["similarity"] = embedding_pipe.score_similarity(
+    results["similarity"] = embedding_pipe.score_similarity(
         summary.source.text, summary.summary.text
     )
 
     # Generate keyphrase suggestions
     included, suggested = suggest_keyphrases(summary.summary, summary.chunks)
-    summary.results["included_keyphrases"] = included
-    summary.results["suggested_keyphrases"] = suggested
+    results["included_keyphrases"] = included
+    results["suggested_keyphrases"] = suggested
 
     # Check if summary is in English
-    summary.results["english"] = True
+    results["english"] = True
     lang_result = detector.FindLanguage(text=summary_input.summary)
     if lang_result.is_reliable and lang_result.language != "en":
-        summary.results["english"] = False
+        results["english"] = False
 
     # Check if summary fails to meet minimum requirements
     junk_filter = (
-        summary.results["containment"] > 0.5
-        or summary.results.get("containment_chat", 0) > 0.5
-        or summary.results["similarity"] < 0.3
-        or not summary.results["english"]
+        results["containment"] > 0.5
+        or results.get("containment_chat", 0) > 0.5
+        or results["similarity"] < 0.3
+        or not results["english"]
     )
 
     if junk_filter:
-        return summary
+        return summary, SummaryResults(**results)
 
     # Summary meets minimum requirements. Score it.
     input_text = summary.summary.text + "</s>" + summary.source.text
-    summary.results["content"] = content_pipe(input_text)
-    summary.results["wording"] = wording_pipe(input_text)
+    results["content"] = content_pipe(input_text)
+    results["wording"] = wording_pipe(input_text)
 
-    return summary
+    return summary, SummaryResults(**results, **results)

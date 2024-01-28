@@ -1,23 +1,30 @@
-from .models.summary import SummaryInputStrapi, SummaryInputSupaBase, SummaryResults
+from .models.summary import (
+    SummaryInputStrapi,
+    SummaryInputSupaBase,
+    SummaryResults,
+    StreamingSummaryResults,
+)
 from .models.answer import AnswerInputStrapi, AnswerInputSupaBase, AnswerResults
 from .models.embedding import ChunkInput, RetrievalInput, RetrievalResults
 from .models.chat import ChatInput
-from .models.sert import SertInput
 from .models.message import Message
+from fastapi import FastAPI, HTTPException, Response
 from .models.transcript import TranscriptInput, TranscriptResults
+from fastapi.responses import StreamingResponse
+from typing import Union, AsyncGenerator
+
 from .sert import sert_generate
 from .summary_eval_supabase import summary_score_supabase
 from .summary_eval import summary_score
+from .summary_feedback import get_feedback
 from .answer_eval_supabase import answer_score_supabase
 from .answer_eval import answer_score
 from .transcript import transcript_generate
 
 import os
-from fastapi import FastAPI, HTTPException, Response
-from fastapi.responses import StreamingResponse, JSONResponse
+import json
 from fastapi.middleware.cors import CORSMiddleware
 import sentry_sdk
-from typing import Union
 
 description = """
 Welcome to iTELL AI, a REST API for intelligent textbooks.
@@ -82,7 +89,8 @@ async def score_summary(
     if isinstance(input_body, SummaryInputSupaBase):
         return await summary_score_supabase(input_body)
     else:  # Strapi method
-        return await summary_score(input_body)
+        _, results = await summary_score(input_body)
+        return results
 
 
 @app.post("/score/answer")
@@ -136,30 +144,32 @@ if not os.environ.get("ENV") == "development":
         """
         return StreamingResponse(await moderated_chat(input_body))
 
-    @app.post("/generate/sert")
-    async def generate_sert(
-        input_body: SertInput,
-    ):
-        """Selects a chunk for re-reading and
+    @app.post("/score/summary/stairs", response_model=StreamingSummaryResults)
+    async def score_summary_with_stairs(
+        input_body: SummaryInputStrapi,
+    ) -> StreamingResponse:
+        """Scores a summary. If the summary fails, selects a chunk for re-reading and
         generates a self-explanation (SERT) question about the chunk.
 
-        The response is a StreamingResponse with the following fields:
+        The response is a stream of Server-Sent Events (SSEs). The first response will
+        be a SummaryResults object with additional fields for feedback.
+
+        If the summary fails, subsequent responses will be:
         - **request_id**: a unique identifier for the request
         - **text**: the self-explanation question text
         - **chunk**: the slug of the chunk selected for re-reading
+        - **question_type**: the type of SERT question
         """
-        stream = await sert_generate(input_body)
-        if input_body.stream:
-            return StreamingResponse(stream)
-        else:
-            # Collect the final byte string from the AsyncGenerator
-            # And encode to JSON
-            final_output = None
-            async for request_output in stream:
-                final_output = request_output
+        summary, results = await summary_score(input_body)
+        feedback = get_feedback(results)
+        stream = await sert_generate(summary)
 
-            assert final_output is not None
-            return JSONResponse(content=final_output)
+        async def stream_results() -> AsyncGenerator[bytes, None]:
+            yield (json.dumps(feedback.dict()) + "\0").encode("utf-8")
+            async for ret in stream:
+                yield ret
+
+        return StreamingResponse(stream_results())
 
     @app.post("/generate/embedding")
     async def generate_embedding(input_body: ChunkInput) -> Response:
