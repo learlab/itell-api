@@ -1,4 +1,5 @@
 from .models.summary import SummaryInputSupaBase, SummaryResults
+from .pipelines.containment import score_containment
 from .pipelines.summary import SummaryPipeline
 from .pipelines.similarity import semantic_similarity
 from .connections.supabase import get_client
@@ -10,7 +11,6 @@ import spacy
 from gensim.models import Doc2Vec
 import gcld3
 
-from nltk import trigrams
 from supabase.client import Client
 from transformers import logging
 
@@ -72,14 +72,7 @@ class Summary:
         text. Calculated as the intersection of unique trigrams divided by the
         number of unique trigrams in the derivative text. Values range from 0
         to 1, with 1 being completely copied."""
-
-        src = set(trigrams([t.text for t in self.source if not t.is_stop]))
-        txt = set(trigrams([t.text for t in self.summary if not t.is_stop]))
-        try:
-            containment = len(src.intersection(txt)) / len(txt)
-            self.results["containment"] = round(containment, 4)
-        except ZeroDivisionError:
-            self.results["containment"] = 1.0
+        self.results["containment"] = score_containment(self.source, self.summary)
 
     def score_similarity(self) -> None:
         """Return semantic similarity score based on summary and source text"""

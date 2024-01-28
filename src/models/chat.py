@@ -1,6 +1,5 @@
 from pydantic import BaseModel
 from typing import Optional
-from fastapi.responses import StreamingResponse
 
 
 class ChatInput(BaseModel):
@@ -12,4 +11,8 @@ class ChatInput(BaseModel):
     message: str
 
 
-ChatResult = StreamingResponse
+class PromptInput(BaseModel):
+    """Used for testing purposes. The user provides the full prompt that is
+    sent to the model for generation."""
+
+    message: str

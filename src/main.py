@@ -1,22 +1,30 @@
-from .models.summary import SummaryInputStrapi, SummaryInputSupaBase, SummaryResults
+from .models.summary import (
+    SummaryInputStrapi,
+    SummaryInputSupaBase,
+    SummaryResults,
+    StreamingSummaryResults,
+)
 from .models.answer import AnswerInputStrapi, AnswerInputSupaBase, AnswerResults
 from .models.embedding import ChunkInput, RetrievalInput, RetrievalResults
-from .models.chat import ChatInput, ChatResult
-from .models.sert import SertInput
+from .models.chat import ChatInput
 from .models.message import Message
+from fastapi import FastAPI, HTTPException, Response
 from .models.transcript import TranscriptInput, TranscriptResults
+from fastapi.responses import StreamingResponse
+from typing import Union, AsyncGenerator
+
 from .sert import sert_generate
 from .summary_eval_supabase import summary_score_supabase
 from .summary_eval import summary_score
+from .summary_feedback import get_feedback
 from .answer_eval_supabase import answer_score_supabase
 from .answer_eval import answer_score
 from .transcript import transcript_generate
 
 import os
-from fastapi import FastAPI, HTTPException, Response
+import json
 from fastapi.middleware.cors import CORSMiddleware
 import sentry_sdk
-from typing import Union
 
 description = """
 Welcome to iTELL AI, a REST API for intelligent textbooks.
@@ -56,11 +64,9 @@ app = FastAPI(
     },
 )
 
-origins = ["*"]
-
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -83,7 +89,8 @@ async def score_summary(
     if isinstance(input_body, SummaryInputSupaBase):
         return await summary_score_supabase(input_body)
     else:  # Strapi method
-        return await summary_score(input_body)
+        _, results = await summary_score(input_body)
+        return results
 
 
 @app.post("/score/answer")
@@ -128,12 +135,41 @@ if not os.environ.get("ENV") == "development":
             return Message(message="GPU is not available.")
 
     @app.post("/chat")
-    async def chat(input_body: ChatInput) -> ChatResult:
-        return ChatResult(await moderated_chat(input_body))
+    async def chat(input_body: ChatInput) -> StreamingResponse:
+        """Responds to user queries incorporating relevant chunks from the current page.
 
-    @app.post("/generate/sert")
-    async def generate_sert(input_body: SertInput) -> ChatResult:
-        return ChatResult(await sert_generate(input_body))
+        The response is a StreamingResponse wih the following fields:
+        - **request_id**: a unique identifier for the request
+        - **text**: the response text
+        """
+        return StreamingResponse(await moderated_chat(input_body))
+
+    @app.post("/score/summary/stairs", response_model=StreamingSummaryResults)
+    async def score_summary_with_stairs(
+        input_body: SummaryInputStrapi,
+    ) -> StreamingResponse:
+        """Scores a summary. If the summary fails, selects a chunk for re-reading and
+        generates a self-explanation (SERT) question about the chunk.
+
+        The response is a stream of Server-Sent Events (SSEs). The first response will
+        be a SummaryResults object with additional fields for feedback.
+
+        If the summary fails, subsequent responses will be:
+        - **request_id**: a unique identifier for the request
+        - **text**: the self-explanation question text
+        - **chunk**: the slug of the chunk selected for re-reading
+        - **question_type**: the type of SERT question
+        """
+        summary, results = await summary_score(input_body)
+        feedback = get_feedback(results)
+        stream = await sert_generate(summary)
+
+        async def stream_results() -> AsyncGenerator[bytes, None]:
+            yield (json.dumps(feedback.dict()) + "\0").encode("utf-8")
+            async for ret in stream:
+                yield ret
+
+        return StreamingResponse(stream_results())
 
     @app.post("/generate/embedding")
     async def generate_embedding(input_body: ChunkInput) -> Response:

@@ -14,6 +14,8 @@ class SummaryPipeline(TextClassificationPipeline):
             tokenizer=AutoTokenizer.from_pretrained("allenai/longformer-base-4096"),
             function_to_apply="None",
             device="cuda" if torch.cuda.is_available() else "cpu",
+            truncation=True,
+            max_length=4096,
             *args,
             **kwargs,
         )
@@ -33,3 +35,10 @@ class SummaryPipeline(TextClassificationPipeline):
         )
 
         return {k: torch.tensor([v]) for k, v in input_dict.items()}
+
+    def postprocess(
+        self, model_outputs, function_to_apply=None, top_k=1, _legacy=True
+    ) -> float:
+        outputs = model_outputs["logits"][0]
+
+        return outputs.numpy()[0]

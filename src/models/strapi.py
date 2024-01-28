@@ -68,6 +68,7 @@ class PageWithChunks(BaseModel):
 
 if __name__ == "__main__":
     from rich import print
+
     test_strings = [
         (
             "rich_response",

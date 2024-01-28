@@ -10,7 +10,7 @@ embedding_pipeline = EmbeddingPipeline()
 async def embedding_generate(input_body: ChunkInput) -> Response:
     db = get_vector_store()
 
-    embedding = embedding_pipeline(input_body.content)
+    embedding = embedding_pipeline(input_body.content)[0].tolist()
     upsert_response = (
         db.table("embeddings")
         .upsert(
@@ -32,7 +32,7 @@ async def embedding_generate(input_body: ChunkInput) -> Response:
 async def chunks_retrieve(input_body: RetrievalInput) -> RetrievalResults:
     db = get_vector_store()
 
-    content_embedding = embedding_pipeline(input_body.text)
+    content_embedding = embedding_pipeline(input_body.text)[0].tolist()
     query_params = {
         "embedding": content_embedding,
         "match_threshold": input_body.similarity_threshold,
