@@ -35,10 +35,3 @@ class SummaryPipeline(TextClassificationPipeline):
         )
 
         return {k: torch.tensor([v]) for k, v in input_dict.items()}
-
-    def postprocess(
-        self, model_outputs, function_to_apply=None, top_k=1, _legacy=True
-    ) -> float:
-        outputs = model_outputs["logits"][0]
-
-        return outputs.numpy()[0]

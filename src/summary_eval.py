@@ -57,9 +57,9 @@ async def summary_score(
         source=Doc.from_docs(chunk_docs),  # combine into a single doc
         chunks=weighted_chunks,
         page_slug=summary_input.page_slug,
-        chat_history=nlp(summary_input.chat_history)
-        if summary_input.chat_history
-        else None,
+        chat_history=(
+            nlp(summary_input.chat_history) if summary_input.chat_history else None
+        ),
     )
 
     results = {}
@@ -74,9 +74,9 @@ async def summary_score(
         )
 
     # Check if summary is similar to source text
-    results["similarity"] = embedding_pipe.score_similarity(
-        summary.source.text, summary.summary.text
-    )
+    results["similarity"] = (
+        embedding_pipe.score_similarity(summary.source.text, summary.summary.text) * 3
+    )  # multiplying by 3 to bring similarity score in line with old doc2vec model
 
     # Generate keyphrase suggestions
     included, suggested = suggest_keyphrases(summary.summary, summary.chunks)
@@ -92,9 +92,9 @@ async def summary_score(
     # Check if summary fails to meet minimum requirements
     junk_filter = (
         results["containment"] > 0.5
-        or results.get("containment_chat", 0) > 0.5
+        or results.get("containment_chat", 0.0) > 0.5
         or results["similarity"] < 0.3
-        or not results["english"]
+        or results["english"] is False
     )
 
     if junk_filter:
@@ -102,7 +102,7 @@ async def summary_score(
 
     # Summary meets minimum requirements. Score it.
     input_text = summary.summary.text + "</s>" + summary.source.text
-    results["content"] = content_pipe(input_text)
-    results["wording"] = wording_pipe(input_text)
+    results["content"] = content_pipe(input_text)[0]["score"]
+    results["wording"] = wording_pipe(input_text)[0]["score"]
 
     return summary, SummaryResults(**results)
