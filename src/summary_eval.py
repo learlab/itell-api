@@ -105,4 +105,4 @@ async def summary_score(
     results["content"] = content_pipe(input_text)
     results["wording"] = wording_pipe(input_text)
 
-    return summary, SummaryResults(**results, **results)
+    return summary, SummaryResults(**results)
