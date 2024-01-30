@@ -75,8 +75,8 @@ async def summary_score(
 
     # Check if summary is similar to source text
     results["similarity"] = (
-        embedding_pipe.score_similarity(summary.source.text, summary.summary.text) * 3
-    )  # multiplying by 3 to bring similarity score in line with old doc2vec model
+        embedding_pipe.score_similarity(summary.source.text, summary.summary.text) + 0.15
+    )  # adding 0.15 to bring similarity score in line with old doc2vec model
 
     # Generate keyphrase suggestions
     included, suggested = suggest_keyphrases(summary.summary, summary.chunks)
