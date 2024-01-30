@@ -10,15 +10,52 @@ from typing import AsyncGenerator
 
 import random
 from vllm.sampling_params import SamplingParams
+from fastapi import HTTPException
 
 strapi = Strapi()
 
 question_type_definitions = {
-    "paraphrasing": "restating the text in different words. Preferably, in the reader’s own words. It is an important part of the explanation process because readers often paraphrase the sentence in order to begin an explanation. Paraphrases are important because they help the reader to better understand the information in the sentences, and thus help the reader, particularly less skilled readers, to develop a better understanding of the text. Essentially, the act of paraphrasing externalizes the reader’s understanding. This process can force the reader to fill in conceptual gaps and facilitates the activation of relevant concepts that are necessary to generate inferences.",  # noqa: E501
-    "elaboration": "the process of making inferences that link what is in the text or sentence to related to a reader’s background knowledge. Readers use specific prior knowledge or learned experiences to understand a text by developing inferences based on specific background knowledge.",  # noqa: E501
-    "logic": "using general knowledge or logic to infer meaning. Does not depend on background knowledge unique to a reader but rather general knowledge of the world. Helps low-knowledge readers make sense of unfamiliar text. Encourages students to use logic and common sense helps them to understand that it is possible to make sense of the text, and go beyond the text, without knowing a lot about the topic.",  # noqa: E501
-    "prediction": "thinking about what might be coming next in the text. Asking readers to predict next ideas or steps in a text that enhance thinking about the text from a global and not a local perspective.",  # noqa: E501
-    "bridging": "bridging The process of linking ideas and understanding the relations between separate text segments. Readers merge individual ideas from the text into coherent text representation. Making bridging inferences is critical to text comprehension because texts normally do not (or cannot) state all of the relevant information. Therefore, to successfully comprehend a text, the reader must generate bridging inferences to build a coherent mental model that connects the separate ideas across the text. Making reference to an idea presented in a previous sentence in the text to better understand relationships between sentences.",  # noqa: E501
+    "paraphrasing": (  # noqa: E501
+        "restating the text in different words. Preferably, in the reader’s own words."
+        " It is an important part of the explanation process because readers often"
+        " paraphrase the sentence in order to begin an explanation. Paraphrases are"
+        " important because they help the reader to better understand the information"
+        " in the sentences, and thus help the reader, particularly less skilled"
+        " readers, to develop a better understanding of the text. Essentially, the act"
+        " of paraphrasing externalizes the reader’s understanding. This process can"
+        " force the reader to fill in conceptual gaps and facilitates the activation of"
+        " relevant concepts that are necessary to generate inferences."
+    ),
+    "elaboration": (  # noqa: E501
+        "the process of making inferences that link what is in the text or sentence to"
+        " related to a reader’s background knowledge. Readers use specific prior"
+        " knowledge or learned experiences to understand a text by developing"
+        " inferences based on specific background knowledge."
+    ),
+    "logic": (  # noqa: E501
+        "using general knowledge or logic to infer meaning. Does not depend on"
+        " background knowledge unique to a reader but rather general knowledge of the"
+        " world. Helps low-knowledge readers make sense of unfamiliar text. Encourages"
+        " students to use logic and common sense helps them to understand that it is"
+        " possible to make sense of the text, and go beyond the text, without knowing a"
+        " lot about the topic."
+    ),
+    "prediction": (  # noqa: E501
+        "thinking about what might be coming next in the text. Asking readers to"
+        " predict next ideas or steps in a text that enhance thinking about the text"
+        " from a global and not a local perspective."
+    ),
+    "bridging": (  # noqa: E501
+        "the process of linking ideas and understanding the relations between"
+        " separate text segments. Readers merge individual ideas from the text into"
+        " coherent text representation. Making bridging inferences is critical to text"
+        " comprehension because texts normally do not (or cannot) state all of the"
+        " relevant information. Therefore, to successfully comprehend a text, the"
+        " reader must generate bridging inferences to build a coherent mental model"
+        " that connects the separate ideas across the text. Making reference to an idea"
+        " presented in a previous sentence in the text to better understand"
+        " relationships between sentences."
+    ),
 }
 
 prompt_template = (
@@ -66,8 +103,9 @@ async def sert_generate(summary: Summary) -> AsyncGenerator[bytes, None]:
     )
 
     if len(least_similar_chunks.matches) == 0:
-        raise Exception(
-            "No chunks found for {summary_input.page_slug} in the vector store."
+        raise HTTPException(
+            status_code=404,
+            detail=f"No chunks found for '{summary.page_slug}' in the vector store.",
         )
 
     # Make a dictionary to look up similarity scores by Slug

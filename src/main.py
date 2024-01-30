@@ -6,11 +6,11 @@ from .models.summary import (
 )
 from .models.answer import AnswerInputStrapi, AnswerInputSupaBase, AnswerResults
 from .models.embedding import ChunkInput, RetrievalInput, RetrievalResults
-from .models.chat import ChatInput
+from .models.chat import ChatInput, PromptInput
 from .models.message import Message
-from fastapi import FastAPI, HTTPException, Response
 from .models.transcript import TranscriptInput, TranscriptResults
 from fastapi.responses import StreamingResponse
+from fastapi import FastAPI, HTTPException, Response
 from typing import Union, AsyncGenerator
 
 from .sert import sert_generate
@@ -125,7 +125,7 @@ async def generate_transcript(input_body: TranscriptInput) -> TranscriptResults:
 if not os.environ.get("ENV") == "development":
     import torch
     from src.embedding import embedding_generate, chunks_retrieve
-    from src.chat import moderated_chat
+    from src.chat import moderated_chat, unmoderated_chat
 
     @app.get("/gpu", description="Check if GPU is available.")
     def gpu_is_available() -> Message:
@@ -143,6 +143,13 @@ if not os.environ.get("ENV") == "development":
         - **text**: the response text
         """
         return StreamingResponse(await moderated_chat(input_body))
+
+    @app.post("/chat/raw")
+    async def raw_chat(input_body: PromptInput) -> StreamingResponse:
+        """Direct access to the underlying chat model.
+        For testing purposes.
+        """
+        return StreamingResponse(await unmoderated_chat(input_body))
 
     @app.post("/score/summary/stairs", response_model=StreamingSummaryResults)
     async def score_summary_with_stairs(

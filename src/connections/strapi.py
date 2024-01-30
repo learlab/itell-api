@@ -116,7 +116,7 @@ class Strapi:
             text_meta = (
                 PageWithText(**json_response).data[0].attributes.text.data.attributes
             )
-        except AttributeError as error:
+        except (AttributeError, ValidationError) as error:
             raise HTTPException(
                 status_code=404,
                 detail=f"No parent text found for {page_slug}\n\n{error}",
