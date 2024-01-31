@@ -58,7 +58,7 @@ class ScoreType(str, Enum):
 
 
 class Feedback(BaseModel):
-    is_passed: bool
+    is_passed: Optional[bool] = None
     prompt: Optional[str] = None
 
 

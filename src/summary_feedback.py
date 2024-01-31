@@ -38,7 +38,7 @@ class ContainmentChat:
     @classmethod
     def generate_feedback(cls, score):
         if score is None:
-            feedback = Feedback(is_passed=False, prompt=None)
+            feedback = Feedback(is_passed=None, prompt=None)
         else:
             is_passed = score < cls.threshold
             feedback = Feedback(
@@ -79,7 +79,7 @@ class Content:
     @classmethod
     def generate_feedback(cls, score):
         if score is None:
-            feedback = Feedback(is_passed=False, prompt=None)
+            feedback = Feedback(is_passed=None, prompt=None)
         else:
             is_passed = score > cls.threshold
             feedback = Feedback(
@@ -103,7 +103,7 @@ class Wording:
     @classmethod
     def generate_feedback(cls, score):
         if score is None:
-            feedback = Feedback(is_passed=False, prompt=None)
+            feedback = Feedback(is_passed=None, prompt=None)
         else:
             is_passed = score > cls.threshold
             feedback = Feedback(
@@ -135,7 +135,7 @@ def get_feedback(results: SummaryResults) -> SummaryResultsWithFeedback:
     english = English.generate_feedback(results.english)
 
     is_passed = all(
-        feedback.feedback.is_passed
+        feedback.feedback.is_passed is not False
         for feedback in [
             containment,
             containment_chat,
