@@ -53,7 +53,7 @@ async def moderated_chat(chat_input: ChatInput) -> AsyncGenerator[bytes, None]:
             text_slug=text_meta.slug,
             page_slug=chat_input.page_slug,
             text=chat_input.message,
-            similarity_threshold=0.2,
+            relevance_threshold=0.2,
             match_count=1,
         )
     )

@@ -1,7 +1,7 @@
 from .models.summary import SummaryInputSupaBase, SummaryResults
-from .pipelines.containment import score_containment
+from .pipelines.originality import score_originality
 from .pipelines.summary import SummaryPipeline
-from .pipelines.similarity import semantic_similarity
+from .pipelines.relevance import semantic_relevance
 from .connections.supabase import get_client
 
 import random
@@ -67,17 +67,17 @@ class Summary:
         # intermediate objects for scoring
         self.input_text = self.summary.text + "</s>" + self.source.text
 
-    def score_containment(self) -> None:
-        """Calculate containment score between a source text and a derivative
+    def score_originality(self) -> None:
+        """Calculate originality (containment) score between a source text and a derivative
         text. Calculated as the intersection of unique trigrams divided by the
         number of unique trigrams in the derivative text. Values range from 0
         to 1, with 1 being completely copied."""
-        self.results["containment"] = score_containment(self.source, self.summary)
+        self.results["originality"] = score_originality(self.source, self.summary)
 
-    def score_similarity(self) -> None:
+    def score_relevance(self) -> None:
         """Return semantic similarity score based on summary and source text"""
 
-        self.results["similarity"] = semantic_similarity(
+        self.results["relevance"] = semantic_relevance(
             [t.text for t in self.source if not t.is_stop],
             [t.text for t in self.summary if not t.is_stop],
         )
@@ -141,8 +141,8 @@ async def summary_score_supabase(summary_input: SummaryInputSupaBase) -> Summary
 
     summary = Summary(summary_input, db)
 
-    summary.score_containment()
-    summary.score_similarity()
+    summary.score_originality()
+    summary.score_relevance()
     summary.suggest_keyphrases()
 
     summary.results["english"] = True
@@ -151,8 +151,8 @@ async def summary_score_supabase(summary_input: SummaryInputSupaBase) -> Summary
         summary.results["english"] = False
 
     junk_filter = (
-        summary.results["containment"] > 0.5
-        or summary.results["similarity"] < 0.3
+        summary.results["originality"] > 0.5
+        or summary.results["relevance"] < 0.3
         or not summary.results["english"]
     )
 

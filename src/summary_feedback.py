@@ -7,7 +7,7 @@ from .models.summary import (
 )
 
 
-class Containment:
+class Originality:
     threshold = 0.6
     passing = (
         "You did a good job of using your own language to describe the main ideas"
@@ -24,10 +24,10 @@ class Containment:
         feedback = Feedback(
             is_passed=is_passed, prompt=cls.passing if is_passed else cls.failing
         )
-        return AnalyticFeedback(type=ScoreType.containment, feedback=feedback)
+        return AnalyticFeedback(type=ScoreType.originality, feedback=feedback)
 
 
-class ContainmentChat:
+class OriginalityChat:
     threshold = 0.6
     passing = (
         "You did a good job of using your own language to describe the main ideas"
@@ -44,10 +44,10 @@ class ContainmentChat:
             feedback = Feedback(
                 is_passed=is_passed, prompt=cls.passing if is_passed else cls.failing
             )
-        return AnalyticFeedback(type=ScoreType.containment_chat, feedback=feedback)
+        return AnalyticFeedback(type=ScoreType.originality_chat, feedback=feedback)
 
 
-class Similarity:
+class Relevance:
     threshold = 0.5
     passing = (
         "You did a good job of staying on topic and writing about the main ideas of"
@@ -64,7 +64,7 @@ class Similarity:
         feedback = Feedback(
             is_passed=is_passed, prompt=cls.passing if is_passed else cls.failing
         )
-        return AnalyticFeedback(type=ScoreType.similarity, feedback=feedback)
+        return AnalyticFeedback(type=ScoreType.relevance, feedback=feedback)
 
 
 class Content:
@@ -127,9 +127,9 @@ class English:
 
 
 def get_feedback(results: SummaryResults) -> SummaryResultsWithFeedback:
-    containment = Containment.generate_feedback(results.containment)
-    containment_chat = ContainmentChat.generate_feedback(results.containment_chat)
-    similarity = Similarity.generate_feedback(results.similarity)
+    originality = Originality.generate_feedback(results.originality)
+    originality_chat = OriginalityChat.generate_feedback(results.originality_chat)
+    relevance = Relevance.generate_feedback(results.relevance)
     content = Content.generate_feedback(results.content)
     wording = Wording.generate_feedback(results.wording)
     english = English.generate_feedback(results.english)
@@ -137,9 +137,9 @@ def get_feedback(results: SummaryResults) -> SummaryResultsWithFeedback:
     is_passed = all(
         feedback.feedback.is_passed is not False
         for feedback in [
-            containment,
-            containment_chat,
-            similarity,
+            originality,
+            originality_chat,
+            relevance,
             english,
             wording,
             content,
@@ -161,9 +161,9 @@ def get_feedback(results: SummaryResults) -> SummaryResultsWithFeedback:
         is_passed=is_passed,
         prompt=prompt,
         prompt_details=[
-            containment,
-            containment_chat,
-            similarity,
+            originality,
+            originality_chat,
+            relevance,
             english,
             content,
             wording,

@@ -11,15 +11,15 @@ def trigrams(doc: Doc) -> set[tuple[int, ...]]:
     return {tuple(tokens[i : i + 3]) for i in range(len(tokens) - 2)}
 
 
-def score_containment(source: Doc, derivative: Doc) -> float:
-    """Calculate containment score between a source text and a derivative
+def score_originality(source: Doc, derivative: Doc) -> float:
+    """Calculate originality (containment) score between a source text and a derivative
     text. Calculated as the intersection of unique trigrams divided by the
     number of unique trigrams in the derivative text. Values range from 0
     to 1, with 1 being completely copied."""
     src = trigrams(source)
     deriv = trigrams(derivative)
     try:
-        containment = len(src.intersection(deriv)) / len(deriv)
-        return round(containment, 4)
+        originality = len(src.intersection(deriv)) / len(deriv)
+        return round(originality, 4)
     except ZeroDivisionError:
         return 1.0

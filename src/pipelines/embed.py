@@ -22,7 +22,7 @@ class EmbeddingPipeline:
 
         return embed
 
-    def score_similarity(self, a: str, b: str) -> float:
+    def score_relevance(self, a: str, b: str) -> float:
         """Return semantic similarity score between a and b"""
         a_embed = self(a)
         b_embed = self(b)

@@ -4,7 +4,7 @@ from spacy.tokens import Doc
 
 from .pipelines.nlp import nlp
 from .pipelines.embed import EmbeddingPipeline
-from .pipelines.containment import score_containment
+from .pipelines.originality import score_originality
 from .pipelines.summary import SummaryPipeline
 from .pipelines.keyphrases import suggest_keyphrases
 from .connections.strapi import Strapi
@@ -65,17 +65,17 @@ async def summary_score(
     results = {}
 
     # Check if summary borrows language from source
-    results["containment"] = score_containment(summary.source, summary.summary)
+    results["originality"] = score_originality(summary.source, summary.summary)
 
     # Check if summary borrows language from chat history
     if summary.chat_history:
-        results["containment_chat"] = score_containment(
+        results["originality_chat"] = score_originality(
             summary.chat_history, summary.summary
         )
 
     # Check if summary is similar to source text
-    results["similarity"] = (
-        embedding_pipe.score_similarity(summary.source.text, summary.summary.text) + 0.15
+    results["relevance"] = (
+        embedding_pipe.score_relevance(summary.source.text, summary.summary.text) + 0.15
     )  # adding 0.15 to bring similarity score in line with old doc2vec model
 
     # Generate keyphrase suggestions
@@ -91,9 +91,9 @@ async def summary_score(
 
     # Check if summary fails to meet minimum requirements
     junk_filter = (
-        results["containment"] > 0.5
-        or results.get("containment_chat", 0.0) > 0.5
-        or results["similarity"] < 0.3
+        results["originality"] > 0.5
+        or results.get("originality_chat", 0.0) > 0.5
+        or results["relevance"] < 0.3
         or results["english"] is False
     )
 

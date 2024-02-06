@@ -38,9 +38,9 @@ class SummaryInputSupaBase(BaseModel):
 
 
 class SummaryResults(BaseModel):
-    containment: float
-    containment_chat: Optional[float] = None
-    similarity: float
+    originality: float
+    originality_chat: Optional[float] = None
+    relevance: float
     english: bool
     included_keyphrases: list[str]
     suggested_keyphrases: list[str]
@@ -49,9 +49,9 @@ class SummaryResults(BaseModel):
 
 
 class ScoreType(str, Enum):
-    containment = "Language Borrowing"
-    containment_chat = "Language Borrowing (from iTELL AI)"
-    similarity = "Topic Similarity"
+    originality = "Language Borrowing"
+    originality_chat = "Language Borrowing (from iTELL AI)"
+    relevance = "Topic Similarity"
     english = "English"
     content = "Content"
     wording = "Wording"
@@ -85,9 +85,9 @@ class StreamingSummaryResults(SummaryResultsWithFeedback):
         schema_extra = {
             "examples": [
                 {
-                    "containment": 0.0,
-                    "containment_chat": None,
-                    "similarity": 0.09705320000648499,
+                    "originality": 0.0,
+                    "originality_chat": None,
+                    "relevance": 0.09705320000648499,
                     "english": True,
                     "included_keyphrases": [],
                     "suggested_keyphrases": [
@@ -118,7 +118,7 @@ class StreamingSummaryResults(SummaryResultsWithFeedback):
                             "feedback": {"is_passed": False, "prompt": None},
                         },
                         {
-                            "type": "Topic Similarity",
+                            "type": "Topic Relevance",
                             "feedback": {
                                 "is_passed": False,
                                 "prompt": (

@@ -84,8 +84,8 @@ def generate_sert_prompt(excerpt_chunk, text_name, question_type):
     )
 
 
-def weight_chunks_with_similarity(reading_time_score, similarity):
-    return reading_time_score * similarity
+def weight_chunks_with_relevance(reading_time_score, relevance):
+    return reading_time_score * relevance
 
 
 async def sert_generate(summary: Summary) -> AsyncGenerator[bytes, None]:
@@ -109,15 +109,15 @@ async def sert_generate(summary: Summary) -> AsyncGenerator[bytes, None]:
         )
 
     # Make a dictionary to look up similarity scores by Slug
-    similarity_dict = {
-        match.chunk: match.similarity for match in least_similar_chunks.matches
+    relevance_dict = {
+        match.chunk: match.relevance for match in least_similar_chunks.matches
     }
 
-    # Calculate final score for rereading: reading_time_score * similarity
+    # Calculate final score for rereading: reading_time_score * relevance
     chunks: list[tuple[ChunkWithWeight, float]] = [
-        (chunk, (chunk.weight * similarity_dict[chunk.Slug]))
+        (chunk, (chunk.weight * relevance_dict[chunk.Slug]))
         for chunk in summary.chunks
-        if chunk.Slug in similarity_dict
+        if chunk.Slug in relevance_dict
     ]
 
     # Select the chunk with the lowest score

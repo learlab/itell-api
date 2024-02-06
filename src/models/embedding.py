@@ -21,7 +21,7 @@ class RetrievalInput(BaseModel, use_enum_values=True):
     text_slug: Optional[str]
     page_slug: str
     text: str  # text to compare to (student summary)
-    similarity_threshold: Optional[float] = 0.0
+    relevance_threshold: Optional[float] = 0.0
     retrieve_strategy: Optional[RetrievalStrategy] = RetrievalStrategy.most_similar
     match_count: Optional[int] = 1
 
@@ -29,7 +29,7 @@ class RetrievalInput(BaseModel, use_enum_values=True):
 class Match(BaseModel):
     chunk: str
     content: str
-    similarity: float
+    relevance: float
 
 
 class RetrievalResults(BaseModel):
