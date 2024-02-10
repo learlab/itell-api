@@ -111,6 +111,7 @@ async def sert_generate(summary: Summary) -> AsyncGenerator[bytes, None]:
     # Make a dictionary to look up similarity scores by Slug
     similarity_dict = {
         match.chunk: match.similarity for match in least_similar_chunks.matches
+        if match.chunk not in summary.excluded_chunks
     }
 
     # Calculate final score for rereading: reading_time_score * similarity
@@ -119,6 +120,11 @@ async def sert_generate(summary: Summary) -> AsyncGenerator[bytes, None]:
         for chunk in summary.chunks
         if chunk.Slug in similarity_dict
     ]
+
+    if len(chunks) == 0:
+        raise HTTPException(
+            status_code=404,
+            detail=f"No candidate chunks remain after accounting for 'excluded_chunks'."
 
     # Select the chunk with the lowest score
     selected_chunk, _ = min(chunks, key=lambda x: x[1])

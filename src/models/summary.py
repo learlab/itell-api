@@ -2,7 +2,7 @@ from .textbook import TextbookNames
 from .strapi import Chunk
 from typing import Optional, Dict, Union
 from pydantic import BaseModel, Field
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from spacy.tokens import Doc
 from enum import Enum
 from typing import Literal
@@ -20,6 +20,14 @@ class SummaryInputStrapi(BaseModel):
     )
     chat_history: Optional[str] = Field(
         default=None, description="The full chat history as a single string."
+    )
+    excluded_chunks: Optional[list[str]] = Field(
+        default=None,
+        description=(
+            "The slugs of chunks that should be excluded from consideration for STAIRS."
+            " For example, if the student has already correctly answered a constructed"
+            " response item about a chunk."
+        ),
     )
 
 
@@ -162,3 +170,4 @@ class Summary:
     chunks: list[ChunkWithWeight]
     page_slug: str
     chat_history: Union[Doc, None]
+    excluded_chunks: list[str] = field(default_factory=lambda: [])
