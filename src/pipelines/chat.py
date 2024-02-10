@@ -26,7 +26,7 @@ else:
 engine = AsyncLLMEngine.from_engine_args(engine_args)
 
 
-async def ChatPipeline(
+async def chat_pipeline(
     prompt: str, sampling_params: SamplingParams, **kwargs
 ) -> AsyncGenerator[bytes, None]:
     """Generate completion for the request.
@@ -39,17 +39,19 @@ async def ChatPipeline(
 
     async def stream_results() -> AsyncGenerator[bytes, None]:
         async for request_output in results_generator:  # type: ignore
+            out_text = request_output.outputs[0].text
+
             # Check if the last part of the output is the USER token
             # If it is, remove this and any preceding whitespace
             # before sending the final response.
-            if request_output.outputs[0].text.endswith("USER"):
-                request_output.outputs[0].text = (
-                    request_output.outputs[0].text[:-4].rstrip()
-                )
+            if out_text.endswith("USER"):
+                out_text = out_text[:-4].rstrip()
+
             ret = {
                 "request_id": request_id,
-                "text": request_output.outputs[0].text,
+                "text": out_text,
             }
+
             # Add any additional kwargs to the response
             # Used for returning the chunk_slug in the SERT response
             if kwargs:

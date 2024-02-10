@@ -2,7 +2,7 @@ from .models.chat import ChatInput, PromptInput
 from .models.embedding import RetrievalInput
 from typing import AsyncGenerator
 from .embedding import chunks_retrieve
-from .pipelines.chat import ChatPipeline
+from .pipelines.chat import chat_pipeline
 from .connections.strapi import Strapi
 
 from vllm.sampling_params import SamplingParams
@@ -80,11 +80,11 @@ async def moderated_chat(chat_input: ChatInput) -> AsyncGenerator[bytes, None]:
     # Join the prompt components together, ending with the (modified) user message
     prompt = "".join([preface, sample_conversation, additional_context, history, msg])
 
-    return await ChatPipeline(prompt, sampling_params)
+    return await chat_pipeline(prompt, sampling_params)
 
 
 async def unmoderated_chat(raw_chat_input: PromptInput) -> AsyncGenerator[bytes, None]:
     sampling_params = SamplingParams(
         temperature=0.4, max_tokens=4096, stop_token_ids=[11889]
     )
-    return await ChatPipeline(raw_chat_input.message, sampling_params)
+    return await chat_pipeline(raw_chat_input.message, sampling_params)
