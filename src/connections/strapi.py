@@ -21,7 +21,12 @@ class Strapi:
         async with httpx.AsyncClient() as client:
             r = await client.get(url, headers=self.headers, params=params)
             if r.status_code != 200:
-                raise Exception(f"Error {r.status_code}: {r.reason_phrase}")
+                raise HTTPException(
+                    status_code=404,
+                    detail=(
+                        f"Error connecting to Strapi {r.status_code}: {r.reason_phrase}"
+                    ),
+                )
             result: dict = r.json()
             return result
 
