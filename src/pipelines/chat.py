@@ -39,6 +39,13 @@ async def ChatPipeline(
 
     async def stream_results() -> AsyncGenerator[bytes, None]:
         async for request_output in results_generator:  # type: ignore
+            # Check if the last part of the output is the USER token
+            # If it is, remove this and any preceding whitespace
+            # before sending the final response.
+            if request_output.outputs[0].text.endswith("USER"):
+                request_output.outputs[0].text = (
+                    request_output.outputs[0].text[:-4].rstrip()
+                )
             ret = {
                 "request_id": request_id,
                 "text": request_output.outputs[0].text,
