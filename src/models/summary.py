@@ -51,7 +51,7 @@ class SummaryResults(BaseModel):
 class ScoreType(str, Enum):
     containment = "Language Borrowing"
     containment_chat = "Language Borrowing (from iTELL AI)"
-    similarity = "Topic Similarity"
+    similarity = "Relevance"
     english = "English"
     content = "Content"
     wording = "Wording"
@@ -118,7 +118,7 @@ class StreamingSummaryResults(SummaryResultsWithFeedback):
                             "feedback": {"is_passed": False, "prompt": None},
                         },
                         {
-                            "type": "Topic Similarity",
+                            "type": "Relevance",
                             "feedback": {
                                 "is_passed": False,
                                 "prompt": (
