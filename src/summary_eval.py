@@ -8,6 +8,7 @@ from .pipelines.containment import score_containment
 from .pipelines.summary import SummaryPipeline
 from .pipelines.keyphrases import suggest_keyphrases
 from .connections.strapi import Strapi
+from .embedding import page_similarity
 
 import gcld3
 from transformers import logging
@@ -82,8 +83,9 @@ async def summary_score(
         )
 
     # Check if summary is similar to source text
+    summary_embed = embedding_pipe(summary.summary.text)[0].tolist()
     results["similarity"] = (
-        embedding_pipe.score_similarity(summary.source.text, summary.summary.text)
+        await page_similarity(summary_embed, summary.page_slug)
         + 0.15
     )  # adding 0.15 to bring similarity score in line with old doc2vec model
 

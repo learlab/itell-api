@@ -47,3 +47,19 @@ async def chunks_retrieve(input_body: RetrievalInput) -> RetrievalResults:
         raise HTTPException(status_code=500, detail=str(error))
 
     return RetrievalResults(matches=matches)
+
+
+async def page_similarity(embedding: list[float], page_slug: str) -> float:
+    db = get_vector_store()
+    query_params = {
+        "summary_embedding": embedding,
+        "target_page": page_slug,
+    }
+    try:
+        similarity = (
+            db.rpc("page_similarity", query_params).execute().data[0]["similarity"]
+        )
+    except (TypeError, AttributeError) as error:
+        raise HTTPException(status_code=500, detail=str(error))
+
+    return similarity
