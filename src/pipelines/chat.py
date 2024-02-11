@@ -44,8 +44,8 @@ async def chat_pipeline(
             # Check if the last part of the output is the USER token
             # If it is, remove this and any preceding whitespace
             # before sending the final response.
-            if out_text.endswith("USER"):
-                out_text = out_text[:-4].rstrip()
+            if request_output.finished:
+                out_text = out_text.removesuffix("USER").rstrip()
 
             ret = {
                 "request_id": request_id,
