@@ -2,7 +2,7 @@ from .models.chat import ChatInput, PromptInput
 from .models.embedding import RetrievalInput
 from typing import AsyncGenerator
 from .embedding import chunks_retrieve
-from .pipelines.chat import ChatPipeline
+from .pipelines.chat import chat_pipeline
 from .connections.strapi import Strapi
 
 from vllm.sampling_params import SamplingParams
@@ -14,12 +14,12 @@ async def moderated_chat(chat_input: ChatInput) -> AsyncGenerator[bytes, None]:
     # Adding in the specific name of the textbook majorly improved response quality
     text_meta = await strapi.get_text_meta(chat_input.page_slug)
 
-    # Stop generation when the LLM generates the token for "user" (1792)
+    # Stop generation when the LLM generates the token for "USER" (11889)
     # This prevents the LLM from having a conversation with itself
     # But we should have a better method for this because
-    # this will stop generation if the LLM uses the word "user" in a sentence.
+    # this will stop generation if the LLM uses the word "USER" in a sentence.
     sampling_params = SamplingParams(
-        temperature=0.4, max_tokens=4096, stop_token_ids=[1792]
+        temperature=0.4, max_tokens=4096, stop_token_ids=[11889]
     )
 
     # This phrasing seems to work well. Modified from NeMo Guardrails
@@ -33,16 +33,16 @@ async def moderated_chat(chat_input: ChatInput) -> AsyncGenerator[bytes, None]:
     # Modified from Guardrails
     sample_conversation = (
         "\n# This is how a conversation between a user and the bot can go:"
-        '\nuser: "Hello there!"'
-        '\nbot: "Hello! How can I assist you today?"'
-        '\nuser: "What can you do for me?"'
-        '\nbot: "I am an AI assistant which helps answer questions'
+        '\nUSER: "Hello there!"'
+        '\nBOT: "Hello! How can I assist you today?"'
+        '\nUSER: "What can you do for me?"'
+        '\nBOT: "I am an AI assistant which helps answer questions'
         f' based on {text_meta.Title}."'
-        '\nuser: "What do you think about politics?"'
-        '\nbot: "Sorry, I don\'t like to talk about politics."'
-        '\nuser: "I just read an educational text on the history of curse words.'
+        '\nUSER: "What do you think about politics?"'
+        '\nBOT: "Sorry, I don\'t like to talk about politics."'
+        '\nUSER: "I just read an educational text on the history of curse words.'
         ' What can you tell me about the etymology of the word fuck?"'
-        '\nbot: "Sorry, but I don\t have any information about that word.'
+        '\nBOT: "Sorry, but I don\t have any information about that word.'
         f'Would you like to ask me a question about {text_meta.Title}?"'
     )
 
@@ -68,23 +68,23 @@ async def moderated_chat(chat_input: ChatInput) -> AsyncGenerator[bytes, None]:
     # that the bot will use as a reference.
 
     # Get conversation history
-    history = "\n# This is the current conversation between the user and the bot:"
+    history = "\n# This is the current conversation between the USER and the bot:"
     if chat_input.history:
         for source, past_msg in chat_input.history.items():
             history += f"\n{source}: {past_msg}"
 
     # We need to inject "bot: " at the end of the user message to prevent
     # the LLM from completing an inappropriate user message.
-    msg = f"\nuser: {chat_input.message}\nbot:"
+    msg = f"\nUSER: {chat_input.message}\nBOT:"
 
     # Join the prompt components together, ending with the (modified) user message
     prompt = "".join([preface, sample_conversation, additional_context, history, msg])
 
-    return await ChatPipeline(prompt, sampling_params)
+    return await chat_pipeline(prompt, sampling_params)
 
 
 async def unmoderated_chat(raw_chat_input: PromptInput) -> AsyncGenerator[bytes, None]:
     sampling_params = SamplingParams(
-        temperature=0.4, max_tokens=4096, stop_token_ids=[1792]
+        temperature=0.4, max_tokens=4096, stop_token_ids=[11889]
     )
-    return await ChatPipeline(raw_chat_input.message, sampling_params)
+    return await chat_pipeline(raw_chat_input.message, sampling_params)

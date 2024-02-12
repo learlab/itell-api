@@ -4,7 +4,7 @@
 from .models.summary import Summary, ChunkWithWeight
 from .models.embedding import RetrievalInput, RetrievalStrategy
 from .embedding import chunks_retrieve
-from .pipelines.chat import ChatPipeline
+from .pipelines.chat import chat_pipeline
 from .connections.strapi import Strapi
 from typing import AsyncGenerator
 
@@ -110,7 +110,9 @@ async def sert_generate(summary: Summary) -> AsyncGenerator[bytes, None]:
 
     # Make a dictionary to look up similarity scores by Slug
     similarity_dict = {
-        match.chunk: match.similarity for match in least_similar_chunks.matches
+        match.chunk: match.similarity
+        for match in least_similar_chunks.matches
+        if match.chunk not in summary.excluded_chunks
     }
 
     # Calculate final score for rereading: reading_time_score * similarity
@@ -119,6 +121,12 @@ async def sert_generate(summary: Summary) -> AsyncGenerator[bytes, None]:
         for chunk in summary.chunks
         if chunk.Slug in similarity_dict
     ]
+
+    if len(chunks) == 0:
+        raise HTTPException(
+            status_code=404,
+            detail="No candidate chunks remain after accounting for 'excluded_chunks'.",
+        )
 
     # Select the chunk with the lowest score
     selected_chunk, _ = min(chunks, key=lambda x: x[1])
@@ -138,7 +146,7 @@ async def sert_generate(summary: Summary) -> AsyncGenerator[bytes, None]:
 
     sampling_params = SamplingParams(temperature=0.4, max_tokens=4096)
 
-    return await ChatPipeline(
+    return await chat_pipeline(
         prompt, sampling_params, chunk=selected_chunk.Slug, question_type=question_type
     )
 

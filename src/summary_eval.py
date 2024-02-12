@@ -8,6 +8,7 @@ from .pipelines.containment import score_containment
 from .pipelines.summary import SummaryPipeline
 from .pipelines.keyphrases import suggest_keyphrases
 from .connections.strapi import Strapi
+from .embedding import page_similarity
 
 import gcld3
 from transformers import logging
@@ -51,14 +52,22 @@ async def summary_score(
 
     weighted_chunks = weight_chunks(chunks, chunk_docs, summary_input.focus_time)
 
+    bot_messages = None
+    if summary_input.chat_history:
+        bot_messages = "\n".join(
+            [msg.text for msg in summary_input.chat_history if msg.agent == "bot"]
+        )
+
     # Create summary data object
     summary = Summary(
         summary=nlp(summary_input.summary),
         source=Doc.from_docs(chunk_docs),  # combine into a single doc
         chunks=weighted_chunks,
         page_slug=summary_input.page_slug,
-        chat_history=(
-            nlp(summary_input.chat_history) if summary_input.chat_history else None
+        chat_history=summary_input.chat_history,
+        bot_messages=nlp(bot_messages) if bot_messages else None,
+        excluded_chunks=(
+            summary_input.excluded_chunks if summary_input.excluded_chunks else []
         ),
     )
 
@@ -68,14 +77,16 @@ async def summary_score(
     results["containment"] = score_containment(summary.source, summary.summary)
 
     # Check if summary borrows language from chat history
-    if summary.chat_history:
+    if summary.bot_messages:
         results["containment_chat"] = score_containment(
-            summary.chat_history, summary.summary
+            summary.bot_messages, summary.summary
         )
 
     # Check if summary is similar to source text
+    summary_embed = embedding_pipe(summary.summary.text)[0].tolist()
     results["similarity"] = (
-        embedding_pipe.score_similarity(summary.source.text, summary.summary.text) + 0.15
+        await page_similarity(summary_embed, summary.page_slug)
+        + 0.15
     )  # adding 0.15 to bring similarity score in line with old doc2vec model
 
     # Generate keyphrase suggestions
@@ -102,7 +113,7 @@ async def summary_score(
 
     # Summary meets minimum requirements. Score it.
     input_text = summary.summary.text + "</s>" + summary.source.text
-    results["content"] = content_pipe(input_text)[0]["score"]
-    results["wording"] = wording_pipe(input_text)[0]["score"]
+    results["content"] = content_pipe(input_text)[0]["score"]  # type: ignore
+    results["wording"] = wording_pipe(input_text)[0]["score"]  # type: ignore
 
     return summary, SummaryResults(**results)

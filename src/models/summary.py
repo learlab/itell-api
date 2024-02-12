@@ -1,11 +1,16 @@
 from .textbook import TextbookNames
 from .strapi import Chunk
-from typing import Optional, Dict, Union
+from typing import Optional, Dict
 from pydantic import BaseModel, Field
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from spacy.tokens import Doc
 from enum import Enum
 from typing import Literal
+
+
+class ChatMessage(BaseModel):
+    agent: Literal["user", "bot"]
+    text: str
 
 
 class SummaryInputStrapi(BaseModel):
@@ -18,8 +23,20 @@ class SummaryInputStrapi(BaseModel):
         description="Keys are chunk slugs and values are focus times in seconds.",
         example={"introduction-to-law-79t": 20},
     )
-    chat_history: Optional[str] = Field(
-        default=None, description="The full chat history as a single string."
+    chat_history: Optional[list[ChatMessage]] = Field(
+        default=None,
+        description=(
+            "The full chat history as a list of {'agent': 'user'/'bot', 'text': str}"
+            " dicts."
+        ),
+    )
+    excluded_chunks: Optional[list[str]] = Field(
+        default=None,
+        description=(
+            "The slugs of chunks that should be excluded from consideration for STAIRS."
+            " For example, if the student has already correctly answered a constructed"
+            " response item about a chunk."
+        ),
     )
 
 
@@ -51,7 +68,7 @@ class SummaryResults(BaseModel):
 class ScoreType(str, Enum):
     containment = "Language Borrowing"
     containment_chat = "Language Borrowing (from iTELL AI)"
-    similarity = "Topic Similarity"
+    similarity = "Relevance"
     english = "English"
     content = "Content"
     wording = "Wording"
@@ -118,7 +135,7 @@ class StreamingSummaryResults(SummaryResultsWithFeedback):
                             "feedback": {"is_passed": False, "prompt": None},
                         },
                         {
-                            "type": "Topic Similarity",
+                            "type": "Relevance",
                             "feedback": {
                                 "is_passed": False,
                                 "prompt": (
@@ -161,4 +178,6 @@ class Summary:
     source: Doc
     chunks: list[ChunkWithWeight]
     page_slug: str
-    chat_history: Union[Doc, None]
+    chat_history: Optional[list[ChatMessage]]
+    bot_messages: Optional[Doc] = None
+    excluded_chunks: list[str] = field(default_factory=lambda: [])

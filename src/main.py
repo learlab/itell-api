@@ -13,7 +13,6 @@ from fastapi.responses import StreamingResponse
 from fastapi import FastAPI, HTTPException, Response
 from typing import Union, AsyncGenerator
 
-from .sert import sert_generate
 from .summary_eval_supabase import summary_score_supabase
 from .summary_eval import summary_score
 from .summary_feedback import get_feedback
@@ -42,6 +41,7 @@ that are used by the content management system.
 
 sentry_sdk.init(
     dsn=os.environ.get("SENTRY_DSN"),
+    environment=os.environ.get("ENV"),
     traces_sample_rate=1.0,
     # Samples 100% of transactions. We should decrease this value in the future.
     profiles_sample_rate=1.0,
@@ -126,6 +126,7 @@ if not os.environ.get("ENV") == "development":
     import torch
     from src.embedding import embedding_generate, chunks_retrieve
     from src.chat import moderated_chat, unmoderated_chat
+    from .sert import sert_generate
 
     @app.get("/gpu", description="Check if GPU is available.")
     def gpu_is_available() -> Message:
