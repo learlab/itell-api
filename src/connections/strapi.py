@@ -19,7 +19,12 @@ class Strapi:
 
     async def _get(self, url: str, params: dict) -> dict:
         async with httpx.AsyncClient() as client:
-            r = await client.get(url, headers=self.headers, params=params)
+            try:
+                r = await client.get(url, headers=self.headers, params=params)
+            except TimeoutError:
+                raise HTTPException(
+                    status_code=504, detail="Connection to Strapi timed out."
+                )
             if r.status_code != 200:
                 raise HTTPException(
                     status_code=404,

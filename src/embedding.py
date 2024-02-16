@@ -61,5 +61,8 @@ async def page_similarity(embedding: list[float], page_slug: str) -> float:
         )
     except (TypeError, AttributeError) as error:
         raise HTTPException(status_code=500, detail=str(error))
+    
+    if similarity is None:
+        raise HTTPException(status_code=404, detail="Page not found in Vector Store")
 
     return similarity
