@@ -68,8 +68,9 @@ async def moderated_chat(chat_input: ChatInput) -> AsyncGenerator[bytes, None]:
     # that the bot will use as a reference.
 
     # Get conversation history
-    history = "\n# This is the current conversation between the USER and the bot:"
+    history = ""
     if chat_input.history:
+        history = "\n# This is the current conversation between the USER and the bot:"
         for source, past_msg in chat_input.history.items():
             history += f"\n{source}: {past_msg}"
 
