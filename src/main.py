@@ -10,7 +10,7 @@ from .models.chat import ChatInput, PromptInput
 from .models.message import Message
 from .models.transcript import TranscriptInput, TranscriptResults
 from fastapi.responses import StreamingResponse
-from fastapi import FastAPI, HTTPException, Response
+from fastapi import FastAPI, HTTPException, Response, Request
 from typing import Union, AsyncGenerator
 
 from .summary_eval_supabase import summary_score_supabase
@@ -24,6 +24,9 @@ import os
 import json
 from fastapi.middleware.cors import CORSMiddleware
 import sentry_sdk
+from starlette.background import BackgroundTask
+import uuid
+import logging
 
 description = """
 Welcome to iTELL AI, a REST API for intelligent textbooks.
@@ -72,6 +75,43 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+logger = logging.getLogger(__name__)
+
+
+def log_info(req_body, res_body):
+    idem = str(uuid.uuid4())
+    logger.info(f"rid={idem} {req_body}")
+    logger.info(f"rid={idem} {res_body}")
+
+
+async def set_body(request: Request, body: bytes):
+    async def receive():
+        return {"type": "http.request", "body": body}
+
+    request._receive = receive
+
+
+@app.middleware("http")
+async def log_requests(request: Request, call_next):
+    req_body = await request.body()
+
+    await set_body(request, req_body)  # not needed, if using FastAPI>=0.108.0.
+    response = await call_next(request)
+
+    res_body = b""
+    async for chunk in response.body_iterator:
+        res_body += chunk
+
+    task = BackgroundTask(log_info, req_body, res_body)
+
+    return Response(
+        content=res_body,
+        status_code=response.status_code,
+        headers=dict(response.headers),
+        media_type=response.media_type,
+        background=task,
+    )
+
 
 @app.get("/")
 def hello() -> Message:
@@ -80,7 +120,7 @@ def hello() -> Message:
 
 @app.post("/score/summary")
 async def score_summary(
-    input_body: Union[SummaryInputStrapi, SummaryInputSupaBase]
+    input_body: Union[SummaryInputStrapi, SummaryInputSupaBase],
 ) -> SummaryResults:
     """Score a summary.
     Requires a textbook name if the textbook content is on SupaBase.
@@ -95,7 +135,7 @@ async def score_summary(
 
 @app.post("/score/answer")
 async def score_answer(
-    input_body: Union[AnswerInputStrapi, AnswerInputSupaBase]
+    input_body: Union[AnswerInputStrapi, AnswerInputSupaBase],
 ) -> AnswerResults:
     """Score a constructed response item.
     Requires a textbook name and location IDs if the textbook content is on SupaBase.
