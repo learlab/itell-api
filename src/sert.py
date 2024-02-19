@@ -69,7 +69,7 @@ prompt_template = (
     "\n{excerpt_chunk}"
     "\n\n###Specific Instructions:"
     "\nGenerate a {question_type} question based on the highlighted chunk."
-    " In this context, {question_type} means {question_type_definition}."
+    " In this context, {question_type} means {question_type_definition}"
     " Write only one question and do not provide any opening, closing, or explanations."
     "\n\n###Question: "
 )
