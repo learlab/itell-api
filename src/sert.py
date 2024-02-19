@@ -15,7 +15,7 @@ from fastapi import HTTPException
 strapi = Strapi()
 
 question_type_definitions = {
-    "paraphrasing": (  # noqa: E501
+    "paraphrasing": (
         "restating the text in different words. Preferably, in the reader’s own words."
         " It is an important part of the explanation process because readers often"
         " paraphrase the sentence in order to begin an explanation. Paraphrases are"
@@ -26,13 +26,13 @@ question_type_definitions = {
         " force the reader to fill in conceptual gaps and facilitates the activation of"
         " relevant concepts that are necessary to generate inferences."
     ),
-    "elaboration": (  # noqa: E501
+    "elaboration": (
         "the process of making inferences that link what is in the text or sentence to"
         " related to a reader’s background knowledge. Readers use specific prior"
         " knowledge or learned experiences to understand a text by developing"
         " inferences based on specific background knowledge."
     ),
-    "logic": (  # noqa: E501
+    "logic": (
         "using general knowledge or logic to infer meaning. Does not depend on"
         " background knowledge unique to a reader but rather general knowledge of the"
         " world. Helps low-knowledge readers make sense of unfamiliar text. Encourages"
@@ -40,12 +40,12 @@ question_type_definitions = {
         " possible to make sense of the text, and go beyond the text, without knowing a"
         " lot about the topic."
     ),
-    "prediction": (  # noqa: E501
+    "prediction": (
         "thinking about what might be coming next in the text. Asking readers to"
         " predict next ideas or steps in a text that enhance thinking about the text"
         " from a global and not a local perspective."
     ),
-    "bridging": (  # noqa: E501
+    "bridging": (
         "the process of linking ideas and understanding the relations between"
         " separate text segments. Readers merge individual ideas from the text into"
         " coherent text representation. Making bridging inferences is critical to text"
@@ -59,18 +59,19 @@ question_type_definitions = {
 }
 
 prompt_template = (
-    "Please write a free response question based on the following excerpt"
+    "###Task Description:"
+    "\nWrite a free response question based on the following highlighted chunk"
     ' from an instructional text titled "{text_name}".'
     " It is important to understand that free response questions are designed to elicit"
     " one of five cognitive processes from readers:"
     " Paraphrasing, Elaboration, Logic, Prediction, and Bridging."
-    "\n\n[START OF EXCERPT]"
-    "\n\n{excerpt_chunk}"
-    "\n\n[END OF EXCERPT]"
-    "\n\nI will now generate a {question_type} question based on the excerpt above."
-    " I know that {question_type} means {question_type_definition}"
-    " I will write only one question."
-    "\n\nQuestion: "
+    "\n\n###Highlighted Chunk:"
+    "\n{excerpt_chunk}"
+    "\n\n###Specific Instructions:"
+    "\nGenerate a {question_type} question based on the highlighted chunk."
+    " {question_type.capitalize()} means {question_type_definition}."
+    " Write only one question and do not provide any opening, closing, or explanations."
+    "\n\n###Question: "
 )
 
 
