@@ -43,7 +43,7 @@ async def moderated_chat(chat_input: ChatInput) -> AsyncGenerator[bytes, None]:
         '\nUSER: "I just read an educational text on the history of curse words.'
         ' What can you tell me about the etymology of the word fuck?"'
         '\nBOT: "Sorry, but I don\t have any information about that word.'
-        f'Would you like to ask me a question about {text_meta.Title}?"'
+        f' Would you like to ask me a question about {text_meta.Title}?"'
     )
 
     # Retrieve relevant chunks
