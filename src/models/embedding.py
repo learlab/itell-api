@@ -18,7 +18,7 @@ class RetrievalStrategy(str, Enum):
 
 
 class RetrievalInput(BaseModel, use_enum_values=True):
-    text_slug: Optional[str]
+    text_slug: Optional[str] = None
     page_slug: str
     text: str  # text to compare to (student summary)
     similarity_threshold: Optional[float] = 0.0
