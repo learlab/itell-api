@@ -1,37 +1,33 @@
 from .textbook import TextbookNames
 from .strapi import Chunk
+from .chat import ChatMessage
 from typing import Optional, Dict
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from dataclasses import dataclass, field
 from spacy.tokens import Doc
 from enum import Enum
 from typing import Literal
 
 
-class ChatMessage(BaseModel):
-    agent: Literal["user", "bot"]
-    text: str
-
-
 class SummaryInputStrapi(BaseModel):
     page_slug: str = Field(
-        description="The slug of the current page.", example="the-first-chunk-99t"
+        description="The slug of the current page.", examples=["the-first-chunk-99t"]
     )
     summary: str
     focus_time: Dict[str, int] = Field(
-        default=dict(),
+        default_factory=dict,
         description="Keys are chunk slugs and values are focus times in seconds.",
-        example={"introduction-to-law-79t": 20},
+        examples=[{"introduction-to-law-79t": 20}],
     )
     chat_history: Optional[list[ChatMessage]] = Field(
-        default=None,
+        default_factory=list,
         description=(
             "The full chat history as a list of {'agent': 'user'/'bot', 'text': str}"
             " dicts."
         ),
     )
     excluded_chunks: Optional[list[str]] = Field(
-        default=None,
+        default_factory=list,
         description=(
             "The slugs of chunks that should be excluded from consideration for STAIRS."
             " For example, if the student has already correctly answered a constructed"
@@ -41,16 +37,17 @@ class SummaryInputStrapi(BaseModel):
 
 
 class SummaryInputSupaBase(BaseModel):
-    textbook_name: TextbookNames = Field(deprecated=True, description="Use page_slug.")
-    chapter_index: int = Field(deprecated=True, description="Use page_slug.")
-    section_index: Optional[int] = Field(
-        None, deprecated=True, description="Use page_slug."
+    model_config = ConfigDict(
+        json_schema_extra={"deprecated": "Use SummaryInputStrapi."}
     )
+    textbook_name: TextbookNames = Field(description="Use page_slug.")
+    chapter_index: int = Field(description="Use page_slug.")
+    section_index: Optional[int] = Field(None, description="Use page_slug.")
     summary: str
     focus_time: Dict[str, int] = Field(
-        default=dict(),
+        default_factory=dict,
         description="Keys are chunk slugs and values are focus times in seconds.",
-        example={"introduction-to-law-79t": 20},
+        examples=[{"introduction-to-law-79t": 20}],
     )
 
 
@@ -91,15 +88,8 @@ class SummaryResultsWithFeedback(SummaryResults):
 
 
 class StreamingSummaryResults(SummaryResultsWithFeedback):
-    request_id: str = Field(description="A unique identifier for the request.")
-    text: str = Field(description="The token stream.")
-    chunk: str = Field(description="The slug of the chunk selected for re-reading.")
-    question_type: Literal[
-        "paraphrasing", "elaboration", "logic", "prediction", "bridging"
-    ]
-
-    class Config:
-        schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "examples": [
                 {
                     "containment": 0.0,
@@ -163,10 +153,17 @@ class StreamingSummaryResults(SummaryResultsWithFeedback):
                 },
             ]
         }
+    )
+    request_id: str = Field(description="A unique identifier for the request.")
+    text: str = Field(description="The token stream.")
+    chunk: str = Field(description="The slug of the chunk selected for re-reading.")
+    question_type: Literal[
+        "paraphrasing", "elaboration", "logic", "prediction", "bridging"
+    ]
 
 
 class ChunkWithWeight(Chunk):
-    KeyPhrase: Optional[list[str]]  # This is a Python object rather than json.
+    KeyPhrase: Optional[list[str]] = None  # This is a Python object rather than json.
     weight: float
 
 
@@ -178,6 +175,6 @@ class Summary:
     source: Doc
     chunks: list[ChunkWithWeight]
     page_slug: str
-    chat_history: Optional[list[ChatMessage]]
+    chat_history: Optional[list[ChatMessage]] = None
     bot_messages: Optional[Doc] = None
     excluded_chunks: list[str] = field(default_factory=lambda: [])

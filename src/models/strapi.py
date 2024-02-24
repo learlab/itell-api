@@ -1,9 +1,7 @@
 from typing import Optional
-from pydantic import BaseModel, Field, Json
-from pydantic import ValidationError
+from pydantic import BaseModel, Field, Json, ValidationError
 
 from typing import TypeVar, Generic
-from pydantic.generics import GenericModel
 
 
 class Chunk(BaseModel):
@@ -11,7 +9,7 @@ class Chunk(BaseModel):
     id: int
     Header: str
     CleanText: str
-    KeyPhrase: Optional[Json[list[str]]]
+    KeyPhrase: Optional[Json[list[str]]] = None
     QuestionAnswerResponse: Optional[Optional[str]] = None
     Question: Optional[str] = None
     ConstructedResponse: Optional[str] = None
@@ -27,14 +25,14 @@ class Text(BaseModel):
     slug: str
     Title: str
     Owner: str
-    Description: Optional[str]
+    Description: Optional[str] = None
 
 
 # Page Types
 
 
 class Content(Page):
-    Content: list[Chunk] = Field(..., min_items=1)
+    Content: list[Chunk] = Field(..., min_length=1)
 
 
 # Fancy Generic Types for Defining Pages Populated with Specific Values
@@ -42,11 +40,11 @@ class Content(Page):
 Populus = TypeVar("Populus")
 
 
-class Response(GenericModel, Generic[Populus]):
+class Response(BaseModel, Generic[Populus]):
     data: Populus
 
 
-class PopulatedItem(GenericModel, Generic[Populus]):
+class PopulatedItem(BaseModel, Generic[Populus]):
     id: int
     attributes: Populus
 
@@ -59,11 +57,11 @@ class _PageWithText(Page):
 
 
 class PageWithText(BaseModel):
-    data: list[PopulatedItem[_PageWithText]] = Field(..., min_items=1)
+    data: list[PopulatedItem[_PageWithText]] = Field(..., min_length=1)
 
 
 class PageWithChunks(BaseModel):
-    data: list[PopulatedItem[Content]] = Field(..., min_items=1)
+    data: list[PopulatedItem[Content]] = Field(..., min_length=1)
 
 
 if __name__ == "__main__":

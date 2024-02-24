@@ -59,19 +59,19 @@ question_type_definitions = {
 }
 
 prompt_template = (
-    "###Task Description:"
+    "<|im_start|>system"
     "\nWrite a free response question based on the following highlighted chunk"
     ' from an instructional text titled "{text_name}".'
     " It is important to understand that free response questions are designed to elicit"
     " one of five cognitive processes from readers:"
     " Paraphrasing, Elaboration, Logic, Prediction, and Bridging."
-    "\n\n###Highlighted Chunk:"
+    "\n[START HIGHLIGHTED CHUNK]"
     "\n{excerpt_chunk}"
-    "\n\n###Specific Instructions:"
-    "\nGenerate a {question_type} question based on the highlighted chunk."
+    "\n[END HIGHLIGHTED CHUNK]"
+    "\nNow, you will need to generate a {question_type} question based on the highlighted chunk."
     " In this context, {question_type} means {question_type_definition}"
-    " Write only one question and do not provide any opening, closing, or explanations."
-    "\n\n###Question: "
+    " Write only one question and do not provide any opening, closing, or explanations.<|im_end|>"
+    "\n<|im_start|>assistant"
 )
 
 
