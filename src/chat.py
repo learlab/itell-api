@@ -1,3 +1,4 @@
+# flake8: noqa E501
 from .models.chat import ChatInput, PromptInput
 from .models.embedding import RetrievalInput
 from typing import AsyncGenerator
@@ -14,40 +15,18 @@ async def moderated_chat(chat_input: ChatInput) -> AsyncGenerator[bytes, None]:
     # Adding in the specific name of the textbook majorly improved response quality
     text_meta = await strapi.get_text_meta(chat_input.page_slug)
 
-    # Stop generation when the LLM generates the token for "USER" (11889)
-    # This prevents the LLM from having a conversation with itself
-    # But we should have a better method for this because
-    # this will stop generation if the LLM uses the word "USER" in a sentence.
-    sampling_params = SamplingParams(
-        temperature=0.4, max_tokens=4096, stop_token_ids=[11889]
+    system_message = (
+        f"You are iTELL AI, a reading support agent that helps users with an instructional text called {text_meta.Title}."
+        " iTELL stands for intelligent texts for enhanced lifelong learning. After reading a page in iTELL, the user must submit a summary of that page."
+        " iTELL AI will try to help help users understand the text, but iTELL AI will not write any summaries for the user."
+        " If the user asks iTELL AI for a summary, iTELL AI will tell the user that it cannot write the summary for them."
+        " iTELL AI cannot provide any hyperlinks to external resources."
+        " iTELL AI is factual and concise. If iTELL AI does not know the answer to a question, it truthfully says that it does not know."
     )
+    
+    if text_meta.Description:
+        system_message += f"\n{text_meta.Description}"
 
-    # This phrasing seems to work well. Modified from NeMo Guardrails
-    preface = (
-        "Below is a conversation between a bot and a user about"
-        f" an instructional textbook called {text_meta.Title}."
-        " The bot is factual and concise. If the bot does not know the answer to a"
-        " question, it truthfully says it does not know."
-    )
-
-    # Modified from Guardrails
-    sample_conversation = (
-        "\n# This is how a conversation between a user and the bot can go:"
-        '\nUSER: "Hello there!"'
-        '\nBOT: "Hello! How can I assist you today?"'
-        '\nUSER: "What can you do for me?"'
-        '\nBOT: "I am an AI assistant which helps answer questions'
-        f' based on {text_meta.Title}."'
-        '\nUSER: "What do you think about politics?"'
-        '\nBOT: "Sorry, I don\'t like to talk about politics."'
-        '\nUSER: "I just read an educational text on the history of curse words.'
-        ' What can you tell me about the etymology of the word fuck?"'
-        '\nBOT: "Sorry, but I don\t have any information about that word.'
-        f' Would you like to ask me a question about {text_meta.Title}?"'
-    )
-
-    # Retrieve relevant chunks
-    additional_context = ""
     relevant_chunks = await chunks_retrieve(
         RetrievalInput(
             text_slug=text_meta.slug,
@@ -57,35 +36,53 @@ async def moderated_chat(chat_input: ChatInput) -> AsyncGenerator[bytes, None]:
             match_count=1,
         )
     )
-    if relevant_chunks:
-        additional_context += "\n# This is some additional context:"
+
+    if relevant_chunks.matches:
+        system_message += "\nSTART CONTEXT BLOCK"
         for chunk in relevant_chunks.matches:
             truncated_chunk = chunk.content[: min(2500, len(chunk.content))]
-            additional_context += f"\n{truncated_chunk}"
+            system_message += f"\n{truncated_chunk}"
+        system_message += "\nEND CONTEXT BLOCK"
+
+    if chat_input.summary:
+        system_message += (
+            f"\nSTART STUDENT SUMMARY\n{chat_input.summary}\nEND STUDENT SUMMARY"
+        )
+
+    system_message += (
+        "\nSTART EXAMPLE CHAT"
+        "\nuser\nWhat can you do for me?"
+        f"\niTELL AI\nI am an AI assistant which helps answer questions about {text_meta.Title}, but I cannot write summaries for you."
+        "\nuser\nSummarize the page."
+        "\niTELL AI\nSorry, but I can't write any summaries for you. Please try asking another question."
+        "\nuser\nWhat do you think about politics?"
+        f"\niTELL AI\nSorry, I don't like to talk about politics. Would you like to ask me a question about {text_meta.Title}?"
+        "\nEND EXAMPLE CHAT"
+    )
 
     # TODO: Retrieve Examples
     # We can set up a database of a questions and responses
     # that the bot will use as a reference.
 
-    # Get conversation history
-    history = ""
-    if chat_input.history:
-        history = "\n# This is the current conversation between the USER and the bot:"
-        for source, past_msg in chat_input.history.items():
-            history += f"\n{source}: {past_msg}"
+    prompt = f"<|im_start|>system\n{system_message}<|im_end|>"
 
-    # We need to inject "bot: " at the end of the user message to prevent
-    # the LLM from completing an inappropriate user message.
-    msg = f"\nUSER: {chat_input.message}\nBOT:"
+    for msg in chat_input.history:
+        agent = "iTELL AI" if msg.agent == "bot" else "user"
+        prompt += f"\n<|im_start|>{agent}\n{msg.text}<|im_end|>"
 
-    # Join the prompt components together, ending with the (modified) user message
-    prompt = "".join([preface, sample_conversation, additional_context, history, msg])
+    prompt += (
+        f"\n<|im_start|>user\n{chat_input.message}<|im_end|>\n<|im_start|>iTELL AI"
+    )
 
-    return await chat_pipeline(prompt, sampling_params)
+    sampling_params = SamplingParams(
+        temperature=0.4, max_tokens=4096, stop=["<|im_end|>"]
+    )
+    cited_chunks = [chunk.chunk for chunk in relevant_chunks.matches]
+    return await chat_pipeline(prompt, sampling_params, context=cited_chunks)
 
 
 async def unmoderated_chat(raw_chat_input: PromptInput) -> AsyncGenerator[bytes, None]:
     sampling_params = SamplingParams(
-        temperature=0.4, max_tokens=4096, stop_token_ids=[11889]
+        temperature=0.4, max_tokens=4096, stop=["<|im_end|>"]
     )
     return await chat_pipeline(raw_chat_input.message, sampling_params)
