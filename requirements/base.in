@@ -4,7 +4,7 @@ gcld3
 https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.7.1/en_core_web_sm-3.7.1-py3-none-any.whl
 httpx
 protobuf==3.20.*
-pydantic>=1.2.4,<2.0.0
+pydantic
 sentry-sdk[fastapi]
 spacy>=3.0,<4.0
 supabase

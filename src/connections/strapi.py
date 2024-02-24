@@ -5,6 +5,7 @@ import httpx
 from typing import Union, Optional
 from pydantic import ValidationError
 from fastapi import HTTPException
+import sentry_sdk as sentry
 
 
 class Strapi:
@@ -18,19 +19,20 @@ class Strapi:
         self.headers = {"Authorization": f"Bearer {self.key}"}
 
     async def _get(self, url: str, params: dict) -> dict:
-        async with httpx.AsyncClient() as client:
+        async with httpx.AsyncClient(timeout=httpx.Timeout(10.0)) as client:
             try:
                 r = await client.get(url, headers=self.headers, params=params)
-            except TimeoutError:
-                raise HTTPException(
-                    status_code=504, detail="Connection to Strapi timed out."
-                )
+            except httpx.TimeoutException as err:
+                sentry.capture_exception(err)
+                raise HTTPException(status_code=504, detail=f"Strapi Timeout: {err}")
             if r.status_code != 200:
+                message = (
+                    f"Error connecting to Strapi {r.status_code}: {r.reason_phrase}"
+                )
+                sentry.capture_message(message)
                 raise HTTPException(
                     status_code=404,
-                    detail=(
-                        f"Error connecting to Strapi {r.status_code}: {r.reason_phrase}"
-                    ),
+                    detail=(message),
                 )
             result: dict = r.json()
             return result
@@ -113,6 +115,7 @@ class Strapi:
         try:
             return PageWithChunks(**json_response).data[0].attributes.Content[0]
         except ValidationError as error:
+            sentry.capture_exception(error)
             raise HTTPException(status_code=404, detail=str(error))
 
     async def get_text_meta(self, page_slug) -> Text:
@@ -127,22 +130,21 @@ class Strapi:
                 PageWithText(**json_response).data[0].attributes.text.data.attributes
             )
         except (AttributeError, ValidationError) as error:
+            sentry.capture_exception(error)
             raise HTTPException(
                 status_code=404,
                 detail=f"No parent text found for {page_slug}\n\n{error}",
             )
 
         if text_meta.Title is None:
-            raise HTTPException(
-                status_code=404,
-                detail="Requested page does not have a parent text with a title.",
-            )
+            message = "Requested page does not have a parent text with a title."
+            sentry.capture_message(message)
+            raise HTTPException(status_code=404, detail=message)
 
         if text_meta.slug is None:
-            raise HTTPException(
-                status_code=404,
-                detail="Requested page does not have a parent text with a slug.",
-            )
+            message = "Requested page does not have a parent text with a slug."
+            sentry.capture_message(message)
+            raise HTTPException(status_code=404, detail=message)
 
         return text_meta
 
@@ -157,4 +159,5 @@ class Strapi:
         try:
             return PageWithChunks(**json_response).data[0].attributes.Content
         except ValidationError as error:
+            sentry.capture_exception(error)
             raise HTTPException(status_code=404, detail=str(error))

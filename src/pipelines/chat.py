@@ -15,7 +15,7 @@ if os.environ.get("ENV") == "gpu-development":
         gpu_memory_utilization=0.80,
     )
 else:
-    # For deployment an an RTX A6000 with 48GiB of VRAM
+    # For deployment on an RTX A6000 with 48GiB of VRAM
     engine_args = AsyncEngineArgs(
         model="microsoft/Orca-2-13b",
         download_dir="/usr/local/huggingface/hub",
