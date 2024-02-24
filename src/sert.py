@@ -1,6 +1,5 @@
-"""SERT: Self-Explanation and Reading Strategy Training.
-"""
-
+"""SERT: Self-Explanation and Reading Strategy Training."""
+# flake8: noqa E501
 from .models.summary import Summary, ChunkWithWeight
 from .models.embedding import RetrievalInput, RetrievalStrategy
 from .embedding import chunks_retrieve
@@ -60,15 +59,16 @@ question_type_definitions = {
 
 prompt_template = (
     "<|im_start|>system"
-    "\nWrite a free response question based on the following highlighted chunk"
+    "\nYou are assistant, an AI language model developed by LEAR lab to provide high-quality tutoring to students."
+    " You will write a free response question based on the following highlighted chunk"
     ' from an instructional text titled "{text_name}".'
-    " It is important to understand that free response questions are designed to elicit"
-    " one of five cognitive processes from readers:"
+    " Free response questions are designed to elicit one of five cognitive processes from readers:"
     " Paraphrasing, Elaboration, Logic, Prediction, and Bridging."
     "\n[START HIGHLIGHTED CHUNK]"
     "\n{excerpt_chunk}"
-    "\n[END HIGHLIGHTED CHUNK]"
-    "\nNow, you will need to generate a {question_type} question based on the highlighted chunk."
+    "\n[END HIGHLIGHTED CHUNK]<|im_end|>"
+    "\n<|im_start|>user"
+    "\nPlease generate a {question_type} question based on the highlighted chunk."
     " In this context, {question_type} means {question_type_definition}"
     " Write only one question and do not provide any opening, closing, or explanations.<|im_end|>"
     "\n<|im_start|>assistant"
