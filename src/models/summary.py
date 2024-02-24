@@ -1,5 +1,6 @@
 from .textbook import TextbookNames
 from .strapi import Chunk
+from .chat import ChatMessage
 from typing import Optional, Dict
 from pydantic import BaseModel, Field, ConfigDict
 from dataclasses import dataclass, field
@@ -8,30 +9,25 @@ from enum import Enum
 from typing import Literal
 
 
-class ChatMessage(BaseModel):
-    agent: Literal["user", "bot"]
-    text: str
-
-
 class SummaryInputStrapi(BaseModel):
     page_slug: str = Field(
         description="The slug of the current page.", examples=["the-first-chunk-99t"]
     )
     summary: str
     focus_time: Dict[str, int] = Field(
-        default=dict(),
+        default_factory=dict,
         description="Keys are chunk slugs and values are focus times in seconds.",
         examples=[{"introduction-to-law-79t": 20}],
     )
     chat_history: Optional[list[ChatMessage]] = Field(
-        default=None,
+        default_factory=list,
         description=(
             "The full chat history as a list of {'agent': 'user'/'bot', 'text': str}"
             " dicts."
         ),
     )
     excluded_chunks: Optional[list[str]] = Field(
-        default=None,
+        default_factory=list,
         description=(
             "The slugs of chunks that should be excluded from consideration for STAIRS."
             " For example, if the student has already correctly answered a constructed"
@@ -49,7 +45,7 @@ class SummaryInputSupaBase(BaseModel):
     section_index: Optional[int] = Field(None, description="Use page_slug.")
     summary: str
     focus_time: Dict[str, int] = Field(
-        default=dict(),
+        default_factory=dict,
         description="Keys are chunk slugs and values are focus times in seconds.",
         examples=[{"introduction-to-law-79t": 20}],
     )
