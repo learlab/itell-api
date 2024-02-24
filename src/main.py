@@ -9,9 +9,19 @@ from .models.embedding import ChunkInput, RetrievalInput, RetrievalResults
 from .models.chat import ChatInput, PromptInput
 from .models.message import Message
 from .models.transcript import TranscriptInput, TranscriptResults
+from typing import Union, AsyncGenerator, Callable
+
 from fastapi.responses import StreamingResponse
-from fastapi import FastAPI, HTTPException, Response, Request
-from typing import Union, AsyncGenerator
+from fastapi import (
+    FastAPI,
+    HTTPException,
+    Response,
+    Request,
+    BackgroundTasks,
+    APIRouter,
+)
+from fastapi.routing import APIRoute
+from fastapi.middleware.cors import CORSMiddleware
 
 from .summary_eval_supabase import summary_score_supabase
 from .summary_eval import summary_score
@@ -21,12 +31,11 @@ from .answer_eval import answer_score
 from .transcript import transcript_generate
 
 import os
-import json
-from fastapi.middleware.cors import CORSMiddleware
 import sentry_sdk
 from starlette.background import BackgroundTask
 import uuid
 import logging
+
 
 description = """
 Welcome to iTELL AI, a REST API for intelligent textbooks.
@@ -75,50 +84,51 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.DEBUG)
 
 
-def log_info(req_body, res_body):
+def log_info(req: str, resp: str) -> None:
     idem = str(uuid.uuid4())
-    logger.info(f"rid={idem} {req_body}")
-    logger.info(f"rid={idem} {res_body}")
+    logging.info(f"REQUEST  {idem}: {req}")
+    logging.info(f"RESPONSE {idem}: {resp}")
 
 
-async def set_body(request: Request, body: bytes):
-    async def receive():
-        return {"type": "http.request", "body": body}
+class LoggingRoute(APIRoute):
+    def get_route_handler(self) -> Callable:
+        original_route_handler = super().get_route_handler()
 
-    request._receive = receive
+        async def custom_route_handler(request: Request) -> Response:
+            req_body = await request.body()
+            response = await original_route_handler(request)
+            existing_task = response.background
 
+            if isinstance(response, StreamingResponse):
+                task = BackgroundTask(log_info, req_body.decode(), "streaming response")
+            else:
+                task = BackgroundTask(
+                    log_info, req_body.decode(), response.body.decode()
+                )
 
-@app.middleware("http")
-async def log_requests(request: Request, call_next):
-    req_body = await request.body()
+            # check if the original response had a background task assigned to it
+            if existing_task:
+                response.background = BackgroundTasks(tasks=[existing_task, task])
+            else:
+                response.background = task
 
-    await set_body(request, req_body)  # not needed, if using FastAPI>=0.108.0.
-    response = await call_next(request)
+            return response
 
-    res_body = b""
-    async for chunk in response.body_iterator:
-        res_body += chunk
-
-    task = BackgroundTask(log_info, req_body, res_body)
-
-    return Response(
-        content=res_body,
-        status_code=response.status_code,
-        headers=dict(response.headers),
-        media_type=response.media_type,
-        background=task,
-    )
+        return custom_route_handler
 
 
-@app.get("/")
+router = APIRouter(route_class=LoggingRoute)
+
+
+@router.get("/")
 def hello() -> Message:
     return Message(message="This is a summary scoring API for iTELL.")
 
 
-@app.post("/score/summary")
+@router.post("/score/summary")
 async def score_summary(
     input_body: Union[SummaryInputStrapi, SummaryInputSupaBase],
 ) -> SummaryResults:
@@ -133,7 +143,7 @@ async def score_summary(
         return results
 
 
-@app.post("/score/answer")
+@router.post("/score/answer")
 async def score_answer(
     input_body: Union[AnswerInputStrapi, AnswerInputSupaBase],
 ) -> AnswerResults:
@@ -147,17 +157,17 @@ async def score_answer(
         return await answer_score(input_body)
 
 
-@app.post("/generate/question")
+@router.post("/generate/question")
 async def generate_question(input_body: ChunkInput) -> None:
     raise HTTPException(status_code=404, detail="Not Implemented")
 
 
-@app.post("/generate/keyphrases")
+@router.post("/generate/keyphrases")
 async def generate_keyphrases(input_body: ChunkInput) -> None:
     raise HTTPException(status_code=404, detail="Not Implemented")
 
 
-@app.post("/generate/transcript")
+@router.post("/generate/transcript")
 async def generate_transcript(input_body: TranscriptInput) -> TranscriptResults:
     return await transcript_generate(input_body)
 
@@ -168,14 +178,14 @@ if not os.environ.get("ENV") == "development":
     from src.chat import moderated_chat, unmoderated_chat
     from .sert import sert_generate
 
-    @app.get("/gpu", description="Check if GPU is available.")
+    @router.get("/gpu", description="Check if GPU is available.")
     def gpu_is_available() -> Message:
         if torch.cuda.is_available():
             return Message(message="GPU is available.")
         else:
             return Message(message="GPU is not available.")
 
-    @app.post("/chat")
+    @router.post("/chat")
     async def chat(input_body: ChatInput) -> StreamingResponse:
         """Responds to user queries incorporating relevant chunks from the current page.
 
@@ -185,14 +195,14 @@ if not os.environ.get("ENV") == "development":
         """
         return StreamingResponse(await moderated_chat(input_body))
 
-    @app.post("/chat/raw")
+    @router.post("/chat/raw")
     async def raw_chat(input_body: PromptInput) -> StreamingResponse:
         """Direct access to the underlying chat model.
         For testing purposes.
         """
         return StreamingResponse(await unmoderated_chat(input_body))
 
-    @app.post("/score/summary/stairs", response_model=StreamingSummaryResults)
+    @router.post("/score/summary/stairs", response_model=StreamingSummaryResults)
     async def score_summary_with_stairs(
         input_body: SummaryInputStrapi,
     ) -> StreamingResponse:
@@ -213,20 +223,22 @@ if not os.environ.get("ENV") == "development":
         stream = await sert_generate(summary)
 
         async def stream_results() -> AsyncGenerator[bytes, None]:
-            yield (json.dumps(feedback.dict()) + "\0").encode("utf-8")
+            yield (feedback.model_dump_json() + "\0").encode("utf-8")
             async for ret in stream:
                 yield ret
 
         return StreamingResponse(stream_results())
 
-    @app.post("/generate/embedding")
+    @router.post("/generate/embedding")
     async def generate_embedding(input_body: ChunkInput) -> Response:
         return await embedding_generate(input_body)
 
-    @app.post("/retrieve/chunks")
+    @router.post("/retrieve/chunks")
     async def retrieve_chunks(input_body: RetrievalInput) -> RetrievalResults:
         return await chunks_retrieve(input_body)
 
+
+app.include_router(router)
 
 if __name__ == "__main__":
     import uvicorn
