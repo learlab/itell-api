@@ -38,7 +38,7 @@ class SummaryInputStrapi(BaseModel):
 
 class SummaryInputSupaBase(BaseModel):
     model_config = ConfigDict(
-        json_schema_extra={"deprecated": "Use SummaryInputStrapi."}
+        json_schema_extra={"deprecated": True}
     )
     textbook_name: TextbookNames = Field(description="Use page_slug.")
     chapter_index: int = Field(description="Use page_slug.")
