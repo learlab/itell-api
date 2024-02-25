@@ -19,14 +19,14 @@ class SummaryInputStrapi(BaseModel):
         description="Keys are chunk slugs and values are focus times in seconds.",
         examples=[{"introduction-to-law-79t": 20}],
     )
-    chat_history: Optional[list[ChatMessage]] = Field(
+    chat_history: list[ChatMessage] = Field(
         default_factory=list,
         description=(
             "The full chat history as a list of {'agent': 'user'/'bot', 'text': str}"
             " dicts."
         ),
     )
-    excluded_chunks: Optional[list[str]] = Field(
+    excluded_chunks: list[str] = Field(
         default_factory=list,
         description=(
             "The slugs of chunks that should be excluded from consideration for STAIRS."
@@ -40,9 +40,9 @@ class SummaryInputSupaBase(BaseModel):
     model_config = ConfigDict(
         json_schema_extra={"deprecated": True}
     )
-    textbook_name: TextbookNames = Field(description="Use page_slug.")
-    chapter_index: int = Field(description="Use page_slug.")
-    section_index: Optional[int] = Field(None, description="Use page_slug.")
+    textbook_name: TextbookNames
+    chapter_index: int
+    section_index: Optional[int] = None
     summary: str
     focus_time: Dict[str, int] = Field(
         default_factory=dict,

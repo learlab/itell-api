@@ -1,5 +1,5 @@
 from typing import Optional, List
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from enum import Enum
 
 
@@ -33,4 +33,20 @@ class Match(BaseModel):
 
 
 class RetrievalResults(BaseModel):
+    model_config = ConfigDict(
+        json_schema_extra={
+            "examples": [
+                {
+                    "matches": [
+                        {
+                            "chunk": "test_chunk_1",
+                            "content": "Lorem ipsum dolor sit amet...",
+                            "similarity": 0.238420323227625,
+                        }
+                    ]
+                }
+            ]
+        }
+    )
+
     matches: List[Match] = []

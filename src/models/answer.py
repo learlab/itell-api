@@ -10,9 +10,7 @@ class AnswerInputStrapi(BaseModel):
 
 
 class AnswerInputSupaBase(BaseModel):
-    model_config = ConfigDict(
-        json_schema_extra={"deprecated": True}
-    )
+    model_config = ConfigDict(json_schema_extra={"deprecated": True})
     textbook_name: TextbookNames
     chapter_index: int
     section_index: Optional[int] = None
@@ -21,5 +19,8 @@ class AnswerInputSupaBase(BaseModel):
 
 
 class AnswerResults(BaseModel):
+    model_config = ConfigDict(
+        json_schema_extra={"examples": [{"score": 0.0, "is_passing": False}]}
+    )
     score: float  # BLEURT or some other score
     is_passing: bool

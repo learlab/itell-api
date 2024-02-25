@@ -125,6 +125,7 @@ router = APIRouter(route_class=LoggingRoute)
 
 @router.get("/")
 def hello() -> Message:
+    """Welcome to iTELL AI!"""
     return Message(message="This is a summary scoring API for iTELL.")
 
 
@@ -159,16 +160,20 @@ async def score_answer(
 
 @router.post("/generate/question")
 async def generate_question(input_body: ChunkInput) -> None:
+    """Not implemented."""
     raise HTTPException(status_code=404, detail="Not Implemented")
 
 
 @router.post("/generate/keyphrases")
-async def generate_keyphrases(input_body: ChunkInput) -> None:
+async def generate_keyphrases() -> None:
+    """Not implemented."""
     raise HTTPException(status_code=404, detail="Not Implemented")
 
 
 @router.post("/generate/transcript")
 async def generate_transcript(input_body: TranscriptInput) -> TranscriptResults:
+    """Generate a transcript from a YouTube video.
+    Intended for use by the Content Management System."""
     return await transcript_generate(input_body)
 
 
@@ -180,6 +185,7 @@ if not os.environ.get("ENV") == "development":
 
     @router.get("/gpu", description="Check if GPU is available.")
     def gpu_is_available() -> Message:
+        """Check if GPU is available."""
         if torch.cuda.is_available():
             return Message(message="GPU is available.")
         else:
@@ -231,6 +237,10 @@ if not os.environ.get("ENV") == "development":
 
     @router.post("/generate/embedding")
     async def generate_embedding(input_body: ChunkInput) -> Response:
+        """This endpoint generates an embedding for a provided chunk of text
+        and saves it to the vector store on SupaBase.
+        It is only intended to be called by the Content Management System.
+        """
         return await embedding_generate(input_body)
 
     @router.post("/retrieve/chunks")
