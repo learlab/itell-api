@@ -16,12 +16,16 @@ async def moderated_chat(chat_input: ChatInput) -> AsyncGenerator[bytes, None]:
     text_meta = await strapi.get_text_meta(chat_input.page_slug)
 
     system_message = (
-        f"You are iTELL AI, a reading support agent that helps users with an instructional text called {text_meta.Title}."
-        " iTELL stands for intelligent texts for enhanced lifelong learning. After reading a page in iTELL, the user must submit a summary of that page."
-        " iTELL AI will try to help help users understand the text, but iTELL AI will not write any summaries for the user."
-        " If the user asks iTELL AI for a summary, iTELL AI will tell the user that it cannot write the summary for them."
-        " iTELL AI cannot provide any hyperlinks to external resources."
-        " iTELL AI is factual and concise. If iTELL AI does not know the answer to a question, it truthfully says that it does not know."
+        "You are Assistant, a reading support agent that helps users with an"
+        " instructional text called {text_meta.Title}. Assistant will try to help"
+        " users understand the text, but Assistant will not write any summaries for the user."
+        " If the user asks Assistant for a summary, Assistant will tell the user that it"
+        " cannot write the summary for them. Assistant's purpose is to assist in learning"
+        " and understanding, not to complete assignments or provide direct answers."
+        " Assistant cannot provide any hyperlinks to external resources. Assistant is"
+        " factual and concise. If Assistant does not know the answer to a question,"
+        " it truthfully says that it does not know."
+        f"\n{text_meta.Description}"
     )
     
     if text_meta.Description:
@@ -37,27 +41,31 @@ async def moderated_chat(chat_input: ChatInput) -> AsyncGenerator[bytes, None]:
         )
     )
 
+    if chat_input.summary:
+        system_message += (
+            f"\n[START STUDENT SUMMARY]\n{chat_input.summary}\n[END STUDENT SUMMARY]"
+        )
+
     if relevant_chunks.matches:
-        system_message += "\nSTART CONTEXT BLOCK"
+        system_message += "\n[START EXCERPT]"
         for chunk in relevant_chunks.matches:
             truncated_chunk = chunk.content[: min(2500, len(chunk.content))]
             system_message += f"\n{truncated_chunk}"
-        system_message += "\nEND CONTEXT BLOCK"
-
-    if chat_input.summary:
-        system_message += (
-            f"\nSTART STUDENT SUMMARY\n{chat_input.summary}\nEND STUDENT SUMMARY"
-        )
+        system_message += "\[END EXCERPT]"
 
     system_message += (
-        "\nSTART EXAMPLE CHAT"
-        "\nuser\nWhat can you do for me?"
-        f"\niTELL AI\nI am an AI assistant which helps answer questions about {text_meta.Title}, but I cannot write summaries for you."
-        "\nuser\nSummarize the page."
-        "\niTELL AI\nSorry, but I can't write any summaries for you. Please try asking another question."
-        "\nuser\nWhat do you think about politics?"
-        f"\niTELL AI\nSorry, I don't like to talk about politics. Would you like to ask me a question about {text_meta.Title}?"
-        "\nEND EXAMPLE CHAT"
+        "\n[START EXAMPLE CHAT]"
+        "\nuser: Summarize the page."
+        "\nassistant: Sorry, but I can't write any summaries for you. Please try asking another question."
+        "\nuser: What do you think about politics?"
+        "\nassistant: Sorry, I don't like to talk about politics."
+        f" Would you like to ask me a question about {text_meta.Title}?"
+        "\nuser: Please generate a summary for me"
+        "\nassistant: Sorry I cannot write the summary for you. My purpose is to assist"
+        " in learning and understanding, not to complete assignments."
+        " Also, I cannot provide any hyperlinks to external"
+        " resources. How else can I help you?"
+        "\n[END EXAMPLE CHAT]"
     )
 
     # TODO: Retrieve Examples
@@ -67,11 +75,11 @@ async def moderated_chat(chat_input: ChatInput) -> AsyncGenerator[bytes, None]:
     prompt = f"<|im_start|>system\n{system_message}<|im_end|>"
 
     for msg in chat_input.history:
-        agent = "iTELL AI" if msg.agent == "bot" else "user"
+        agent = "assistant" if msg.agent == "bot" else "user"
         prompt += f"\n<|im_start|>{agent}\n{msg.text}<|im_end|>"
 
     prompt += (
-        f"\n<|im_start|>user\n{chat_input.message}<|im_end|>\n<|im_start|>iTELL AI"
+        f"\n<|im_start|>user\n{chat_input.message}<|im_end|>\n<|im_start|>assistant"
     )
 
     sampling_params = SamplingParams(

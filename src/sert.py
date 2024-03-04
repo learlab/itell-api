@@ -59,27 +59,35 @@ question_type_definitions = {
 
 prompt_template = (
     "<|im_start|>system"
-    "\nYou are assistant, an AI language model developed by LEAR lab to provide high-quality tutoring to students."
-    " You will write a free response question based on the following highlighted chunk"
-    ' from an instructional text titled "{text_name}".'
-    " Free response questions are designed to elicit one of five cognitive processes from readers:"
-    " Paraphrasing, Elaboration, Logic, Prediction, and Bridging."
+    "\nYou are assistant, an AI tutor that helps students learn. Your job is to"
+    " ask thought-provoking questions that encourage students to think more deeply"
+    " about the text they are reading. You guide students through the learning process"
+    " without providing them with the answers directly. The student has just read a"
+    " page from {text_name}. They wrote a summary about the page, which was scored as"
+    " failing. The student will now re-read the highlighted chunk below."
+    " The student's summary is also included."
     "\n[START HIGHLIGHTED CHUNK]"
     "\n{excerpt_chunk}"
-    "\n[END HIGHLIGHTED CHUNK]<|im_end|>"
+    "\n[END HIGHLIGHTED CHUNK]"
+    "\n[START USER SUMMARY]"
+    "\n{student_summary}"
+    "\n[END USER SUMMARY]<|im_end|>"
     "\n<|im_start|>user"
-    "\nPlease generate a {question_type} question based on the highlighted chunk."
+    "\nGenerate a {question_type} question based on the highlighted chunk."
     " In this context, {question_type} means {question_type_definition}"
-    " Write only one question and do not provide any opening, closing, or explanations.<|im_end|>"
+    " The question will be a free-response question that requires a thoughtful, written"
+    " response. Write just the question. Do not include any formatting or explanation."
+    " Do not provide an answer to the free-response question.<|im_end|>"
     "\n<|im_start|>assistant"
 )
 
 
-def generate_sert_prompt(excerpt_chunk, text_name, question_type):
+def generate_sert_prompt(excerpt_chunk, text_name, question_type, student_summary):
     question_type_definition = question_type_definitions[question_type]
     return prompt_template.format(
         text_name=text_name,
         excerpt_chunk=excerpt_chunk,
+        student_summary=student_summary,
         question_type=question_type,
         question_type_definition=question_type_definition,
     )
@@ -142,6 +150,7 @@ async def sert_generate(summary: Summary) -> AsyncGenerator[bytes, None]:
     prompt = generate_sert_prompt(
         excerpt_chunk=chunk_text,
         text_name=text_meta.Title,
+        student_summary=summary.summary.text,
         question_type=question_type,
     )
 
