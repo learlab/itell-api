@@ -51,7 +51,7 @@ async def moderated_chat(chat_input: ChatInput) -> AsyncGenerator[bytes, None]:
         for chunk in relevant_chunks.matches:
             truncated_chunk = chunk.content[: min(2500, len(chunk.content))]
             system_message += f"\n{truncated_chunk}"
-        system_message += "\[END EXCERPT]"
+        system_message += "\n[END EXCERPT]"
 
     system_message += (
         "\n[START EXAMPLE CHAT]"
