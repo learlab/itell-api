@@ -34,7 +34,7 @@ def weight_chunks(
     for chunk, chunk_doc in zip(chunks, chunk_docs):
         focus_time = max(focus_time_dict.get(chunk.Slug, 1), 1)
         weight = 3.33 * (focus_time / len(chunk_doc))
-        weighted_chunks.append(ChunkWithWeight(**chunk.dict(), weight=weight))
+        weighted_chunks.append(ChunkWithWeight(**chunk.model_dump(), weight=weight))
     return weighted_chunks
 
 

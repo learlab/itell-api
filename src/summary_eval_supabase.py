@@ -22,7 +22,9 @@ logging.set_verbosity_error()
 doc2vec_model = Doc2Vec.load("assets/doc2vec-model")
 content_pipe = SummaryPipeline("tiedaar/longformer-content-global")
 wording_pipe = SummaryPipeline("tiedaar/longformer-wording-global")
-detector = gcld3.NNetLanguageIdentifier(min_num_bytes=0, max_num_bytes=1000)
+detector = gcld3.NNetLanguageIdentifier(  # type: ignore
+    min_num_bytes=0, max_num_bytes=1000
+)
 
 
 class Summary:
@@ -149,6 +151,9 @@ async def summary_score_supabase(summary_input: SummaryInputSupaBase) -> Summary
     result = detector.FindLanguage(text=summary_input.summary)
     if result.is_reliable and result.language != "en":
         summary.results["english"] = False
+
+    # Profanity is always False when using the deprecated Supabase methods
+    summary.results["profanity"] = False
 
     junk_filter = (
         summary.results["containment"] > 0.5
