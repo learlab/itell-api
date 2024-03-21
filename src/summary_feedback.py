@@ -20,7 +20,7 @@ class Containment:
 
     @classmethod
     def generate_feedback(cls, score):
-        is_passed = score < cls.threshold
+        is_passed = score < cls.threshold  # pass if language is original
         feedback = Feedback(
             is_passed=is_passed, prompt=cls.passing if is_passed else cls.failing
         )
@@ -40,7 +40,7 @@ class ContainmentChat:
         if score is None:
             feedback = Feedback(is_passed=None, prompt=None)
         else:
-            is_passed = score < cls.threshold
+            is_passed = score < cls.threshold  # pass if language is original
             feedback = Feedback(
                 is_passed=is_passed, prompt=cls.passing if is_passed else cls.failing
             )
@@ -60,7 +60,7 @@ class Similarity:
 
     @classmethod
     def generate_feedback(cls, score):
-        is_passed = score > cls.threshold
+        is_passed = score > cls.threshold  # pass if summary is on topic
         feedback = Feedback(
             is_passed=is_passed, prompt=cls.passing if is_passed else cls.failing
         )
@@ -68,7 +68,7 @@ class Similarity:
 
 
 class Content:
-    threshold = -0.5
+    threshold = -0.3
     passing = "You did a good job of including key ideas and details on this page."
     failing = (
         "You need to include more key ideas and details from the page to"
@@ -119,11 +119,25 @@ class English:
 
     @classmethod
     def generate_feedback(cls, score):
-        is_passed = score > cls.threshold
+        is_passed = score > cls.threshold  # pass if summary is in English
         feedback = Feedback(
             is_passed=is_passed, prompt=cls.passing if is_passed else cls.failing
         )
         return AnalyticFeedback(type=ScoreType.english, feedback=feedback)
+
+
+class Profanity:
+    threshold = True
+    passing = None
+    failing = "Please avoid using profanity in your summary."
+
+    @classmethod
+    def generate_feedback(cls, score):
+        is_passed = score < cls.threshold  # pass if summary does not contain profanity
+        feedback = Feedback(
+            is_passed=is_passed, prompt=cls.passing if is_passed else cls.failing
+        )
+        return AnalyticFeedback(type=ScoreType.profanity, feedback=feedback)
 
 
 def get_feedback(results: SummaryResults) -> SummaryResultsWithFeedback:
@@ -133,6 +147,7 @@ def get_feedback(results: SummaryResults) -> SummaryResultsWithFeedback:
     content = Content.generate_feedback(results.content)
     wording = Wording.generate_feedback(results.wording)
     english = English.generate_feedback(results.english)
+    profanity = Profanity.generate_feedback(results.profanity)
 
     is_passed = all(
         feedback.feedback.is_passed is not False
@@ -141,6 +156,7 @@ def get_feedback(results: SummaryResults) -> SummaryResultsWithFeedback:
             containment_chat,
             similarity,
             english,
+            profanity,
             wording,
             content,
         ]
@@ -157,7 +173,7 @@ def get_feedback(results: SummaryResults) -> SummaryResultsWithFeedback:
         )
 
     return SummaryResultsWithFeedback(
-        **results.dict(),
+        **results.model_dump(),
         is_passed=is_passed,
         prompt=prompt,
         prompt_details=[
@@ -165,6 +181,7 @@ def get_feedback(results: SummaryResults) -> SummaryResultsWithFeedback:
             containment_chat,
             similarity,
             english,
+            profanity,
             content,
             wording,
         ],

@@ -56,6 +56,7 @@ class SummaryResults(BaseModel):
     containment_chat: Optional[float] = None
     similarity: float
     english: bool
+    profanity: bool
     included_keyphrases: list[str]
     suggested_keyphrases: list[str]
     content: Optional[float] = None
@@ -67,6 +68,7 @@ class ScoreType(str, Enum):
     containment_chat = "Language Borrowing (from iTELL AI)"
     similarity = "Relevance"
     english = "English"
+    profanity = "Profanity"
     content = "Content"
     wording = "Wording"
 
@@ -96,6 +98,7 @@ class StreamingSummaryResults(SummaryResultsWithFeedback):
                     "containment_chat": None,
                     "similarity": 0.09705320000648499,
                     "english": True,
+                    "profanity": False,
                     "included_keyphrases": [],
                     "suggested_keyphrases": [
                         "promote social justice",

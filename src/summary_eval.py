@@ -7,6 +7,7 @@ from .pipelines.embed import EmbeddingPipeline
 from .pipelines.containment import score_containment
 from .pipelines.summary import SummaryPipeline
 from .pipelines.keyphrases import suggest_keyphrases
+from .pipelines.profanity_filter import profanity_filter
 from .connections.strapi import Strapi
 from .embedding import page_similarity
 
@@ -85,8 +86,7 @@ async def summary_score(
     # Check if summary is similar to source text
     summary_embed = embedding_pipe(summary.summary.text)[0].tolist()
     results["similarity"] = (
-        await page_similarity(summary_embed, summary.page_slug)
-        + 0.15
+        await page_similarity(summary_embed, summary.page_slug) + 0.15
     )  # adding 0.15 to bring similarity score in line with old doc2vec model
 
     # Generate keyphrase suggestions
@@ -100,12 +100,16 @@ async def summary_score(
     if lang_result.is_reliable and lang_result.language != "en":
         results["english"] = False
 
+    # Check if summary contains profanity
+    results["profanity"] = profanity_filter(summary.summary)
+
     # Check if summary fails to meet minimum requirements
     junk_filter = (
         results["containment"] > 0.5
         or results.get("containment_chat", 0.0) > 0.5
         or results["similarity"] < 0.3
         or results["english"] is False
+        or results["profanity"] is True
     )
 
     if junk_filter:

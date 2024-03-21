@@ -6,4 +6,4 @@ with open(Path("assets/offensive-words.txt"), "r") as data:
 
 
 def profanity_filter(doc: Doc) -> bool:
-    return any(tok.text in offensive_words for tok in doc)
+    return any(tok.lower_ in offensive_words for tok in doc)
