@@ -1,4 +1,5 @@
 """SERT: Self-Explanation and Reading Strategy Training."""
+
 # flake8: noqa E501
 from .models.summary import Summary, ChunkWithWeight
 from .models.embedding import RetrievalInput, RetrievalStrategy
@@ -159,15 +160,3 @@ async def sert_generate(summary: Summary) -> AsyncGenerator[bytes, None]:
     return await chat_pipeline(
         prompt, sampling_params, chunk=selected_chunk.Slug, question_type=question_type
     )
-
-
-if __name__ == "__main__":
-    # python3 -m src.sert --arg "VALUE"
-    import argparse
-
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--excerpt_chunk", type=str, required=True)
-    parser.add_argument("--text_name", type=str, required=True)
-    parser.add_argument("--question_type", type=str, required=True)
-    args = parser.parse_args()
-    print(generate_sert_prompt(args.excerpt_chunk, args.text_name, args.question_type))

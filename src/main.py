@@ -55,8 +55,7 @@ sentry_sdk.init(
     dsn=os.environ.get("SENTRY_DSN"),
     environment=os.environ.get("ENV"),
     traces_sample_rate=1.0,
-    # Samples 100% of transactions. We should decrease this value in the future.
-    profiles_sample_rate=1.0,
+    profiles_sample_rate=0.1,  # 10% of transactions
 )
 
 
