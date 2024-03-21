@@ -17,7 +17,7 @@ async def moderated_chat(chat_input: ChatInput) -> AsyncGenerator[bytes, None]:
 
     system_message = (
         "You are Assistant, a reading support agent that helps users with an"
-        " instructional text called {text_meta.Title}. Assistant will try to help"
+        f" instructional text called {text_meta.Title}. Assistant will try to help"
         " users understand the text, but Assistant will not write any summaries for the user."
         " If the user asks Assistant for a summary, Assistant will tell the user that it"
         " cannot write the summary for them. Assistant's purpose is to assist in learning"
