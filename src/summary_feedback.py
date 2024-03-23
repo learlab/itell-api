@@ -68,7 +68,8 @@ class Similarity:
 
 
 class Content:
-    threshold = -0.3
+    # threshold was originally -0.3 : was decreased to -0.15 for the Cornell volume to increase engagement with STAIRS
+    threshold = -0.15
     passing = "You did a good job of including key ideas and details on this page."
     failing = (
         "You need to include more key ideas and details from the page to"
@@ -89,7 +90,8 @@ class Content:
 
 
 class Wording:
-    threshold = -1
+    # threshold was originally -1 : was decreased to -0.5 for the Cornell volume to increase engagement with STAIRS
+    threshold = -0.5
     passing = (
         "You did a good job of paraphrasing words and sentences from the text and"
         " using objective language."
