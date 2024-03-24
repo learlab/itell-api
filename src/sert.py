@@ -104,7 +104,9 @@ async def sert_generate(summary: Summary) -> AsyncGenerator[bytes, None]:
         question_type_definition=question_type_definitions[question_type],
     )
 
-    sampling_params = SamplingParams(temperature=0.4, max_tokens=4096)
+    sampling_params = SamplingParams(
+        temperature=0.4, max_tokens=409, stop=["<|im_end|>"]
+    )
 
     return await chat_pipeline(
         prompt, sampling_params, chunk=selected_chunk.Slug, question_type=question_type
