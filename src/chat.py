@@ -36,7 +36,7 @@ async def moderated_chat(chat_input: ChatInput) -> AsyncGenerator[bytes, None]:
         text_name=text_meta.Title,
         text_info=text_meta.Description,
         context=relevant_chunks.matches,
-        chat_history=chat_input.history,
+        chat_history=[(msg.agent, msg.text) for msg in chat_input.history],
         user_message=chat_input.message,
         student_summary=chat_input.summary,
     )
