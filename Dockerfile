@@ -10,7 +10,8 @@ RUN apt-get update && \
 # Do requirements first so we can cache them
 RUN mkdir /usr/src/itell-ai && \
     mkdir /usr/src/itell-ai/assets && \
-    mkdir /usr/src/itell-ai/src
+    mkdir /usr/src/itell-ai/src && \
+    mkdir /usr/src/itell-ai/templates
 WORKDIR /usr/src/itell-ai
 COPY requirements/gpu.txt /usr/src/itell-ai/requirements.txt
 RUN pip install -r requirements.txt
@@ -19,6 +20,8 @@ ENV HF_HOME=/usr/local/huggingface
 
 COPY assets /usr/src/itell-ai/assets/
 COPY src /usr/src/itell-ai/src/
+COPY templates /usr/src/itell-ai/templates/
+
 CMD ["python3", "-m", "src.main"]
 
 FROM base as test
