@@ -10,88 +10,36 @@ from typing import AsyncGenerator
 
 import random
 from vllm.sampling_params import SamplingParams
+from jinja2 import Template
 from fastapi import HTTPException
 
 strapi = Strapi()
 
+with open("templates/sert.jinja2", "r", encoding="utf8") as file_:
+    prompt_template = Template(file_.read())
+
 question_type_definitions = {
     "paraphrasing": (
-        "restating the text in different words. Preferably, in the reader’s own words."
-        " It is an important part of the explanation process because readers often"
-        " paraphrase the sentence in order to begin an explanation. Paraphrases are"
-        " important because they help the reader to better understand the information"
-        " in the sentences, and thus help the reader, particularly less skilled"
-        " readers, to develop a better understanding of the text. Essentially, the act"
-        " of paraphrasing externalizes the reader’s understanding. This process can"
-        " force the reader to fill in conceptual gaps and facilitates the activation of"
-        " relevant concepts that are necessary to generate inferences."
+        "A paraphrasing question asks readers to restate the text in different words."
     ),
     "elaboration": (
-        "the process of making inferences that link what is in the text or sentence to"
-        " related to a reader’s background knowledge. Readers use specific prior"
-        " knowledge or learned experiences to understand a text by developing"
-        " inferences based on specific background knowledge."
+        "An elaboration question asks readers to make inferences that"
+        " link what is in the text or sentence to the reader’s background knowledge."
     ),
     "logic": (
-        "using general knowledge or logic to infer meaning. Does not depend on"
-        " background knowledge unique to a reader but rather general knowledge of the"
-        " world. Helps low-knowledge readers make sense of unfamiliar text. Encourages"
-        " students to use logic and common sense helps them to understand that it is"
-        " possible to make sense of the text, and go beyond the text, without knowing a"
-        " lot about the topic."
+        "A logic question asks readers to use general knowledge or logic to infer meaning."
+        " It encourages readers to use logic and common sense to help them make sense of the text."
     ),
     "prediction": (
-        "thinking about what might be coming next in the text. Asking readers to"
-        " predict next ideas or steps in a text that enhance thinking about the text"
-        " from a global and not a local perspective."
+        "A prediction question asks readers to think about what might come next in the text."
+        " It encouranges readers to predict next ideas or steps."
     ),
     "bridging": (
-        "the process of linking ideas and understanding the relations between"
-        " separate text segments. Readers merge individual ideas from the text into"
-        " coherent text representation. Making bridging inferences is critical to text"
-        " comprehension because texts normally do not (or cannot) state all of the"
-        " relevant information. Therefore, to successfully comprehend a text, the"
-        " reader must generate bridging inferences to build a coherent mental model"
-        " that connects the separate ideas across the text. Making reference to an idea"
-        " presented in a previous sentence in the text to better understand"
-        " relationships between sentences."
+        "A bridging question asks readers to link ideas and understand the relations between"
+        " text segments. It will encourage readers to generate bridging inferences"
+        " across sentences and to build a coherent mental model."
     ),
 }
-
-prompt_template = (
-    "<|im_start|>system"
-    "\nYou are assistant, an AI tutor that helps students learn. Your job is to"
-    " ask thought-provoking questions that encourage students to think more deeply"
-    " about the text they are reading. You guide students through the learning process"
-    " without providing them with the answers directly. The student has just read a"
-    " page from {text_name}. They wrote a summary about the page, which was scored as"
-    " failing. The student will now re-read the highlighted chunk below."
-    " The student's summary is also included."
-    "\n[START HIGHLIGHTED CHUNK]"
-    "\n{excerpt_chunk}"
-    "\n[END HIGHLIGHTED CHUNK]"
-    "\n[START USER SUMMARY]"
-    "\n{student_summary}"
-    "\n[END USER SUMMARY]<|im_end|>"
-    "\n<|im_start|>user"
-    "\nGenerate a {question_type} question based on the highlighted chunk."
-    " In this context, {question_type} means {question_type_definition}"
-    " The question will be a free-response question that requires a thoughtful, written"
-    " response. Write just the question. Do not include any formatting or explanation."
-    " Do not provide an answer to the free-response question.<|im_end|>"
-    "\n<|im_start|>assistant"
-)
-
-
-def generate_sert_prompt(excerpt_chunk, text_name, question_type, student_summary):
-    question_type_definition = question_type_definitions[question_type]
-    return prompt_template.format(
-        text_name=text_name,
-        excerpt_chunk=excerpt_chunk,
-        student_summary=student_summary,
-        question_type=question_type,
-        question_type_definition=question_type_definition,
-    )
 
 
 def weight_chunks_with_similarity(reading_time_score, similarity):
@@ -129,7 +77,7 @@ async def sert_generate(summary: Summary) -> AsyncGenerator[bytes, None]:
     chunks: list[tuple[ChunkWithWeight, float]] = [
         (chunk, (chunk.weight * similarity_dict[chunk.Slug]))
         for chunk in summary.chunks
-        if chunk.Slug in similarity_dict
+        if chunk.Slug in similarity_dict and 
     ]
 
     if len(chunks) == 0:
@@ -148,11 +96,12 @@ async def sert_generate(summary: Summary) -> AsyncGenerator[bytes, None]:
     question_type = random.choice(list(question_type_definitions.keys()))
 
     # Construct the SERT prompt
-    prompt = generate_sert_prompt(
-        excerpt_chunk=chunk_text,
+    prompt = prompt_template.render(
         text_name=text_meta.Title,
+        excerpt_chunk=chunk_text,
         student_summary=summary.summary.text,
         question_type=question_type,
+        question_type_definition=question_type_definitions[question_type],
     )
 
     sampling_params = SamplingParams(temperature=0.4, max_tokens=4096)
