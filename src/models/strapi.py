@@ -5,6 +5,7 @@ from typing import TypeVar, Generic
 
 
 class Chunk(BaseModel):
+    component_type: str = Field(..., alias="__component")
     Slug: str
     id: int
     Header: str

@@ -77,7 +77,7 @@ async def sert_generate(summary: Summary) -> AsyncGenerator[bytes, None]:
     chunks: list[tuple[ChunkWithWeight, float]] = [
         (chunk, (chunk.weight * similarity_dict[chunk.Slug]))
         for chunk in summary.chunks
-        if chunk.Slug in similarity_dict and 
+        if chunk.Slug in similarity_dict
     ]
 
     if len(chunks) == 0:

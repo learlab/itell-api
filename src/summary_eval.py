@@ -32,9 +32,13 @@ def weight_chunks(
     """Weight chunks based on focus time"""
     weighted_chunks = []
     for chunk, chunk_doc in zip(chunks, chunk_docs):
+        if not chunk.component_type == "page.chunk":
+            continue
         focus_time = max(focus_time_dict.get(chunk.Slug, 1), 1)
         weight = 3.33 * (focus_time / len(chunk_doc))
-        weighted_chunks.append(ChunkWithWeight(**chunk.model_dump(), weight=weight))
+        weighted_chunks.append(
+            ChunkWithWeight(**chunk.model_dump(by_alias=True), weight=weight)
+        )
     return weighted_chunks
 
 
@@ -49,6 +53,7 @@ async def summary_score(
     # Retrieve chunks from Strapi and weight them
     # 3.33 words per second is an average reading pace
     chunks = await strapi.get_chunks(summary_input.page_slug)
+
     chunk_docs = list(nlp.pipe([chunk.CleanText for chunk in chunks]))
 
     weighted_chunks = weight_chunks(chunks, chunk_docs, summary_input.focus_time)
