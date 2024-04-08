@@ -6,7 +6,7 @@ from .models.summary import (
 )
 from .models.answer import AnswerInputStrapi, AnswerInputSupaBase, AnswerResults
 from .models.embedding import ChunkInput, RetrievalInput, RetrievalResults
-from .models.chat import ChatInput, PromptInput
+from .models.chat import ChatInput, PromptInput, ChatInputCRI
 from .models.message import Message
 from .models.transcript import TranscriptInput, TranscriptResults
 from typing import Union, AsyncGenerator, Callable
@@ -179,7 +179,7 @@ async def generate_transcript(input_body: TranscriptInput) -> TranscriptResults:
 if not os.environ.get("ENV") == "development":
     import torch
     from src.embedding import embedding_generate, chunks_retrieve
-    from src.chat import moderated_chat, unmoderated_chat
+    from src.chat import moderated_chat, unmoderated_chat, cri_chat
     from .sert import sert_generate
 
     @router.get("/gpu", description="Check if GPU is available.")
@@ -206,6 +206,13 @@ if not os.environ.get("ENV") == "development":
         For testing purposes.
         """
         return StreamingResponse(await unmoderated_chat(input_body))
+
+    @router.post("/chat/CRI")
+    async def chat_cri(input_body: ChatInputCRI) -> StreamingResponse:
+        """Explains why a student's response to a constructed response item was evaluated
+        as incorrect
+        """
+        return StreamingResponse(await cri_chat(input_body))
 
     @router.post("/score/summary/stairs", response_model=StreamingSummaryResults)
     async def score_summary_with_stairs(

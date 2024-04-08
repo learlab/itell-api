@@ -14,6 +14,9 @@ strapi = Strapi()
 with open("templates/chat.jinja2", "r", encoding="utf8") as file_:
     prompt_template = Template(file_.read())
 
+with open("templates/cri_chat.jinja2", "r", encoding="utf8") as file_:
+    cri_prompt_template = Template(file_.read())
+
 async def moderated_chat(chat_input: ChatInput) -> AsyncGenerator[bytes, None]:
     # Adding in the specific name of the textbook majorly improved response quality
     text_meta = await strapi.get_text_meta(chat_input.page_slug)
@@ -55,3 +58,29 @@ async def unmoderated_chat(raw_chat_input: PromptInput) -> AsyncGenerator[bytes,
         temperature=0.4, max_tokens=4096, stop=["<|im_end|>"]
     )
     return await chat_pipeline(raw_chat_input.message, sampling_params)
+
+async def cri_chat(cri_input: ChatInputCRI) -> AsyncGenerator[bytes, None]:
+    chunk = await strapi.get_chunk(
+        cri_input.page_slug, cri_input.chunk_slug
+    )
+
+    target_properties = ['ConstructedResponse', 'Question', 'CleanText']
+
+    for prop in target_properties:
+        if getattr(chunk, prop) is None:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Requested Chunk does not have {prop}",
+            )
+
+    prompt = cri_prompt_template.render(
+        clean_text=chunk.CleanText,
+        question=chunk.Question,
+        golden_answer=chunk.ConstructedResponse,
+        student_response=cri_input.student_response
+    )
+
+    sampling_params = SamplingParams(
+        temperature=0.4, max_tokens=4096, stop=["<|im_end|>"]
+    )
+    return await chat_pipeline(prompt, sampling_params)
