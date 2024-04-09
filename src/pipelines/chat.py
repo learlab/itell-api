@@ -59,3 +59,32 @@ async def chat_pipeline(
             yield (json.dumps(ret) + "\0").encode("utf-8")
 
     return stream_results()
+
+
+async def chat_CRI_pipeline(
+    prompt: str, sampling_params: SamplingParams, **kwargs
+) -> AsyncGenerator[bytes, None]:
+    """Generate completion for the request.
+    - prompt: the prompt to use for the generation.
+    - sampling_params: the sampling parameters (See `SamplingParams` for details).
+    """
+    request_id = random_uuid()
+
+    results_generator = engine.generate(prompt, sampling_params, request_id)
+
+    async def stream_CRI_results() -> AsyncGenerator[bytes, None]:
+        async for request_output in results_generator:  # type: ignore
+            out_text = "Your response" + request_output.outputs[0].text
+
+            ret = {
+                "request_id": request_id,
+                "text": out_text,
+            }
+
+            # Add any additional kwargs to the response
+            # Used for returning the chunk_slug in the SERT response
+            if kwargs:
+                ret.update(kwargs)
+            yield (json.dumps(ret) + "\0").encode("utf-8")
+
+    return stream_CRI_results()
