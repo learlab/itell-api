@@ -5,6 +5,7 @@ from typing import AsyncGenerator
 from .embedding import chunks_retrieve
 from .pipelines.chat import chat_pipeline, chat_CRI_pipeline
 from .connections.strapi import Strapi
+from fastapi import HTTPException
 
 from jinja2 import Template
 from vllm.sampling_params import SamplingParams
