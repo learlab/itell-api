@@ -3,7 +3,7 @@ from .models.chat import ChatInput, PromptInput, ChatInputCRI
 from .models.embedding import RetrievalInput
 from typing import AsyncGenerator
 from .embedding import chunks_retrieve
-from .pipelines.chat import chat_pipeline, chat_CRI_pipeline
+from .pipelines.chat import chat_pipeline
 from .connections.strapi import Strapi
 from fastapi import HTTPException
 
@@ -66,6 +66,7 @@ async def cri_chat(cri_input: ChatInputCRI) -> AsyncGenerator[bytes, None]:
     )
 
     target_properties = ['ConstructedResponse', 'Question', 'CleanText']
+    prompt_prefix = "Your response"
 
     for prop in target_properties:
         if getattr(chunk, prop) is None:
@@ -84,4 +85,5 @@ async def cri_chat(cri_input: ChatInputCRI) -> AsyncGenerator[bytes, None]:
     sampling_params = SamplingParams(
         temperature=0.4, max_tokens=4096, stop=["<|im_end|>"]
     )
-    return await chat_CRI_pipeline(prompt, sampling_params)
+
+    return await chat_pipeline(prompt, sampling_params, preface_text=prompt_prefix)
