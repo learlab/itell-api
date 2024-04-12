@@ -8,7 +8,7 @@ async def test_summary_eval_stairs(client):
     response = await client.post(
         "/score/summary/stairs",
         json={
-            "page_slug": "what-is-law",
+            "page_slug": "emotional",
             "summary": "What is the meaning of life?",
         },
     )

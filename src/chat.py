@@ -1,10 +1,11 @@
 # flake8: noqa E501
-from .models.chat import ChatInput, PromptInput
+from .models.chat import ChatInput, PromptInput, ChatInputCRI
 from .models.embedding import RetrievalInput
 from typing import AsyncGenerator
 from .embedding import chunks_retrieve
 from .pipelines.chat import chat_pipeline
 from .connections.strapi import Strapi
+from fastapi import HTTPException
 
 from jinja2 import Template
 from vllm.sampling_params import SamplingParams
@@ -13,6 +14,9 @@ strapi = Strapi()
 
 with open("templates/chat.jinja2", "r", encoding="utf8") as file_:
     prompt_template = Template(file_.read())
+
+with open("templates/cri_chat.jinja2", "r", encoding="utf8") as file_:
+    cri_prompt_template = Template(file_.read())
 
 async def moderated_chat(chat_input: ChatInput) -> AsyncGenerator[bytes, None]:
     # Adding in the specific name of the textbook majorly improved response quality
@@ -55,3 +59,31 @@ async def unmoderated_chat(raw_chat_input: PromptInput) -> AsyncGenerator[bytes,
         temperature=0.4, max_tokens=4096, stop=["<|im_end|>"]
     )
     return await chat_pipeline(raw_chat_input.message, sampling_params)
+
+async def cri_chat(cri_input: ChatInputCRI) -> AsyncGenerator[bytes, None]:
+    chunk = await strapi.get_chunk(
+        cri_input.page_slug, cri_input.chunk_slug
+    )
+
+    target_properties = ['ConstructedResponse', 'Question', 'CleanText']
+    prompt_prefix = "Your response"
+
+    for prop in target_properties:
+        if getattr(chunk, prop) is None:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Requested Chunk does not have {prop}",
+            )
+
+    prompt = cri_prompt_template.render(
+        clean_text=chunk.CleanText,
+        question=chunk.Question,
+        golden_answer=chunk.ConstructedResponse,
+        student_response=cri_input.student_response
+    )
+
+    sampling_params = SamplingParams(
+        temperature=0.4, max_tokens=4096, stop=["<|im_end|>"]
+    )
+
+    return await chat_pipeline(prompt, sampling_params, preface_text=prompt_prefix)

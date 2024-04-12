@@ -27,7 +27,7 @@ engine = AsyncLLMEngine.from_engine_args(engine_args)
 
 
 async def chat_pipeline(
-    prompt: str, sampling_params: SamplingParams, **kwargs
+    prompt: str, sampling_params: SamplingParams, preface_text: str = "", **kwargs
 ) -> AsyncGenerator[bytes, None]:
     """Generate completion for the request.
     - prompt: the prompt to use for the generation.
@@ -46,6 +46,8 @@ async def chat_pipeline(
             # before sending the final response.
             if request_output.finished:
                 out_text = out_text.removesuffix("USER").rstrip()
+            
+            out_text = preface_text + out_text
 
             ret = {
                 "request_id": request_id,

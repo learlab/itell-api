@@ -6,8 +6,12 @@ from urllib import parse
 
 
 async def transcript_generate(transcript_input: TranscriptInput) -> TranscriptResults:
-    qsl = parse.parse_qs(transcript_input.url.query)
-    video_code = qsl["v"][0]
+
+    if transcript_input.url.host == "youtu.be":
+        video_code = transcript_input.url.path[1:]
+    else:
+        qsl = parse.parse_qs(transcript_input.url.query)
+        video_code = qsl["v"][0]
 
     srt = YouTubeTranscriptApi.get_transcript(video_code)
 
