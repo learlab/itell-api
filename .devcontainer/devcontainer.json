@@ -10,7 +10,7 @@
 		"--env-file",
 		".env",
 		"--gpus",
-		"all"
+		"device=0"
 	],
 	"features": {
 		"ghcr.io/devcontainers/features/git:1": {
@@ -24,7 +24,7 @@
 		"ghcr.io/devcontainers-contrib/features/black:2": {
 			"version": "latest"
 		},
-		"ghcr.io/joshuanianji/devcontainer-features/github-cli-persistence:0": {},
+		"ghcr.io/joshuanianji/devcontainer-features/github-cli-persistence:1.0.3": {},
 		"ghcr.io/devcontainers/features/python:1": {
 			"installTools": true
 		}
