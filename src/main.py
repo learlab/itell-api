@@ -23,10 +23,8 @@ from fastapi import (
 from fastapi.routing import APIRoute
 from fastapi.middleware.cors import CORSMiddleware
 
-from .summary_eval_supabase import summary_score_supabase
 from .summary_eval import summary_score
 from .summary_feedback import get_feedback
-from .answer_eval_supabase import answer_score_supabase
 from .answer_eval import answer_score
 from .transcript import transcript_generate
 
@@ -133,14 +131,10 @@ async def score_summary(
     input_body: Union[SummaryInputStrapi, SummaryInputSupaBase],
 ) -> SummaryResults:
     """Score a summary.
-    Requires a textbook name if the textbook content is on SupaBase.
-    Requires a page_slug if the textbook content is in our Strapi CMS.
+    Requires a page_slug.
     """
-    if isinstance(input_body, SummaryInputSupaBase):
-        return await summary_score_supabase(input_body)
-    else:  # Strapi method
-        _, results = await summary_score(input_body)
-        return results
+    _, results = await summary_score(input_body)
+    return results
 
 
 @router.post("/score/answer")
@@ -148,13 +142,9 @@ async def score_answer(
     input_body: Union[AnswerInputStrapi, AnswerInputSupaBase],
 ) -> AnswerResults:
     """Score a constructed response item.
-    Requires a textbook name and location IDs if the textbook content is on SupaBase.
-    Requires a page_slug and chunk_slug if the textbook content is in our Strapi CMS.
+    Requires a page_slug and chunk_slug.
     """
-    if isinstance(input_body, AnswerInputSupaBase):
-        return await answer_score_supabase(input_body)
-    else:  # Strapi method
-        return await answer_score(input_body)
+    return await answer_score(input_body)
 
 
 @router.post("/generate/question")
@@ -209,8 +199,8 @@ if not os.environ.get("ENV") == "development":
 
     @router.post("/chat/CRI")
     async def chat_cri(input_body: ChatInputCRI) -> StreamingResponse:
-        """Explains why a student's response to a constructed response item was evaluated
-        as incorrect
+        """Explains why a student's response to a constructed response item
+        was evaluated as incorrect
         """
         return StreamingResponse(await cri_chat(input_body))
 
