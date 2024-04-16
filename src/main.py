@@ -1,15 +1,14 @@
 from .models.summary import (
     SummaryInputStrapi,
-    SummaryInputSupaBase,
     SummaryResults,
     StreamingSummaryResults,
 )
-from .models.answer import AnswerInputStrapi, AnswerInputSupaBase, AnswerResults
+from .models.answer import AnswerInputStrapi, AnswerResults
 from .models.embedding import ChunkInput, RetrievalInput, RetrievalResults
 from .models.chat import ChatInput, PromptInput, ChatInputCRI
 from .models.message import Message
 from .models.transcript import TranscriptInput, TranscriptResults
-from typing import Union, AsyncGenerator, Callable
+from typing import AsyncGenerator, Callable
 
 from fastapi.responses import StreamingResponse
 from fastapi import (
@@ -53,7 +52,7 @@ sentry_sdk.init(
     dsn=os.environ.get("SENTRY_DSN"),
     environment=os.environ.get("ENV"),
     traces_sample_rate=1.0,
-    profiles_sample_rate=0.1,  # 10% of transactions
+    profiles_sample_rate=0.05,  # Log 5% of transactions
 )
 
 
@@ -128,7 +127,7 @@ def hello() -> Message:
 
 @router.post("/score/summary")
 async def score_summary(
-    input_body: Union[SummaryInputStrapi, SummaryInputSupaBase],
+    input_body: SummaryInputStrapi,
 ) -> SummaryResults:
     """Score a summary.
     Requires a page_slug.
@@ -139,7 +138,7 @@ async def score_summary(
 
 @router.post("/score/answer")
 async def score_answer(
-    input_body: Union[AnswerInputStrapi, AnswerInputSupaBase],
+    input_body: AnswerInputStrapi,
 ) -> AnswerResults:
     """Score a constructed response item.
     Requires a page_slug and chunk_slug.
