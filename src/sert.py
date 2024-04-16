@@ -105,7 +105,7 @@ async def sert_generate(summary: Summary) -> AsyncGenerator[bytes, None]:
     )
 
     sampling_params = SamplingParams(
-        temperature=0.4, max_tokens=409, stop=["<|im_end|>"]
+        temperature=0.4, max_tokens=4096, stop=["<|im_end|>"]
     )
 
     return await chat_pipeline(

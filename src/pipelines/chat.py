@@ -46,7 +46,7 @@ async def chat_pipeline(
             # before sending the final response.
             if request_output.finished:
                 out_text = out_text.removesuffix("USER").rstrip()
-            
+
             out_text = preface_text + out_text
 
             ret = {
