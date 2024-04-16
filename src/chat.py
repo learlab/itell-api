@@ -18,6 +18,7 @@ with open("templates/chat.jinja2", "r", encoding="utf8") as file_:
 with open("templates/cri_chat.jinja2", "r", encoding="utf8") as file_:
     cri_prompt_template = Template(file_.read())
 
+
 async def moderated_chat(chat_input: ChatInput) -> AsyncGenerator[bytes, None]:
     # Adding in the specific name of the textbook majorly improved response quality
     text_meta = await strapi.get_text_meta(chat_input.page_slug)
@@ -36,11 +37,14 @@ async def moderated_chat(chat_input: ChatInput) -> AsyncGenerator[bytes, None]:
     # We can set up a database of a questions and responses
     # that the bot will use as a reference.
 
+    # Get last 4 messages from chat history
+    chat_history = chat_input.history[-4:]
+
     prompt = prompt_template.render(
         text_name=text_meta.Title,
         text_info=text_meta.Description,
         context=relevant_chunks.matches,
-        chat_history=[(msg.agent, msg.text) for msg in chat_input.history],
+        chat_history=[(msg.agent, msg.text) for msg in chat_history],
         user_message=chat_input.message,
         student_summary=chat_input.summary,
     )
@@ -60,12 +64,11 @@ async def unmoderated_chat(raw_chat_input: PromptInput) -> AsyncGenerator[bytes,
     )
     return await chat_pipeline(raw_chat_input.message, sampling_params)
 
-async def cri_chat(cri_input: ChatInputCRI) -> AsyncGenerator[bytes, None]:
-    chunk = await strapi.get_chunk(
-        cri_input.page_slug, cri_input.chunk_slug
-    )
 
-    target_properties = ['ConstructedResponse', 'Question', 'CleanText']
+async def cri_chat(cri_input: ChatInputCRI) -> AsyncGenerator[bytes, None]:
+    chunk = await strapi.get_chunk(cri_input.page_slug, cri_input.chunk_slug)
+
+    target_properties = ["ConstructedResponse", "Question", "CleanText"]
     prompt_prefix = "Your response"
 
     for prop in target_properties:
@@ -79,7 +82,7 @@ async def cri_chat(cri_input: ChatInputCRI) -> AsyncGenerator[bytes, None]:
         clean_text=chunk.CleanText,
         question=chunk.Question,
         golden_answer=chunk.ConstructedResponse,
-        student_response=cri_input.student_response
+        student_response=cri_input.student_response,
     )
 
     sampling_params = SamplingParams(
