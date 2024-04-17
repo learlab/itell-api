@@ -67,6 +67,7 @@ async def unmoderated_chat(raw_chat_input: PromptInput) -> AsyncGenerator[bytes,
 
 async def cri_chat(cri_input: ChatInputCRI) -> AsyncGenerator[bytes, None]:
     chunk = await strapi.get_chunk(cri_input.page_slug, cri_input.chunk_slug)
+    text_meta = await strapi.get_text_meta(cri_input.page_slug)
 
     target_properties = ["ConstructedResponse", "Question", "CleanText"]
     prompt_prefix = "Your response"
@@ -79,6 +80,7 @@ async def cri_chat(cri_input: ChatInputCRI) -> AsyncGenerator[bytes, None]:
             )
 
     prompt = cri_prompt_template.render(
+        text_name=text_meta.Title,
         clean_text=chunk.CleanText,
         question=chunk.Question,
         golden_answer=chunk.ConstructedResponse,
