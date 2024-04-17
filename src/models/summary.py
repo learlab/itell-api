@@ -1,4 +1,3 @@
-from .textbook import TextbookNames
 from .strapi import Chunk
 from .chat import ChatMessage
 from typing import Optional, Dict
@@ -33,21 +32,6 @@ class SummaryInputStrapi(BaseModel):
             " For example, if the student has already correctly answered a constructed"
             " response item about a chunk."
         ),
-    )
-
-
-class SummaryInputSupaBase(BaseModel):
-    model_config = ConfigDict(
-        json_schema_extra={"deprecated": True}
-    )
-    textbook_name: TextbookNames
-    chapter_index: int
-    section_index: Optional[int] = None
-    summary: str
-    focus_time: Dict[str, int] = Field(
-        default_factory=dict,
-        description="Keys are chunk slugs and values are focus times in seconds.",
-        examples=[{"introduction-to-law-79t": 20}],
     )
 
 
