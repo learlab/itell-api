@@ -4,7 +4,7 @@ import os
 
 @pytest.mark.skipif(os.getenv("ENV") == "development", reason="Requires GPU.")
 async def test_summary_eval_stairs(client):
-    '''This test is not working with streaming. Currently using simple post test.'''
+    """This test is not working with streaming. Currently using simple post test."""
     response = await client.post(
         "/score/summary/stairs",
         json={
@@ -12,11 +12,11 @@ async def test_summary_eval_stairs(client):
             "summary": "What is the meaning of life?",
         },
     )
-    assert response.status_code == 200
-    
     # print the first two chunks of the response
     for chunk in response.content.split(b"\0")[0:2]:
         print(chunk.decode())
+
+    assert response.status_code == 200
 
 
 # httpx.AsyncClient.stream() is not splitting the StreamingResponse for some reason.
