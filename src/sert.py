@@ -55,6 +55,7 @@ async def sert_generate(summary: Summary) -> AsyncGenerator[bytes, None]:
             text_slug=text_meta.slug,
             page_slug=summary.page_slug,
             text=summary.summary.text,
+            include_help=False,
             retrieve_strategy=RetrievalStrategy.least_similar,
             match_count=5,
         )

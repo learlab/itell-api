@@ -21,6 +21,7 @@ class ChatInput(BaseModel):
     summary: Optional[str] = None
     message: str
 
+
 class ChatInputCRI(BaseModel):
     """Explains why a student's response to a constructed response item is incorrect.
     Only works with texts that have their content stored in Strapi."""
@@ -28,6 +29,7 @@ class ChatInputCRI(BaseModel):
     page_slug: str
     chunk_slug: str
     student_response: str
+
 
 class PromptInput(BaseModel):
     """Used for testing purposes. The user provides the full prompt that is
