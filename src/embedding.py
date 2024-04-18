@@ -38,12 +38,13 @@ async def chunks_retrieve(input_body: RetrievalInput) -> RetrievalResults:
         "embed": content_embedding,
         "match_threshold": input_body.similarity_threshold,
         "match_count": input_body.match_count,
+        "include_help": input_body.include_help,
         "retrieve_strategy": input_body.retrieve_strategy,
         "page_slug": input_body.page_slug,
     }
 
     try:
-        matches = db.rpc("retrieve_chunks_test", query_params).execute().data
+        matches = db.rpc("retrieve_chunks", query_params).execute().data
     except (TypeError, AttributeError) as error:
         sentry.capture_exception(error)
         raise HTTPException(status_code=500, detail=str(error))
