@@ -57,7 +57,7 @@ async def sert_generate(summary: Summary) -> AsyncGenerator[bytes, None]:
             text=summary.summary.text,
             include_help=False,
             retrieve_strategy=RetrievalStrategy.least_similar,
-            match_count=5,
+            match_count=10,
         )
     )
 
