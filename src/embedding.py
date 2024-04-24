@@ -1,6 +1,6 @@
 from .connections.vectorstore import get_vector_store
 from .pipelines.embed import EmbeddingPipeline
-from .models.embedding import ChunkInput, RetrievalInput, RetrievalResults
+from .models.embedding import ChunkInput, RetrievalInput, RetrievalResults, DeleteUnusedInput
 
 from fastapi import Response, HTTPException
 import sentry_sdk as sentry
@@ -72,3 +72,23 @@ async def page_similarity(embedding: list[float], page_slug: str) -> float:
         raise HTTPException(status_code=404, detail=message)
 
     return similarity
+
+async def delete_unused(input_body: DeleteUnusedInput) -> Response:
+    # Deletes all chunks not in the chunk slugs list
+    db = get_vector_store()
+
+    current_slugs = db.table("embeddings").select('chunk').eq(
+            "page", input_body.page_slug
+        ).eq(
+            "chapter", input_body.chapter_slug
+        ).eq(
+            "module", input_body.module_slug
+        ).eq(
+            "text", input_body.text_slug
+        ).execute().data
+
+    for chunk in current_slugs:
+        if chunk['chunk'] not in input_body.chunk_slugs:
+            db.table("embeddings").delete().eq("chunk", chunk['chunk']).execute()
+
+    return

@@ -4,7 +4,7 @@ from .models.summary import (
     StreamingSummaryResults,
 )
 from .models.answer import AnswerInputStrapi, AnswerResults
-from .models.embedding import ChunkInput, RetrievalInput, RetrievalResults
+from .models.embedding import ChunkInput, RetrievalInput, RetrievalResults, DeleteUnusedInput
 from .models.chat import ChatInput, PromptInput, ChatInputCRI
 from .models.message import Message
 from .models.transcript import TranscriptInput, TranscriptResults
@@ -80,7 +80,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.WARNING)
 
 
 def log_info(req: str, resp: str) -> None:
@@ -167,7 +167,7 @@ async def generate_transcript(input_body: TranscriptInput) -> TranscriptResults:
 
 if not os.environ.get("ENV") == "development":
     import torch
-    from src.embedding import embedding_generate, chunks_retrieve
+    from src.embedding import embedding_generate, chunks_retrieve, delete_unused
     from src.chat import moderated_chat, unmoderated_chat, cri_chat
     from .sert import sert_generate
 
@@ -242,6 +242,9 @@ if not os.environ.get("ENV") == "development":
     async def retrieve_chunks(input_body: RetrievalInput) -> RetrievalResults:
         return await chunks_retrieve(input_body)
 
+    @router.post("/delete/unused")
+    async def delete_chunks(input_body: DeleteUnusedInput) -> Response:
+        return await delete_unused(input_body)
 
 app.include_router(router)
 
