@@ -85,7 +85,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.WARNING)
 
 
 def log_info(req: str, resp: str) -> None:
@@ -247,7 +247,7 @@ if not os.environ.get("ENV") == "development":
     async def retrieve_chunks(input_body: RetrievalInput) -> RetrievalResults:
         return await chunks_retrieve(input_body)
 
-    @router.post("/delete/unused")
+    @router.post("/delete/embedding")
     async def delete_unused_chunks(input_body: DeleteUnusedInput) -> Response:
         """This endpoint accepts a list of slugs of chunks currently in STRAPI.
         It deletes any embeddings in the vector store that are not in the list.
