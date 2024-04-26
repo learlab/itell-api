@@ -52,6 +52,7 @@ class RetrievalResults(BaseModel):
 
     matches: List[Match] = []
 
+
 class DeleteUnusedInput(BaseModel):
     text_slug: str
     module_slug: Optional[str] = None

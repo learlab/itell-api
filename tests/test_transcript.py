@@ -9,6 +9,7 @@ async def test_generate_transcript(client):
     )
     assert response.status_code == 200
 
+
 async def test_generate_transcript_short_URL(client):
     response = await client.post(
         "/generate/transcript",

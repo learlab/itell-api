@@ -16,6 +16,10 @@ async def test_chat_CRI(client):
     assert response.status_code == 200
 
     try:
-        print(json.loads([w for w in response.content.split(b'\x00') if w != b''][-1])['text'])
+        print(
+            json.loads([w for w in response.content.split(b"\x00") if w != b""][-1])[
+                "text"
+            ]
+        )
     except Exception as e:
         print(e)

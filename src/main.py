@@ -4,7 +4,12 @@ from .models.summary import (
     StreamingSummaryResults,
 )
 from .models.answer import AnswerInputStrapi, AnswerResults
-from .models.embedding import ChunkInput, RetrievalInput, RetrievalResults, DeleteUnusedInput
+from .models.embedding import (
+    ChunkInput,
+    RetrievalInput,
+    RetrievalResults,
+    DeleteUnusedInput,
+)
 from .models.chat import ChatInput, PromptInput, ChatInputCRI
 from .models.message import Message
 from .models.transcript import TranscriptInput, TranscriptResults
@@ -243,8 +248,12 @@ if not os.environ.get("ENV") == "development":
         return await chunks_retrieve(input_body)
 
     @router.post("/delete/unused")
-    async def delete_chunks(input_body: DeleteUnusedInput) -> Response:
+    async def delete_unused_chunks(input_body: DeleteUnusedInput) -> Response:
+        """This endpoint accepts a list of slugs of chunks currently in STRAPI.
+        It deletes any embeddings in the vector store that are not in the list.
+        """
         return await delete_unused(input_body)
+
 
 app.include_router(router)
 
