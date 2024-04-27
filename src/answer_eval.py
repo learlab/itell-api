@@ -30,9 +30,7 @@ class Answer:
 
 
 async def answer_score(answer_input: AnswerInputStrapi) -> AnswerResults:
-    chunk = await strapi.get_chunk(
-        answer_input.page_slug, answer_input.chunk_slug
-    )
+    chunk = await strapi.get_chunk(answer_input.page_slug, answer_input.chunk_slug)
 
     if chunk.ConstructedResponse is None:
         raise HTTPException(
