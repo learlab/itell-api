@@ -54,8 +54,5 @@ class RetrievalResults(BaseModel):
 
 
 class DeleteUnusedInput(BaseModel):
-    text_slug: str
-    module_slug: Optional[str] = None
-    chapter_slug: Optional[str] = None
     page_slug: str
     chunk_slugs: list[str]
