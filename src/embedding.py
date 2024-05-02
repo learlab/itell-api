@@ -87,9 +87,6 @@ async def delete_unused(input_body: DeleteUnusedInput) -> Response:
         db.table("embeddings")
         .select("chunk")
         .eq("page", input_body.page_slug)
-        .eq("chapter", input_body.chapter_slug)
-        .eq("module", input_body.module_slug)
-        .eq("text", input_body.text_slug)
         .execute()
         .data
     )
