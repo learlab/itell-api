@@ -55,3 +55,22 @@ async def test_retrieve_chunks(client):
         },
     )
     assert response.status_code == 200
+
+async def test_delete(client):
+    response = await client.post(
+        "/delete/embedding",
+        json={
+            "page_slug": "test_page",
+            "chunk_slugs": ["test_chunk_1", "test_chunk_2"],
+        },
+    )
+    assert response.status_code == 200
+
+async def test_delete_missing_page(client):
+    response = await client.post(
+        "/delete/embedding",
+        json={
+            "chunk_slugs": ["test_chunk_1", "test_chunk_2"],
+        },
+    )
+    assert response.status_code == 422
