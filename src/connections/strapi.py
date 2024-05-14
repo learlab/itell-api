@@ -112,7 +112,10 @@ class Strapi:
         try:
             return PageWithChunks(**json_response).data[0].attributes.Content[0]
         except ValidationError as error:
-            raise HTTPException(status_code=404, detail=str(error))
+            raise HTTPException(
+                status_code=404,
+                detail=f"Page not found: {page_slug}. {error}",
+            )
 
     async def get_text_meta(self, page_slug) -> Text:
         json_response = await self.get_entries(
@@ -144,6 +147,9 @@ class Strapi:
         try:
             page_with_chunks = PageWithChunks(**json_response)
         except ValidationError as error:
-            raise HTTPException(status_code=404, detail=str(error))
+            raise HTTPException(
+                status_code=404,
+                detail=f"No chunks found for {page_slug}. {error}",
+            )
 
         return page_with_chunks.data[0].attributes.Content
