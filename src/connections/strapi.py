@@ -110,12 +110,14 @@ class Strapi:
         )
 
         try:
-            return PageWithChunks(**json_response).data[0].attributes.Content[0]
+            page_with_chunks = PageWithChunks(**json_response)
         except ValidationError as error:
             raise HTTPException(
                 status_code=404,
-                detail=f"Page not found: {page_slug}. {error}",
+                detail=f"Chunk '{chunk_slug}' not found in page '{page_slug}'. {error}",
             )
+
+        return page_with_chunks.data[0].attributes.Content[0]
 
     async def get_text_meta(self, page_slug) -> Text:
         json_response = await self.get_entries(
