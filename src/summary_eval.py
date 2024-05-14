@@ -20,6 +20,7 @@ strapi = Strapi()
 
 content_pipe = SummaryPipeline("tiedaar/longformer-content-global")
 wording_pipe = SummaryPipeline("tiedaar/longformer-wording-global")
+language_pipe = SummaryPipeline("tiedaar/language-beyond-the-source")
 embedding_pipe = EmbeddingPipeline()
 detector = gcld3.NNetLanguageIdentifier(  # type: ignore
     min_num_bytes=0, max_num_bytes=1000
@@ -124,5 +125,6 @@ async def summary_score(
     input_text = summary.summary.text + "</s>" + summary.source.text
     results["content"] = content_pipe(input_text)[0]["score"]  # type: ignore
     results["wording"] = wording_pipe(input_text)[0]["score"]  # type: ignore
+    results["language"] = language_pipe(summary.summary.text)[0]["score"]
 
     return summary, SummaryResults(**results)
