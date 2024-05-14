@@ -60,5 +60,5 @@ async def test_empty_page(client):
             "summary": "What is the meaning of life?",
         },
     )
-    print(f"Response: {response.detail}")
+    print(f"Response: {response.json()}")
     assert response.status_code == 404
