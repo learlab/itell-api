@@ -8,7 +8,6 @@ from .models.embedding import (
 )
 
 from fastapi import Response, HTTPException
-import sentry_sdk as sentry
 
 embedding_pipeline = EmbeddingPipeline()
 
@@ -51,7 +50,6 @@ async def chunks_retrieve(input_body: RetrievalInput) -> RetrievalResults:
     try:
         matches = db.rpc("retrieve_chunks", query_params).execute().data
     except (TypeError, AttributeError) as error:
-        sentry.capture_exception(error)
         raise HTTPException(status_code=500, detail=str(error))
 
     return RetrievalResults(matches=matches)
@@ -68,12 +66,10 @@ async def page_similarity(embedding: list[float], page_slug: str) -> float:
             db.rpc("page_similarity", query_params).execute().data[0]["similarity"]
         )
     except (TypeError, AttributeError) as error:
-        sentry.capture_exception(error)
         raise HTTPException(status_code=500, detail=str(error))
 
     if similarity is None:
         message = f"Page similarity not found for {page_slug}"
-        sentry.capture_message(message)
         raise HTTPException(status_code=404, detail=message)
 
     return similarity
