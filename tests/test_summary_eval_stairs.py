@@ -18,6 +18,29 @@ async def test_summary_eval_stairs(client):
 
     assert response.status_code == 200
 
+@pytest.mark.skipif(os.getenv("ENV") == "development", reason="Requires GPU.")
+async def test_bad_page_slug(client):
+    response = await client.post(
+        "/score/summary/stairs",
+        json={
+            "page_slug": "i-am-a-string-but-not-a-slug",
+            "summary": "What is the meaning of life?",
+        },
+    )
+    print(f"Response: {response.json()}")
+    assert response.status_code == 404
+
+@pytest.mark.skipif(os.getenv("ENV") == "development", reason="Requires GPU.")
+async def test_empty_page(client):
+    response = await client.post(
+        "/score/summary/stairs",
+        json={
+            "page_slug": "test-page-no-chunks",
+            "summary": "What is the meaning of life?",
+        },
+    )
+    print(f"Response: {response.detail}")
+    assert response.status_code == 404
 
 # httpx.AsyncClient.stream() is not splitting the StreamingResponse for some reason.
 # async def test_summary_eval_stairs(client):
