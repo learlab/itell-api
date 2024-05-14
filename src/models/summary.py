@@ -45,6 +45,7 @@ class SummaryResults(BaseModel):
     suggested_keyphrases: list[str]
     content: Optional[float] = None
     wording: Optional[float] = None
+    language: Optional[float] = None
 
 
 class ScoreType(str, Enum):
@@ -55,6 +56,7 @@ class ScoreType(str, Enum):
     profanity = "Profanity"
     content = "Content"
     wording = "Wording"
+    language = "Language"
 
 
 class Feedback(BaseModel):
@@ -91,6 +93,7 @@ class StreamingSummaryResults(SummaryResultsWithFeedback):
                     ],
                     "content": None,
                     "wording": None,
+                    "language": None,
                     "is_passed": False,
                     "prompt": (
                         "Before moving onto the next page, you will need to revise the"

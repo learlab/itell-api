@@ -5,7 +5,7 @@ from .models.summary import (
     SummaryResults,
     SummaryResultsWithFeedback,
 )
-
+from numpy import ceil
 
 class Containment:
     threshold = 0.6
@@ -113,6 +113,27 @@ class Wording:
             )
         return AnalyticFeedback(type=ScoreType.wording, feedback=feedback)
 
+class Language:
+    # threshold currently set to 1.5 (scores are matched to rubric)
+    rubric_dict = {
+        1: "Your summary shows a very basic understanding of lexical and syntactic structures.",
+        2: "Your summary shows an understanding of lexical and syntactic structures.",
+        3: "Your summary shows an appropriate range of lexical and syntactic structures.",
+        4: "Your summary shows an excellent range of lexical and syntactic structures.",
+        5: "Your summary shows an excellent range of lexical and syntactic structures.",
+    }
+    threshold = 1.5
+
+    @classmethod
+    def generate_feedback(cls, score):
+        if score is None:
+            feedback = Feedback(is_passed=None, prompt=None)
+        else:
+            is_passed = score > cls.threshold
+            feedback = Feedback(
+                is_passed=is_passed, prompt=cls.rubric_dict[ceil(score)]
+            )
+        return AnalyticFeedback(type=ScoreType.language, feedback=feedback)
 
 class English:
     threshold = False
@@ -150,6 +171,7 @@ def get_feedback(results: SummaryResults) -> SummaryResultsWithFeedback:
     wording = Wording.generate_feedback(results.wording)
     english = English.generate_feedback(results.english)
     profanity = Profanity.generate_feedback(results.profanity)
+    language = Language.generate_feedback(results.language)
 
     is_passed = all(
         feedback.feedback.is_passed is not False
@@ -161,6 +183,7 @@ def get_feedback(results: SummaryResults) -> SummaryResultsWithFeedback:
             profanity,
             wording,
             content,
+            language,
         ]
     )
 
@@ -186,5 +209,6 @@ def get_feedback(results: SummaryResults) -> SummaryResultsWithFeedback:
             profanity,
             content,
             wording,
+            language,
         ],
     )
