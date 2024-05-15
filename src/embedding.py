@@ -101,4 +101,4 @@ async def delete_unused(input_body: DeleteUnusedInput) -> Response:
     if unused_slugs:
         db.table("embeddings").delete().in_("chunk", unused_slugs).execute()
 
-    return
+    return Response(status_code=202)

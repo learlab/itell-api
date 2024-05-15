@@ -14,3 +14,10 @@ async def client(anyio_backend):
     client = AsyncClient(app=app, base_url="http://test")
     yield client
     await client.aclose()
+
+@pytest.fixture(scope="module")
+async def db():
+    from src.connections.vectorstore import get_vector_store
+
+    db = get_vector_store()
+    yield db 
