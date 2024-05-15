@@ -9,7 +9,7 @@ from typing import Dict
 
 class SummaryPipeline(TextClassificationPipeline):
     def __init__(self, model, *args, **kwargs):
-    self.model_name = model    
+        self.model_name = model    
         super().__init__(
             model=AutoModelForSequenceClassification.from_pretrained(model),
             tokenizer=AutoTokenizer.from_pretrained(model),
