@@ -115,13 +115,12 @@ class Wording:
 
 class Language:
     # threshold currently set to 1.5 (scores are matched to rubric)
-    rubric_dict = {
-        1: "Your summary shows a very basic understanding of lexical and syntactic structures.",
-        2: "Your summary shows an understanding of lexical and syntactic structures.",
-        3: "Your summary shows an appropriate range of lexical and syntactic structures.",
-        4: "Your summary shows an excellent range of lexical and syntactic structures.",
-        5: "Your summary shows an excellent range of lexical and syntactic structures.",
-    }
+    rubric = ["Your summary shows a very basic understanding of lexical and syntactic structures.",
+              "Your summary shows an understanding of lexical and syntactic structures.",
+              "Your summary shows an appropriate range of lexical and syntactic structures.",
+              "Your summary shows an excellent range of lexical and syntactic structures.",
+              "Your summary shows an excellent range of lexical and syntactic structures.",
+              ]
     threshold = 1.5
 
     @classmethod
@@ -130,9 +129,10 @@ class Language:
             feedback = Feedback(is_passed=None, prompt=None)
         else:
             is_passed = score > cls.threshold
-            feedback = Feedback(
-                is_passed=is_passed, prompt=cls.rubric_dict[ceil(score)]
-            )
+            try:
+                feedback = Feedback(is_passed=is_passed, prompt=cls.rubric[ceil(score)-1])
+            except:
+                feedback = Feedback(is_passed=is_passed, prompt=None)
         return AnalyticFeedback(type=ScoreType.language, feedback=feedback)
 
 class English:
