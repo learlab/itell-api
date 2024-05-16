@@ -30,7 +30,7 @@ class SummaryPipeline(TextClassificationPipeline):
             raise TypeError(f"Expected list, got {type(input_ids)}")
 
         # Configure the global attention mask only for longformer, not for deberta.
-        if self.model_name in ["tiedaar/longformer-content-global", "tiedaar/longformer-wording-global"]: 
+        if "longformer" in self.model_name: 
             sep_index = input_ids.index(2)       
             input_dict["global_attention_mask"] = [1] * (sep_index + 1) + [0] * (
                 len(input_ids) - (sep_index + 1)

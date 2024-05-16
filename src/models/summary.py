@@ -133,6 +133,10 @@ class StreamingSummaryResults(SummaryResultsWithFeedback):
                             "type": "Wording",
                             "feedback": {"is_passed": False, "prompt": None},
                         },
+                        {
+                            "type": "Language",
+                            "feedback": {"is_passed": False, "prompt": None},
+                        },
                     ],
                 },
                 {
