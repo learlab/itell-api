@@ -1,7 +1,6 @@
 import pytest
 import os
 
-
 @pytest.mark.skipif(os.getenv("ENV") == "development", reason="Requires GPU.")
 async def test_generate_embeddings(client):
     response = await client.post(
@@ -55,3 +54,60 @@ async def test_retrieve_chunks(client):
         },
     )
     assert response.status_code == 200
+
+@pytest.fixture
+async def create_embedding(db):
+    db.table("embeddings").upsert([
+        {
+            "chunk": "delete_test_chunk_1",
+            "page": "delete_test_page",
+            "text": "delete_test_text",
+            "content": "delete_test_content",
+        },
+        {
+            "chunk": "delete_test_chunk_2",
+            "page": "delete_test_page",
+            "text": "delete_test_text",
+            "content": "delete_test_content",
+        }
+    ]).execute()
+
+async def test_delete(client, create_embedding, db):
+    current_slugs = (
+        db.table("embeddings")
+        .select("chunk")
+        .eq("page", "delete_test_page")
+        .execute()
+        .data
+    )
+
+    assert len(current_slugs) == 2
+
+    response = await client.post(
+        "/delete/embedding",
+        json={
+            "page_slug": "delete_test_page",
+            "chunk_slugs": ["delete_test_chunk_1"],
+        },
+    )
+    assert response.status_code == 202
+
+    current_slugs = (
+        db.table("embeddings")
+        .select("chunk")
+        .eq("page", "delete_test_page")
+        .execute()
+        .data
+    )
+
+    assert len(current_slugs) == 1
+    assert current_slugs[0]["chunk"] == "delete_test_chunk_1"
+
+async def test_delete_missing_page(client):
+    response = await client.post(
+        "/delete/embedding",
+        json={
+            "chunk_slugs": ["test_chunk_1", "test_chunk_2"],
+        },
+    )
+    assert response.status_code == 422
