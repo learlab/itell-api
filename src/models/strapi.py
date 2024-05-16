@@ -66,6 +66,7 @@ class PageWithText(BaseModel):
     data: list[PopulatedItem[_PageWithText]]
 
     @field_validator("data")
+    @classmethod
     def page_must_have_text(cls, v):
         if len(v) == 0:
             raise ValueError("Empty response from Strapi.")
@@ -77,6 +78,7 @@ class PageWithChunks(BaseModel):
     data: list[PopulatedItem[Content]]
 
     @field_validator("data")
+    @classmethod
     def page_must_have_chunks(cls, v):
         if len(v) == 0:
             raise ValueError("Empty response from Strapi.")
