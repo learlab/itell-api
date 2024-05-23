@@ -20,7 +20,7 @@ class Containment:
     )
 
     @classmethod
-    def generate_feedback(cls, score):
+    def generate_feedback(cls, score: float):
         is_passed = score < cls.threshold  # pass if language is original
         feedback = Feedback(
             is_passed=is_passed, prompt=cls.passing if is_passed else cls.failing
@@ -37,7 +37,7 @@ class ContainmentChat:
     failing = "You need to depend less on the examples provided by iTELL AI."
 
     @classmethod
-    def generate_feedback(cls, score):
+    def generate_feedback(cls, score: float):
         if score is None:
             feedback = Feedback(is_passed=None, prompt=None)
         else:
@@ -60,7 +60,7 @@ class Similarity:
     )
 
     @classmethod
-    def generate_feedback(cls, score):
+    def generate_feedback(cls, score: float):
         is_passed = score > cls.threshold  # pass if summary is on topic
         feedback = Feedback(
             is_passed=is_passed, prompt=cls.passing if is_passed else cls.failing
@@ -69,7 +69,8 @@ class Similarity:
 
 
 class Content:
-    # threshold was originally -0.3 : was decreased to -0.15 for the Cornell volume to increase engagement with STAIRS
+    # Threshold was originally -0.3
+    # Was decreased to -0.15 for the Cornell volume to increase engagement with STAIRS
     threshold = -0.15
     passing = "You did a good job of including key ideas and details on this page."
     failing = (
@@ -79,7 +80,7 @@ class Content:
     )
 
     @classmethod
-    def generate_feedback(cls, score):
+    def generate_feedback(cls, score: float):
         if score is None:
             feedback = Feedback(is_passed=None, prompt=None)
         else:
@@ -91,7 +92,8 @@ class Content:
 
 
 class Wording:
-    # threshold was originally -1 : was decreased to -0.5 for the Cornell volume to increase engagement with STAIRS
+    # Threshold was originally -1
+    # Was decreased to -0.5 for the Cornell volume to increase engagement with STAIRS
     threshold = -0.5
     passing = (
         "You did a good job of paraphrasing words and sentences from the text and"
@@ -104,7 +106,7 @@ class Wording:
     )
 
     @classmethod
-    def generate_feedback(cls, score):
+    def generate_feedback(cls, score: float):
         if score is None:
             feedback = Feedback(is_passed=None, prompt=None)
         else:
@@ -116,9 +118,9 @@ class Wording:
 
 
 class Language:
-    # threshold currently set to 1.5 (scores are matched to rubric)
+    # Threshold currently set to 1.5 (scores are matched to rubric).
     rubric = [
-        "Your summary shows a very basic understanding of lexical and syntactic structures.",
+        "Your summary shows a very basic understanding of lexical and syntactic structures.",  # noqa: E501
         "Your summary shows an understanding of lexical and syntactic structures.",
         "Your summary shows an appropriate range of lexical and syntactic structures.",
         "Your summary shows an excellent range of lexical and syntactic structures.",

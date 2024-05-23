@@ -123,8 +123,8 @@ async def summary_score(
 
     # Summary meets minimum requirements. Score it.
     input_text = summary.summary.text + "</s>" + summary.source.text
-    results["content"] = content_pipe(input_text)[0]["score"]  # type: ignore
-    results["wording"] = wording_pipe(input_text)[0]["score"]  # type: ignore
-    results["language"] = language_pipe(summary.summary.text)[0]["score"]
+    results["content"] = float(content_pipe(input_text)[0]["score"])
+    results["wording"] = float(wording_pipe(input_text)[0]["score"])
+    results["language"] = float(language_pipe(summary.summary.text)[0]["score"])
 
     return summary, SummaryResults(**results)
