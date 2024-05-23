@@ -5,7 +5,7 @@ from .models.summary import (
     SummaryResults,
     SummaryResultsWithFeedback,
 )
-from numpy import ceil
+import math
 
 
 class Containment:
@@ -127,14 +127,14 @@ class Language:
     threshold = 1.5
 
     @classmethod
-    def generate_feedback(cls, score):
+    def generate_feedback(cls, score: float):
         if score is None:
             feedback = Feedback(is_passed=None, prompt=None)
         else:
             is_passed = score > cls.threshold
             try:
                 feedback = Feedback(
-                    is_passed=is_passed, prompt=cls.rubric[ceil(score) - 1]
+                    is_passed=is_passed, prompt=cls.rubric[math.floor(score)]
                 )
             except IndexError:
                 feedback = Feedback(is_passed=is_passed, prompt=None)
@@ -147,7 +147,7 @@ class English:
     failing = "Please write your summary in English."
 
     @classmethod
-    def generate_feedback(cls, score):
+    def generate_feedback(cls, score: bool):
         is_passed = score > cls.threshold  # pass if summary is in English
         feedback = Feedback(
             is_passed=is_passed, prompt=cls.passing if is_passed else cls.failing
@@ -161,7 +161,7 @@ class Profanity:
     failing = "Please avoid using profanity in your summary."
 
     @classmethod
-    def generate_feedback(cls, score):
+    def generate_feedback(cls, score: bool):
         is_passed = score < cls.threshold  # pass if summary does not contain profanity
         feedback = Feedback(
             is_passed=is_passed, prompt=cls.passing if is_passed else cls.failing
