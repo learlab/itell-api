@@ -1,23 +1,35 @@
 import pytest
 import os
+import json
+import sys
 
+from src.models import summary
 
 @pytest.mark.skipif(os.getenv("ENV") == "development", reason="Requires GPU.")
-async def test_summary_eval_stairs(client):
+async def test_summary_eval_stairs_language(client):
     """This test is not working with streaming. Currently using simple post test."""
     response = await client.post(
         "/score/summary/stairs",
         json={
             "page_slug": "emotional",
-            "summary": "What is the meaning of life?",
+            "summary": "Emotions are physical and mental states brought on by neurophysiological changes, variously associated with thoughts, feelings, behavioral responses, and a degree of pleasure or displeasure. There is no scientific consensus on a definition. Emotions are often intertwined with mood, temperament, personality, disposition, or creativity.",
         },
     )
-    # print the first two chunks of the response
-    for chunk in response.content.split(b"\0")[0:2]:
-        print(chunk.decode())
+    # combine and print the first two chunks of the response
+    data = json.loads(response.content.split(b"\0")[0].decode())
+    data.update(json.loads(response.content.split(b"\0")[1].decode()))
 
+    # check that the status code is 200
+    # throws assertion error if false
     assert response.status_code == 200
 
+    # validate the response format
+    # throws validation errors if false
+    summary.StreamingSummaryResults(**data)
+
+    # check that the language score is passing
+    # throws assertion error if false
+    assert data['prompt_details'][7]['feedback']['is_passed'] == True, "Language score was too low."
 
 # httpx.AsyncClient.stream() is not splitting the StreamingResponse for some reason.
 # async def test_summary_eval_stairs(client):
