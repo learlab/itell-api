@@ -5,7 +5,7 @@ from spacy.tokens import Doc
 from .pipelines.nlp import nlp
 from .pipelines.embed import EmbeddingPipeline
 from .pipelines.containment import score_containment
-from .pipelines.summary import SummaryPipeline
+from .pipelines.summary import SummaryPipeline, LongformerPipeline
 from .pipelines.keyphrases import suggest_keyphrases
 from .pipelines.profanity_filter import profanity_filter
 from .connections.strapi import Strapi
@@ -18,8 +18,9 @@ logging.set_verbosity_error()
 
 strapi = Strapi()
 
-content_pipe = SummaryPipeline("tiedaar/longformer-content-global")
-wording_pipe = SummaryPipeline("tiedaar/longformer-wording-global")
+content_pipe = LongformerPipeline("tiedaar/longformer-content-global")
+wording_pipe = LongformerPipeline("tiedaar/longformer-wording-global")
+language_pipe = SummaryPipeline("tiedaar/language-beyond-the-source")
 embedding_pipe = EmbeddingPipeline()
 detector = gcld3.NNetLanguageIdentifier(  # type: ignore
     min_num_bytes=0, max_num_bytes=1000
@@ -122,7 +123,8 @@ async def summary_score(
 
     # Summary meets minimum requirements. Score it.
     input_text = summary.summary.text + "</s>" + summary.source.text
-    results["content"] = content_pipe(input_text)[0]["score"]  # type: ignore
-    results["wording"] = wording_pipe(input_text)[0]["score"]  # type: ignore
+    results["content"] = float(content_pipe(input_text)[0]["score"])
+    results["wording"] = float(wording_pipe(input_text)[0]["score"])
+    results["language"] = float(language_pipe(summary.summary.text)[0]["score"])
 
     return summary, SummaryResults(**results)
