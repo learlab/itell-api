@@ -30,6 +30,7 @@ async def test_summary_eval_stairs_language(client):
         feedback = SummaryResultsWithFeedback.model_validate_json(feedback_bytes)
     except ValidationError as err:
         print(err)
+        raise
 
     # Check that the language score is passing
     language = next(item for item in feedback.prompt_details if item.type == "Language")
