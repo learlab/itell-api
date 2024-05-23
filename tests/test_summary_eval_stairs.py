@@ -1,6 +1,5 @@
 import pytest
 import os
-from rich import print
 from src.models.summary import SummaryResultsWithFeedback
 from pydantic import ValidationError
 
