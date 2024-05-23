@@ -12,7 +12,7 @@ class SummaryPipeline(TextClassificationPipeline):
         self.model_name = model
         super().__init__(
             model=AutoModelForSequenceClassification.from_pretrained(model),
-            tokenizer=AutoTokenizer.from_pretrained(model),
+            tokenizer=AutoTokenizer.from_pretrained(model, use_fast=False),
             function_to_apply="None",
             device="cuda" if torch.cuda.is_available() else "cpu",
             truncation=True,
