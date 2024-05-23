@@ -7,6 +7,7 @@ from .models.summary import (
 )
 from numpy import ceil
 
+
 class Containment:
     threshold = 0.6
     passing = (
@@ -113,14 +114,16 @@ class Wording:
             )
         return AnalyticFeedback(type=ScoreType.wording, feedback=feedback)
 
+
 class Language:
     # threshold currently set to 1.5 (scores are matched to rubric)
-    rubric = ["Your summary shows a very basic understanding of lexical and syntactic structures.",
-              "Your summary shows an understanding of lexical and syntactic structures.",
-              "Your summary shows an appropriate range of lexical and syntactic structures.",
-              "Your summary shows an excellent range of lexical and syntactic structures.",
-              "Your summary shows an excellent range of lexical and syntactic structures.",
-              ]
+    rubric = [
+        "Your summary shows a very basic understanding of lexical and syntactic structures.",
+        "Your summary shows an understanding of lexical and syntactic structures.",
+        "Your summary shows an appropriate range of lexical and syntactic structures.",
+        "Your summary shows an excellent range of lexical and syntactic structures.",
+        "Your summary shows an excellent range of lexical and syntactic structures.",
+    ]
     threshold = 1.5
 
     @classmethod
@@ -130,10 +133,13 @@ class Language:
         else:
             is_passed = score > cls.threshold
             try:
-                feedback = Feedback(is_passed=is_passed, prompt=cls.rubric[ceil(score)-1])
-            except:
+                feedback = Feedback(
+                    is_passed=is_passed, prompt=cls.rubric[ceil(score) - 1]
+                )
+            except IndexError:
                 feedback = Feedback(is_passed=is_passed, prompt=None)
         return AnalyticFeedback(type=ScoreType.language, feedback=feedback)
+
 
 class English:
     threshold = False
