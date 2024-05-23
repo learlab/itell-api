@@ -25,11 +25,12 @@ async def test_summary_eval_stairs_language(client):
 
     # validate the response format
     # throws validation errors if false
-    summary.StreamingSummaryResults(**data)
+    streaming_summary_results = summary.StreamingSummaryResults(**data)
 
     # check that the language score is passing
     # throws assertion error if false
-    assert data['prompt_details'][7]['feedback']['is_passed'] == True, "Language score was too low."
+    assert streaming_summary_results.prompt_details[7].type == 'Language', "Prompt details [7] should be Language."
+    assert streaming_summary_results.prompt_details[7].feedback.is_passed == True, "Language score was too low."
 
 # httpx.AsyncClient.stream() is not splitting the StreamingResponse for some reason.
 # async def test_summary_eval_stairs(client):
