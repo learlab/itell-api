@@ -6,28 +6,30 @@ from pydantic import ValidationError
 
 @pytest.mark.skipif(os.getenv("ENV") == "development", reason="Requires GPU.")
 async def test_chat(client):
-    response = await client.post(
+    async with client.stream(
+        "POST",
         "/chat",
         json={
-            "page_slug": "what-is-law",
-            "message": "I don't understand how legal systems actually help anyone.",
+            "page_slug": "emotional",
+            "message": "What are emotions about?",
         },
-    )
-    assert response.status_code == 200
+    ) as response:
+        assert response.status_code == 200
 
-    # We need to simulate the streaming response due to an issue with
-    # Starlette's TestClient https://github.com/encode/starlette/issues/1102
-    first_response = response.content.split(b"\0")[0]
+        # We need to simulate the streaming response due to an issue with
+        # Starlette's TestClient https://github.com/encode/starlette/issues/1102
+        response = await anext(response.aiter_text())
+        stream = (chunk for chunk in response.split("\n\n"))
 
-    for i, chunk in enumerate(response.content.split(b"\0")):
-        print(i, chunk.decode("utf-8"))
+        # The first chunk is the feedback
+        first_chunk = next(stream).removeprefix("event: completion\ndata: ")
 
-    # Checks that the first chunk is a valid ChatResponse object.
-    try:
-        message = ChatResponse.model_validate_json(first_response)
-    except ValidationError as err:
-        print(err)
-        raise
+        # Checks that the first chunk is a valid ChatResponse object.
+        try:
+            message = ChatResponse.model_validate_json(first_chunk)
+        except ValidationError as err:
+            print(err)
+            raise
 
     # Check that a chunk was cited
-    assert message.context is not None, "A chunk should be cited."
+    assert len(message.context) != 0, "A chunk should be cited."

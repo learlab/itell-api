@@ -229,11 +229,13 @@ if not os.environ.get("ENV") == "development":
         stream = await sert_generate(summary)
 
         async def stream_results() -> AsyncGenerator[bytes, None]:
-            yield (feedback.model_dump_json() + "\0").encode("utf-8")
+            yield f"event: summaryfeedback\ndata: {feedback.model_dump_json()}\n\n"
             async for ret in stream:
                 yield ret
 
-        return StreamingResponse(stream_results())
+        return StreamingResponse(
+            content=stream_results(), media_type="text/event-stream"
+        )
 
     @router.post("/generate/embedding")
     async def generate_embedding(input_body: ChunkInput) -> Response:
