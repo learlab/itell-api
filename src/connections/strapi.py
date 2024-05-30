@@ -5,7 +5,6 @@ import httpx
 from typing import Union, Optional
 from pydantic import ValidationError
 from fastapi import HTTPException
-import sentry_sdk as sentry
 
 
 class Strapi:
@@ -23,13 +22,11 @@ class Strapi:
             try:
                 r = await client.get(url, headers=self.headers, params=params)
             except httpx.TimeoutException as err:
-                sentry.capture_exception(err)
                 raise HTTPException(status_code=504, detail=f"Strapi Timeout: {err}")
             if r.status_code != 200:
                 message = (
                     f"Error connecting to Strapi {r.status_code}: {r.reason_phrase}"
                 )
-                sentry.capture_message(message)
                 raise HTTPException(
                     status_code=404,
                     detail=(message),
@@ -113,10 +110,14 @@ class Strapi:
         )
 
         try:
-            return PageWithChunks(**json_response).data[0].attributes.Content[0]
+            page_with_chunks = PageWithChunks(**json_response)
         except ValidationError as error:
-            sentry.capture_exception(error)
-            raise HTTPException(status_code=404, detail=str(error))
+            raise HTTPException(
+                status_code=404,
+                detail=f"Chunk '{chunk_slug}' not found in page '{page_slug}'. {error}",
+            )
+
+        return page_with_chunks.data[0].attributes.Content[0]
 
     async def get_text_meta(self, page_slug) -> Text:
         json_response = await self.get_entries(
@@ -126,25 +127,14 @@ class Strapi:
         )
 
         try:
-            text_meta = (
-                PageWithText(**json_response).data[0].attributes.text.data.attributes
-            )
-        except (AttributeError, ValidationError) as error:
-            sentry.capture_exception(error)
+            page_with_text = PageWithText(**json_response)
+        except ValidationError as error:
             raise HTTPException(
                 status_code=404,
-                detail=f"No parent text found for {page_slug}\n\n{error}",
+                detail=f"No parent text found for {page_slug}. {error}",
             )
 
-        if text_meta.Title is None:
-            message = "Requested page does not have a parent text with a title."
-            sentry.capture_message(message)
-            raise HTTPException(status_code=404, detail=message)
-
-        if text_meta.slug is None:
-            message = "Requested page does not have a parent text with a slug."
-            sentry.capture_message(message)
-            raise HTTPException(status_code=404, detail=message)
+        text_meta = page_with_text.data[0].attributes.text.data.attributes
 
         return text_meta
 
@@ -157,7 +147,11 @@ class Strapi:
             populate={"Content": "*"},
         )
         try:
-            return PageWithChunks(**json_response).data[0].attributes.Content
+            page_with_chunks = PageWithChunks(**json_response)
         except ValidationError as error:
-            sentry.capture_exception(error)
-            raise HTTPException(status_code=404, detail=str(error))
+            raise HTTPException(
+                status_code=404,
+                detail=f"No chunks found for {page_slug}. {error}",
+            )
+
+        return page_with_chunks.data[0].attributes.Content

@@ -1,14 +1,35 @@
 import pytest
 import os
+from src.models.chat import ChatResponse
+from pydantic import ValidationError
 
 
 @pytest.mark.skipif(os.getenv("ENV") == "development", reason="Requires GPU.")
 async def test_chat(client):
-    response = await client.post(
+    async with client.stream(
+        "POST",
         "/chat",
         json={
-            "page_slug": "what-is-law",
-            "message": "What is the meaning of life?",
+            "page_slug": "emotional",
+            "message": "What are emotions about?",
         },
-    )
-    assert response.status_code == 200
+    ) as response:
+        assert response.status_code == 200
+
+        # We need to simulate the streaming response due to an issue with
+        # Starlette's TestClient https://github.com/encode/starlette/issues/1102
+        response = await anext(response.aiter_text())
+        stream = (chunk for chunk in response.split("\n\n"))
+
+        # The first chunk is the feedback
+        first_chunk = next(stream).removeprefix("event: completion\ndata: ")
+
+        # Checks that the first chunk is a valid ChatResponse object.
+        try:
+            message = ChatResponse.model_validate_json(first_chunk)
+        except ValidationError as err:
+            print(err)
+            raise
+
+    # Check that a chunk was cited
+    assert len(message.context) != 0, "A chunk should be cited."

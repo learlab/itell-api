@@ -5,6 +5,7 @@ from .models.summary import (
     SummaryResults,
     SummaryResultsWithFeedback,
 )
+import math
 
 
 class Containment:
@@ -19,7 +20,7 @@ class Containment:
     )
 
     @classmethod
-    def generate_feedback(cls, score):
+    def generate_feedback(cls, score: float):
         is_passed = score < cls.threshold  # pass if language is original
         feedback = Feedback(
             is_passed=is_passed, prompt=cls.passing if is_passed else cls.failing
@@ -36,7 +37,7 @@ class ContainmentChat:
     failing = "You need to depend less on the examples provided by iTELL AI."
 
     @classmethod
-    def generate_feedback(cls, score):
+    def generate_feedback(cls, score: float):
         if score is None:
             feedback = Feedback(is_passed=None, prompt=None)
         else:
@@ -59,7 +60,7 @@ class Similarity:
     )
 
     @classmethod
-    def generate_feedback(cls, score):
+    def generate_feedback(cls, score: float):
         is_passed = score > cls.threshold  # pass if summary is on topic
         feedback = Feedback(
             is_passed=is_passed, prompt=cls.passing if is_passed else cls.failing
@@ -68,7 +69,8 @@ class Similarity:
 
 
 class Content:
-    # threshold was originally -0.3 : was decreased to -0.15 for the Cornell volume to increase engagement with STAIRS
+    # Threshold was originally -0.3
+    # Was decreased to -0.15 for the Cornell volume to increase engagement with STAIRS
     threshold = -0.15
     passing = "You did a good job of including key ideas and details on this page."
     failing = (
@@ -78,7 +80,7 @@ class Content:
     )
 
     @classmethod
-    def generate_feedback(cls, score):
+    def generate_feedback(cls, score: float):
         if score is None:
             feedback = Feedback(is_passed=None, prompt=None)
         else:
@@ -90,7 +92,8 @@ class Content:
 
 
 class Wording:
-    # threshold was originally -1 : was decreased to -0.5 for the Cornell volume to increase engagement with STAIRS
+    # Threshold was originally -1
+    # Was decreased to -0.5 for the Cornell volume to increase engagement with STAIRS
     threshold = -0.5
     passing = (
         "You did a good job of paraphrasing words and sentences from the text and"
@@ -103,7 +106,7 @@ class Wording:
     )
 
     @classmethod
-    def generate_feedback(cls, score):
+    def generate_feedback(cls, score: float):
         if score is None:
             feedback = Feedback(is_passed=None, prompt=None)
         else:
@@ -114,13 +117,39 @@ class Wording:
         return AnalyticFeedback(type=ScoreType.wording, feedback=feedback)
 
 
+class Language:
+    # Threshold currently set to 1.5 (scores are matched to rubric).
+    rubric = [
+        "Your summary shows a very basic understanding of lexical and syntactic structures.",  # noqa: E501
+        "Your summary shows an understanding of lexical and syntactic structures.",
+        "Your summary shows an appropriate range of lexical and syntactic structures.",
+        "Your summary shows an excellent range of lexical and syntactic structures.",
+        "Your summary shows an excellent range of lexical and syntactic structures.",
+    ]
+    threshold = 1.5
+
+    @classmethod
+    def generate_feedback(cls, score: float):
+        if score is None:
+            feedback = Feedback(is_passed=None, prompt=None)
+        else:
+            is_passed = score > cls.threshold
+            try:
+                feedback = Feedback(
+                    is_passed=is_passed, prompt=cls.rubric[math.floor(score)]
+                )
+            except IndexError:
+                feedback = Feedback(is_passed=is_passed, prompt=None)
+        return AnalyticFeedback(type=ScoreType.language, feedback=feedback)
+
+
 class English:
     threshold = False
     passing = None
     failing = "Please write your summary in English."
 
     @classmethod
-    def generate_feedback(cls, score):
+    def generate_feedback(cls, score: bool):
         is_passed = score > cls.threshold  # pass if summary is in English
         feedback = Feedback(
             is_passed=is_passed, prompt=cls.passing if is_passed else cls.failing
@@ -134,7 +163,7 @@ class Profanity:
     failing = "Please avoid using profanity in your summary."
 
     @classmethod
-    def generate_feedback(cls, score):
+    def generate_feedback(cls, score: bool):
         is_passed = score < cls.threshold  # pass if summary does not contain profanity
         feedback = Feedback(
             is_passed=is_passed, prompt=cls.passing if is_passed else cls.failing
@@ -150,6 +179,7 @@ def get_feedback(results: SummaryResults) -> SummaryResultsWithFeedback:
     wording = Wording.generate_feedback(results.wording)
     english = English.generate_feedback(results.english)
     profanity = Profanity.generate_feedback(results.profanity)
+    language = Language.generate_feedback(results.language)
 
     is_passed = all(
         feedback.feedback.is_passed is not False
@@ -161,6 +191,7 @@ def get_feedback(results: SummaryResults) -> SummaryResultsWithFeedback:
             profanity,
             wording,
             content,
+            language,
         ]
     )
 
@@ -186,5 +217,6 @@ def get_feedback(results: SummaryResults) -> SummaryResultsWithFeedback:
             profanity,
             content,
             wording,
+            language,
         ],
     )

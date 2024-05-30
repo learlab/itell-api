@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from typing import Optional, Literal
 
 
@@ -36,3 +36,12 @@ class PromptInput(BaseModel):
     sent to the model for generation."""
 
     message: str
+
+
+class ChatResponse(BaseModel):
+    """Each response in the token stream will have this shape."""
+
+    model_config = ConfigDict(extra="allow")  # Allow extra fields
+
+    request_id: str
+    text: str

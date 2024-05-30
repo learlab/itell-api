@@ -1,4 +1,3 @@
-import json
 import os
 from typing import AsyncGenerator
 
@@ -6,6 +5,8 @@ from vllm.sampling_params import SamplingParams
 from vllm.engine.arg_utils import AsyncEngineArgs
 from vllm.engine.async_llm_engine import AsyncLLMEngine
 from vllm.utils import random_uuid
+
+from ..models.chat import ChatResponse
 
 # For local development on an RTX 3060 with 12GiB of VRAM
 if os.environ.get("ENV") == "gpu-development":
@@ -39,25 +40,18 @@ async def chat_pipeline(
 
     async def stream_results() -> AsyncGenerator[bytes, None]:
         async for request_output in results_generator:  # type: ignore
-            out_text = request_output.outputs[0].text
+            generated_text = request_output.outputs[0].text
 
             # Check if the last part of the output is the USER token
             # If it is, remove this and any preceding whitespace
             # before sending the final response.
             if request_output.finished:
-                out_text = out_text.removesuffix("USER").rstrip()
+                generated_text = generated_text.removesuffix("USER").rstrip()
 
-            out_text = preface_text + out_text
+            out_text = preface_text + generated_text
 
-            ret = {
-                "request_id": request_id,
-                "text": out_text,
-            }
+            chat_output = ChatResponse(request_id=request_id, text=out_text, **kwargs)
 
-            # Add any additional kwargs to the response
-            # Used for returning the chunk_slug in the SERT response
-            if kwargs:
-                ret.update(kwargs)
-            yield (json.dumps(ret) + "\0").encode("utf-8")
+            yield f"event: completion\ndata: {chat_output.model_dump_json()}\n\n"
 
     return stream_results()
