@@ -192,21 +192,27 @@ if not os.environ.get("ENV") == "development":
         - **request_id**: a unique identifier for the request
         - **text**: the response text
         """
-        return StreamingResponse(await moderated_chat(input_body))
+        return StreamingResponse(
+            content=await moderated_chat(input_body), media_type="text/event-stream"
+        )
 
     @router.post("/chat/raw")
     async def raw_chat(input_body: PromptInput) -> StreamingResponse:
         """Direct access to the underlying chat model.
         For testing purposes.
         """
-        return StreamingResponse(await unmoderated_chat(input_body))
+        return StreamingResponse(
+            content=await unmoderated_chat(input_body), media_type="text/event-stream"
+        )
 
     @router.post("/chat/CRI")
     async def chat_cri(input_body: ChatInputCRI) -> StreamingResponse:
         """Explains why a student's response to a constructed response item
         was evaluated as incorrect
         """
-        return StreamingResponse(await cri_chat(input_body))
+        return StreamingResponse(
+            content=await cri_chat(input_body), media_type="text/event-stream"
+        )
 
     @router.post("/score/summary/stairs", response_model=StreamingSummaryResults)
     async def score_summary_with_stairs(

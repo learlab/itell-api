@@ -18,7 +18,7 @@ if os.environ.get("ENV") == "gpu-development":
 else:
     # For deployment on an RTX A6000 with 48GiB of VRAM
     engine_args = AsyncEngineArgs(
-        model="microsoft/Orca-2-13b",
+        model="meta-llama/Meta-Llama-3-8B-Instruct",
         download_dir="/usr/local/huggingface/hub",
         gpu_memory_utilization=0.80,  # this leaves room for batching and other models
     )
@@ -41,12 +41,6 @@ async def chat_pipeline(
     async def stream_results() -> AsyncGenerator[bytes, None]:
         async for request_output in results_generator:  # type: ignore
             generated_text = request_output.outputs[0].text
-
-            # Check if the last part of the output is the USER token
-            # If it is, remove this and any preceding whitespace
-            # before sending the final response.
-            if request_output.finished:
-                generated_text = generated_text.removesuffix("USER").rstrip()
 
             out_text = preface_text + generated_text
 
