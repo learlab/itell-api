@@ -14,6 +14,7 @@ from .models.chat import ChatInput, PromptInput, ChatInputCRI
 from .models.message import Message
 from .models.transcript import TranscriptInput, TranscriptResults
 from typing import AsyncGenerator, Callable
+from src.auth import get_role, developer_role
 
 from fastapi.responses import StreamingResponse
 from fastapi import (
@@ -23,6 +24,7 @@ from fastapi import (
     Request,
     BackgroundTasks,
     APIRouter,
+    Depends,
 )
 from fastapi.routing import APIRoute
 from fastapi.middleware.cors import CORSMiddleware
@@ -130,7 +132,7 @@ def hello() -> Message:
     return Message(message="This is a summary scoring API for iTELL.")
 
 
-@router.post("/score/summary")
+@router.post("/score/summary", dependencies=[Depends(get_role)])
 async def score_summary(
     input_body: SummaryInputStrapi,
 ) -> SummaryResults:
@@ -141,7 +143,7 @@ async def score_summary(
     return results
 
 
-@router.post("/score/answer")
+@router.post("/score/answer", dependencies=[Depends(get_role)])
 async def score_answer(
     input_body: AnswerInputStrapi,
 ) -> AnswerResults:
@@ -151,19 +153,19 @@ async def score_answer(
     return await answer_score(input_body)
 
 
-@router.post("/generate/question")
+@router.post("/generate/question", dependencies=[Depends(get_role)])
 async def generate_question(input_body: ChunkInput) -> None:
     """Not implemented."""
     raise HTTPException(status_code=404, detail="Not Implemented")
 
 
-@router.post("/generate/keyphrases")
+@router.post("/generate/keyphrases", dependencies=[Depends(get_role)])
 async def generate_keyphrases() -> None:
     """Not implemented."""
     raise HTTPException(status_code=404, detail="Not Implemented")
 
 
-@router.post("/generate/transcript")
+@router.post("/generate/transcript", dependencies=[Depends(get_role)])
 async def generate_transcript(input_body: TranscriptInput) -> TranscriptResults:
     """Generate a transcript from a YouTube video.
     Intended for use by the Content Management System."""
@@ -184,7 +186,7 @@ if not os.environ.get("ENV") == "development":
         else:
             return Message(message="GPU is not available.")
 
-    @router.post("/chat")
+    @router.post("/chat", dependencies=[Depends(get_role)])
     async def chat(input_body: ChatInput) -> StreamingResponse:
         """Responds to user queries incorporating relevant chunks from the current page.
 
@@ -196,7 +198,7 @@ if not os.environ.get("ENV") == "development":
             content=await moderated_chat(input_body), media_type="text/event-stream"
         )
 
-    @router.post("/chat/raw")
+    @router.post("/chat/raw", dependencies=[Depends(get_role)])
     async def raw_chat(input_body: PromptInput) -> StreamingResponse:
         """Direct access to the underlying chat model.
         For testing purposes.
@@ -205,7 +207,7 @@ if not os.environ.get("ENV") == "development":
             content=await unmoderated_chat(input_body), media_type="text/event-stream"
         )
 
-    @router.post("/chat/CRI")
+    @router.post("/chat/CRI", dependencies=[Depends(get_role)])
     async def chat_cri(input_body: ChatInputCRI) -> StreamingResponse:
         """Explains why a student's response to a constructed response item
         was evaluated as incorrect
@@ -214,7 +216,11 @@ if not os.environ.get("ENV") == "development":
             content=await cri_chat(input_body), media_type="text/event-stream"
         )
 
-    @router.post("/score/summary/stairs", response_model=StreamingSummaryResults)
+    @router.post(
+        "/score/summary/stairs",
+        response_model=StreamingSummaryResults,
+        dependencies=[Depends(get_role)],
+    )
     async def score_summary_with_stairs(
         input_body: SummaryInputStrapi,
     ) -> StreamingResponse:
@@ -243,7 +249,7 @@ if not os.environ.get("ENV") == "development":
             content=stream_results(), media_type="text/event-stream"
         )
 
-    @router.post("/generate/embedding")
+    @router.post("/generate/embedding", dependencies=[Depends(developer_role)])
     async def generate_embedding(input_body: ChunkInput) -> Response:
         """This endpoint generates an embedding for a provided chunk of text
         and saves it to the vector store on SupaBase.
@@ -251,11 +257,11 @@ if not os.environ.get("ENV") == "development":
         """
         return await embedding_generate(input_body)
 
-    @router.post("/retrieve/chunks")
+    @router.post("/retrieve/chunks", dependencies=[Depends(get_role)])
     async def retrieve_chunks(input_body: RetrievalInput) -> RetrievalResults:
         return await chunks_retrieve(input_body)
 
-    @router.post("/delete/embedding")
+    @router.post("/delete/embedding", dependencies=[Depends(developer_role)])
     async def delete_unused_chunks(input_body: DeleteUnusedInput) -> Response:
         """This endpoint accepts a list of slugs of chunks currently in STRAPI.
         It deletes any embeddings in the vector store that are not in the list.

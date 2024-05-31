@@ -23,6 +23,8 @@ attrs==23.1.0
     #   referencing
 blis==0.7.11
     # via thinc
+cachetools==5.3.3
+    # via -r requirements/base.in
 catalogue==2.0.10
     # via
     #   spacy
@@ -225,8 +227,10 @@ rpds-py==0.14.2
     #   referencing
 safetensors==0.4.1
     # via transformers
-scipy==1.11.4
-    # via gensim
+scipy==1.12.0
+    # via
+    #   -r requirements/base.in
+    #   gensim
 sentencepiece==0.1.99
     # via vllm
 sentry-sdk[fastapi]==1.39.1
