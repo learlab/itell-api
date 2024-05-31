@@ -1,6 +1,6 @@
 import pytest
 from httpx import AsyncClient
-
+import os
 
 @pytest.fixture(scope="session")
 def anyio_backend():
@@ -11,7 +11,7 @@ def anyio_backend():
 async def client(anyio_backend):
     from src.main import app
 
-    client = AsyncClient(app=app, base_url="http://test")
+    client = AsyncClient(app=app, base_url="http://test", headers={"API-Key": os.getenv("ITELL_API_KEY")})
     yield client
     await client.aclose()
 
