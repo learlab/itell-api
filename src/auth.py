@@ -1,11 +1,18 @@
 from fastapi import Security, HTTPException, status
 from fastapi.security import APIKeyHeader
 from .connections.vectorstore import get_vector_store
+from cachetools import cached, TTLCache
 
 api_key_header = APIKeyHeader(name="API-Key")
 
-
+@cached(cache=TTLCache(maxsize=1024, ttl=600))
 def get_role(api_key_header: str = Security(api_key_header)):
+    if not api_key_header:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Missing API key",
+        )
+    
     db = get_vector_store()
 
     role = (
@@ -15,7 +22,7 @@ def get_role(api_key_header: str = Security(api_key_header)):
     if role:
         return role[0]["role"]
     raise HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED, detail="Missing or invalid API key"
+        status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid API key"
     )
 
 

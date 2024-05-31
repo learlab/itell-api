@@ -128,7 +128,7 @@ class LoggingRoute(APIRoute):
 router = APIRouter(route_class=LoggingRoute)
 
 
-@router.get("/", dependencies=[Depends(get_role)])
+@router.get("/")
 def hello() -> Message:
     """Welcome to iTELL AI!"""
     return Message(message="This is a summary scoring API for iTELL.")
