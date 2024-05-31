@@ -42,12 +42,6 @@ async def chat_pipeline(
         async for request_output in results_generator:  # type: ignore
             generated_text = request_output.outputs[0].text
 
-            # Check if the last part of the output is the USER token
-            # If it is, remove this and any preceding whitespace
-            # before sending the final response.
-            if request_output.finished:
-                generated_text = generated_text.removesuffix("USER").rstrip()
-
             out_text = preface_text + generated_text
 
             chat_output = ChatResponse(request_id=request_id, text=out_text, **kwargs)
