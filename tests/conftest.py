@@ -15,7 +15,7 @@ async def client(anyio_backend):
     client = AsyncClient(
         app=app,
         base_url="http://test",
-        headers={"API-Key": os.environ.get("ITELL_API_KEY")}
+        headers={"API-Key": os.environ["ITELL_API_KEY"]}
     )
     yield client
     await client.aclose()
