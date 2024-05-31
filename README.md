@@ -12,7 +12,7 @@ iTELL AI also provides some utility endpoints that are used by the content manag
 
 ## Usage
 
-The API endpoints are hosted at the [/docs](https://itell-api.learlab.vanderbilt.edu/docs) location.
+The API documention is hosted at the [/redoc](https://itell-api.learlab.vanderbilt.edu/redoc) location.
  - The endpoints are defined in `src/main.py`.
  - The Pydantic models are defined in `src/models/`.
 
@@ -27,13 +27,13 @@ This repository can run in three modes: development, gpu-development, and produc
 Please set ENV=development, ENV=gpu-development, or ENV=production in your .env file and make sure these environment variables are loaded in the shell session where you run the API.
  **If no ENV is set, the default is production, which will likely fail on your system.**
 
-1. Install `protobuf-compiler` on your system. This is a requirement to build `gcld3`.
+1. If not using the provided dev container, install `protobuf-compiler` on your system. This is a requirement to build `gcld3`.
 2. Clone the repository and run `pip install -r requirements/dev.in` or `pip install -r requirements/gpu.in` depending on your environment.
 3. Make sure to create a `.env` file in the application root directory like `.env.example`
    - Ask a team member for the values to use in the `.env` file.
    - If you are on Mac, you will need to add `export ` before each line in the `.env` file.
    - Load the environment variables with `source .env` or by using the provided [devcontainer](#using-dev-containers).
-4. Install development dependencies: `pip install pip-tools pytest rich`
+4. If not using the provided dev container, install development dependencies: `pip install pip-tools pytest`
 5. Run `pytest` from the root directory to run the test suite.
    - Please write tests for any new endpoints.
    - Please run tests **using `pytest`** before requesting a code review.
@@ -59,13 +59,13 @@ The Makefile defines a build and push sequence to the localhost:32000 container 
 
 ### LEARlab Bare Metal Deployment
 
-The image is hosted on our bare metal server. `kubernetes/manifest.yaml` defines a deployment and service for the image. The deployment is configured to pull the image from a local Docker registry (microk8s built-in registry).
+The image is hosted on our server. `kubernetes/manifest.yaml` defines a deployment and service for the image. The deployment is configured to pull the image from a local Docker registry (microk8s built-in registry).
 
 The repository is located at `/srv/repos/itell-api` on the lab server. You should only need the following commands to deploy an update. Run these from within the repository directory:
 
 1. `git fetch`  
 2. `git pull`  
-3. `make`  
+3. `make cuda_device=X` (Where X is 0, 1, or 2 depending on which GPU is available)
 
 If you need to make any quick fixes to get the deployment working, please do not forget to push those changes directly to main:  
 1. Make your changes to the files
@@ -73,6 +73,17 @@ If you need to make any quick fixes to get the deployment working, please do not
 3. `git commit -m [commit message]`
 4. `git push`
 
-The deployment relies on a Kubernetes secret. This was created using `microk8s kubectl create secret generic supabase-itell --from-env-file=.env`. You will need to run this command from within the repository directory whenever environment variables are updated. Since the `.env` file is not pushed to Github, you will also need to manually update this file on the server before running the `create secret` command.
+## Updating Secrets in Production
+If you make any changes to the required environment variables, these must be udpated using a kubernetes secret.
 
-To access the running container, find the pod's id using `microk8s kubectl get pods`. Then, run `microk8s kubectl exec -i -t itell-api-[POD-ID] -- /bin/bash`
+1. Manually update the .env file on the production server. This is not version controlled.
+2. `microk8s kubectl delete secret supabase-itell`
+3. `microk8s kubectl create secret generic supabase-itell --from-env-file=.env`
+
+## Access the Running Container
+1. Find the pod's id using `microk8s kubectl get pods`.
+2. Run `microk8s kubectl exec -i -t itell-api-[POD-ID] -- /bin/bash`
+
+## Access the Running Container's Logs
+
+`microk8s kubectl logs itell-api-[tab-to-complete]`
