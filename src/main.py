@@ -13,7 +13,7 @@ from .models.embedding import (
 from .models.chat import ChatInput, PromptInput, ChatInputCRI
 from .models.message import Message
 from .models.transcript import TranscriptInput, TranscriptResults
-from .models.api_keys import CreateAPIKeyInput, DeleteAPIKeyInput
+from .chat import wording_feedback_chat
 from typing import AsyncGenerator, Callable
 from src.auth import get_role, developer_role
 
@@ -250,12 +250,32 @@ if not os.environ.get("ENV") == "development":
         """
         summary, results = await summary_score(input_body)
         feedback = get_feedback(results)
+        # current setup - always generates a SERT question
         stream = await sert_generate(summary)
+
+        ### ================================================== ###
+        ### This is where the triggers for STAIRS should go ###
+        ## e.g.
+
+        # for item in feedback.prompt_details:
+        #     if item.type == "Wording":
+        #         wording = item
+        #     elif item.type == "Content":
+        #         content = item
+
+        # if not content.feedback.is_passed:
+        #     stream = await sert_generate(summary)
+        # elif not wording.feedback.is_passed:
+        #     stream = await wording_feedback_chat(summary)
+        # else:
+        #     stream = False
+        ### ================================================== ###
 
         async def stream_results() -> AsyncGenerator[bytes, None]:
             yield f"event: summaryfeedback\ndata: {feedback.model_dump_json()}\n\n"
-            async for ret in stream:
-                yield ret
+            if stream:
+                async for ret in stream:
+                    yield ret
 
         return StreamingResponse(
             content=stream_results(), media_type="text/event-stream"
