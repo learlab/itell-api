@@ -13,7 +13,7 @@ from .models.embedding import (
 from .models.chat import ChatInput, PromptInput, ChatInputCRI
 from .models.message import Message
 from .models.transcript import TranscriptInput, TranscriptResults
-from .chat import wording_feedback_chat
+from .chat import language_feedback_chat
 from typing import AsyncGenerator, Callable
 from src.auth import get_role, developer_role
 
@@ -255,7 +255,7 @@ if not os.environ.get("ENV") == "development":
         # if not content.feedback.is_passed:
         #     stream = await sert_generate(summary)
         # elif not wording.feedback.is_passed:
-        #     stream = await wording_feedback_chat(summary)
+        #     stream = await language_feedback_chat(summary)
         # else:
         #     stream = False
         ### ================================================== ###
