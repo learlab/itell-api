@@ -44,7 +44,6 @@ class SummaryResults(BaseModel):
     included_keyphrases: list[str]
     suggested_keyphrases: list[str]
     content: Optional[float] = None
-    wording: Optional[float] = None
     language: Optional[float] = None
 
 
@@ -55,7 +54,6 @@ class ScoreType(str, Enum):
     english = "English"
     profanity = "Profanity"
     content = "Content"
-    wording = "Wording"
     language = "Language"
 
 
@@ -92,7 +90,6 @@ class StreamingSummaryResults(SummaryResultsWithFeedback):
                         "legislators",
                     ],
                     "content": None,
-                    "wording": None,
                     "language": None,
                     "is_passed": False,
                     "prompt": (
@@ -127,10 +124,6 @@ class StreamingSummaryResults(SummaryResultsWithFeedback):
                         },
                         {
                             "type": "Content",
-                            "feedback": {"is_passed": False, "prompt": None},
-                        },
-                        {
-                            "type": "Wording",
                             "feedback": {"is_passed": False, "prompt": None},
                         },
                         {

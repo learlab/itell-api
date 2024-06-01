@@ -92,33 +92,6 @@ class Content:
         return AnalyticFeedback(type=ScoreType.content, feedback=feedback)
 
 
-class Wording:
-    # Threshold was originally -1
-    # Was decreased to -0.5 for the Cornell volume to increase engagement with STAIRS
-    # Set to 0 for Prolific testing
-    threshold = 0
-    passing = (
-        "You did a good job of paraphrasing words and sentences from the text and"
-        " using objective language."
-    )
-    failing = (
-        "You need to paraphrase words and ideas on this page better. Focus on using"
-        " different words and sentences than those used in the text. Also, try to"
-        " use more objective language (or less emotional language)."
-    )
-
-    @classmethod
-    def generate_feedback(cls, score: float):
-        if score is None:
-            feedback = Feedback(is_passed=None, prompt=None)
-        else:
-            is_passed = score > cls.threshold
-            feedback = Feedback(
-                is_passed=is_passed, prompt=cls.passing if is_passed else cls.failing
-            )
-        return AnalyticFeedback(type=ScoreType.wording, feedback=feedback)
-
-
 class Language:
     # Threshold currently set to 1.5 (scores are matched to rubric).
     # Set to 1 (or 2?) for Prolific testing
@@ -179,7 +152,6 @@ def summary_feedback(results: SummaryResults) -> SummaryResultsWithFeedback:
     containment_chat = ContainmentChat.generate_feedback(results.containment_chat)
     similarity = Similarity.generate_feedback(results.similarity)
     content = Content.generate_feedback(results.content)
-    wording = Wording.generate_feedback(results.wording)
     english = English.generate_feedback(results.english)
     profanity = Profanity.generate_feedback(results.profanity)
     language = Language.generate_feedback(results.language)
@@ -192,7 +164,6 @@ def summary_feedback(results: SummaryResults) -> SummaryResultsWithFeedback:
             similarity,
             english,
             profanity,
-            wording,
             content,
             language,
         ]
@@ -219,7 +190,6 @@ def summary_feedback(results: SummaryResults) -> SummaryResultsWithFeedback:
             english,
             profanity,
             content,
-            wording,
             language,
         ],
     )
