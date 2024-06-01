@@ -1,6 +1,5 @@
-import pytest
-import os
 from src.models.summary import SummaryResultsWithFeedback
+from src.models.chat import EventType
 from pydantic import ValidationError
 
 
@@ -21,7 +20,8 @@ async def test_summary_eval_stairs_language(client):
         stream = (chunk for chunk in response.split("\n\n"))
 
         # The first chunk is the feedback
-        feedback = next(stream).removeprefix("event: summaryfeedback\ndata: ")
+        feedback = next(stream).removeprefix(
+            f"event: {EventType.summary_feedback}\ndata: ")
 
         # Checks that the feedback is a valid SummaryResultsWithFeedback object.
         try:
@@ -38,7 +38,6 @@ async def test_summary_eval_stairs_language(client):
         assert language.feedback.is_passed, "Language score should be passing."
 
 
-@pytest.mark.skipif(os.getenv("ENV") == "development", reason="Requires GPU.")
 async def test_bad_page_slug(client):
     response = await client.post(
         "/score/summary/stairs",
@@ -51,7 +50,6 @@ async def test_bad_page_slug(client):
     assert response.status_code == 404
 
 
-@pytest.mark.skipif(os.getenv("ENV") == "development", reason="Requires GPU.")
 async def test_empty_page(client):
     response = await client.post(
         "/score/summary/stairs",

@@ -1,5 +1,6 @@
 from pydantic import BaseModel, Field, ConfigDict
 from typing import Optional, Literal
+from enum import Enum
 
 
 class ChatMessage(BaseModel):
@@ -45,3 +46,11 @@ class ChatResponse(BaseModel):
 
     request_id: str
     text: str
+
+
+class EventType(str, Enum):
+    chat = "chat"
+    summary_feedback = "summaryfeedback"  # First chunk when summary scoring
+    content_feedback = "contentfeedback"
+    language_feedback = "languagefeedback"
+    constructed_response_feedback = "constructedresponsefeedback"

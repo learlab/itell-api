@@ -7,6 +7,7 @@ from ..models.summary import (
     SummaryResultsWithFeedback,
 )
 from ..models.answer import AnswerInputStrapi, AnswerResults
+from ..models.chat import EventType
 from typing import AsyncGenerator
 
 from ..answer_eval import answer_score
@@ -72,7 +73,9 @@ async def score_summary_with_stairs(
         feedback_stream = await language_feedback_chat(summary)
 
     async def stream_results() -> AsyncGenerator[bytes, None]:
-        yield f"event: summaryfeedback\ndata: {feedback.model_dump_json()}\n\n"
+        event_str = f"event: {EventType.summary_feedback}"
+        data_str = f"data: {feedback.model_dump_json()}\n\n"
+        yield "\n".join([event_str, data_str]).encode("utf-8")
         if feedback_stream:
             async for chunk in feedback_stream:
                 yield chunk
