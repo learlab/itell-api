@@ -1,5 +1,4 @@
-# flake8: noqa E501
-from .models.chat import ChatInput, PromptInput, ChatInputCRI
+from .models.chat import ChatInput, PromptInput, ChatInputCRI, EventType
 from .models.summary import Summary
 from .models.embedding import RetrievalInput
 from typing import AsyncGenerator
@@ -21,6 +20,8 @@ with open("templates/cri_chat.jinja2", "r", encoding="utf8") as file_:
 
 with open("templates/language_feedback.jinja2", "r", encoding="utf8") as file_:
     language_feedback_template = Template(file_.read())
+
+sampling_params = SamplingParams(temperature=0.4, max_tokens=4096)
 
 
 async def moderated_chat(chat_input: ChatInput) -> AsyncGenerator[bytes, None]:
@@ -53,18 +54,22 @@ async def moderated_chat(chat_input: ChatInput) -> AsyncGenerator[bytes, None]:
         student_summary=chat_input.summary,
     )
 
-    sampling_params = SamplingParams(
-        temperature=0.4, max_tokens=4096, stop=["<|eot_id|>"]
-    )
-
     cited_chunks = [chunk.chunk for chunk in relevant_chunks.matches]
 
-    return await chat_pipeline(prompt, sampling_params, context=cited_chunks)
+    return await chat_pipeline(
+        prompt,
+        sampling_params,
+        event_type=EventType.chat,
+        context=cited_chunks
+    )
 
 
 async def unmoderated_chat(raw_chat_input: PromptInput) -> AsyncGenerator[bytes, None]:
-    sampling_params = SamplingParams(temperature=0.4, max_tokens=4096)
-    return await chat_pipeline(raw_chat_input.message, sampling_params)
+    return await chat_pipeline(
+        raw_chat_input.message,
+        sampling_params,
+        event_type=EventType.chat,
+    )
 
 
 async def cri_chat(cri_input: ChatInputCRI) -> AsyncGenerator[bytes, None]:
@@ -89,9 +94,12 @@ async def cri_chat(cri_input: ChatInputCRI) -> AsyncGenerator[bytes, None]:
         student_response=cri_input.student_response,
     )
 
-    sampling_params = SamplingParams(temperature=0.4, max_tokens=4096)
-
-    return await chat_pipeline(prompt, sampling_params, preface_text=prompt_prefix)
+    return await chat_pipeline(
+        prompt,
+        sampling_params,
+        event_type=EventType.constructed_response_feedback,
+        preface_text=prompt_prefix
+    )
 
 
 async def language_feedback_chat(summary: Summary) -> AsyncGenerator[bytes, None]:
@@ -102,8 +110,8 @@ async def language_feedback_chat(summary: Summary) -> AsyncGenerator[bytes, None
         summary=summary.summary.text,
     )
 
-    sampling_params = SamplingParams(
-        temperature=0.4, max_tokens=4096, stop=["<|eot_id|>"]
+    return await chat_pipeline(
+        prompt,
+        sampling_params,
+        event_type=EventType.language_feedback
     )
-
-    return await chat_pipeline(prompt, sampling_params)

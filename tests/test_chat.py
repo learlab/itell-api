@@ -1,10 +1,7 @@
-import pytest
-import os
-from src.models.chat import ChatResponse
+from src.models.chat import ChatResponse, EventType
 from pydantic import ValidationError
 
 
-@pytest.mark.skipif(os.getenv("ENV") == "development", reason="Requires GPU.")
 async def test_chat(client):
     async with client.stream(
         "POST",
@@ -22,7 +19,9 @@ async def test_chat(client):
         stream = (chunk for chunk in response.split("\n\n"))
 
         # The first chunk is the feedback
-        first_chunk = next(stream).removeprefix("event: completion\ndata: ")
+        first_chunk = next(stream).removeprefix(
+            f"event: {EventType.chat}\ndata: "
+        )
 
         # Checks that the first chunk is a valid ChatResponse object.
         try:
