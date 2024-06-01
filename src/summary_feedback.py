@@ -121,7 +121,7 @@ class Wording:
 
 class Language:
     # Threshold currently set to 1.5 (scores are matched to rubric).
-    # Set to 0 for Prolific testing
+    # Set to 1 (or 2?) for Prolific testing
     rubric = [
         "Your summary shows a very basic understanding of lexical and syntactic structures.",  # noqa: E501
         "Your summary shows an understanding of lexical and syntactic structures.",
@@ -129,7 +129,7 @@ class Language:
         "Your summary shows an excellent range of lexical and syntactic structures.",
         "Your summary shows an excellent range of lexical and syntactic structures.",
     ]
-    threshold = 0
+    threshold = 1.5
 
     @classmethod
     def generate_feedback(cls, score: float):
@@ -174,7 +174,7 @@ class Profanity:
         return AnalyticFeedback(type=ScoreType.profanity, feedback=feedback)
 
 
-def get_feedback(results: SummaryResults) -> SummaryResultsWithFeedback:
+def summary_feedback(results: SummaryResults) -> SummaryResultsWithFeedback:
     containment = Containment.generate_feedback(results.containment)
     containment_chat = ContainmentChat.generate_feedback(results.containment_chat)
     similarity = Similarity.generate_feedback(results.similarity)

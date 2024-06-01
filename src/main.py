@@ -13,11 +13,8 @@ from .models.embedding import (
 from .models.chat import ChatInput, PromptInput, ChatInputCRI
 from .models.message import Message
 from .models.transcript import TranscriptInput, TranscriptResults
-from .chat import language_feedback_chat
 from typing import AsyncGenerator, Callable
-from src.auth import get_role, developer_role
 
-from fastapi.responses import StreamingResponse
 from fastapi import (
     FastAPI,
     HTTPException,
@@ -27,11 +24,13 @@ from fastapi import (
     APIRouter,
     Depends,
 )
+from fastapi.responses import StreamingResponse
 from fastapi.routing import APIRoute
 from fastapi.middleware.cors import CORSMiddleware
 
+from .auth import get_role, developer_role
 from .summary_eval import summary_score
-from .summary_feedback import get_feedback
+from .summary_feedback import summary_feedback
 from .answer_eval import answer_score
 from .transcript import transcript_generate
 
@@ -107,7 +106,8 @@ class LoggingRoute(APIRoute):
             existing_task = response.background
 
             if isinstance(response, StreamingResponse):
-                task = BackgroundTask(log_info, req_body.decode(), "streaming response")
+                task = BackgroundTask(
+                    log_info, req_body.decode(), "streaming response")
             else:
                 task = BackgroundTask(
                     log_info, req_body.decode(), response.body.decode()
@@ -115,7 +115,8 @@ class LoggingRoute(APIRoute):
 
             # check if the original response had a background task assigned to it
             if existing_task:
-                response.background = BackgroundTasks(tasks=[existing_task, task])
+                response.background = BackgroundTasks(
+                    tasks=[existing_task, task])
             else:
                 response.background = task
 
@@ -175,9 +176,9 @@ async def generate_transcript(input_body: TranscriptInput) -> TranscriptResults:
 
 if not os.environ.get("ENV") == "development":
     import torch
-    from src.embedding import embedding_generate, chunks_retrieve, delete_unused
-    from src.chat import moderated_chat, unmoderated_chat, cri_chat
-    from .sert import sert_generate
+    from .embedding import embedding_generate, chunks_retrieve, delete_unused
+    from .chat import moderated_chat, unmoderated_chat, cri_chat, language_feedback_chat
+    from .sert import sert_chat
 
     @router.get("/gpu", description="Check if GPU is available.")
     def gpu_is_available() -> Message:
@@ -238,33 +239,25 @@ if not os.environ.get("ENV") == "development":
         - **question_type**: the type of SERT question
         """
         summary, results = await summary_score(input_body)
-        feedback = get_feedback(results)
-        # current setup - always generates a SERT question
-        stream = await sert_generate(summary)
+        feedback = summary_feedback(results)
 
-        ### ================================================== ###
-        ### This is where the triggers for STAIRS should go ###
-        ## e.g.
+        feedback_stream = None
 
-        # for item in feedback.prompt_details:
-        #     if item.type == "Language":
-        #         language = item
-        #     elif item.type == "Content":
-        #         content = item
+        # Failing specific scores triggers feedback as a token stream
+        feedback_details = {
+            item.type: item.feedback for item in feedback.prompt_details
+        }
 
-        # if not content.feedback.is_passed:
-        #     stream = await sert_generate(summary)
-        # elif not language.feedback.is_passed:
-        #     stream = await language_feedback_chat(summary)
-        # else:
-        #     stream = False
-        ### ================================================== ###
+        if not feedback_details["Content"].is_passed:
+            feedback_stream = await sert_chat(summary)
+        elif not feedback_details["Language"].is_passed:
+            feedback_stream = await language_feedback_chat(summary)
 
         async def stream_results() -> AsyncGenerator[bytes, None]:
             yield f"event: summaryfeedback\ndata: {feedback.model_dump_json()}\n\n"
-            if stream:
-                async for ret in stream:
-                    yield ret
+            if feedback_stream:
+                async for chunk in feedback_stream:
+                    yield chunk
 
         return StreamingResponse(
             content=stream_results(), media_type="text/event-stream"
