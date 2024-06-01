@@ -1,45 +1,16 @@
-from .models.summary import (
-    SummaryInputStrapi,
-    SummaryResults,
-    StreamingSummaryResults,
-)
-from .models.answer import AnswerInputStrapi, AnswerResults
-from .models.embedding import (
-    ChunkInput,
-    RetrievalInput,
-    RetrievalResults,
-    DeleteUnusedInput,
-)
-from .models.chat import ChatInput, PromptInput, ChatInputCRI
-from .models.message import Message
-from .models.transcript import TranscriptInput, TranscriptResults
-from typing import AsyncGenerator, Callable
 
-from fastapi import (
-    FastAPI,
-    HTTPException,
-    Response,
-    Request,
-    BackgroundTasks,
-    APIRouter,
-    Depends,
-)
-from fastapi.responses import StreamingResponse
-from fastapi.routing import APIRoute
-from fastapi.middleware.cors import CORSMiddleware
+from .models.message import Message
 
 from .auth import get_role, developer_role
-from .summary_eval import summary_score
-from .summary_feedback import summary_feedback
-from .answer_eval import answer_score
-from .transcript import transcript_generate
-
+from fastapi import FastAPI, Depends
+from fastapi.middleware.cors import CORSMiddleware
 import os
-import sentry_sdk
-from starlette.background import BackgroundTask
-import uuid
 import logging
+import sentry_sdk
+from .routers import score, chat, generate
 
+
+logging.basicConfig(level=logging.WARNING)
 
 description = """
 Welcome to iTELL AI, a REST API for intelligent textbooks.
@@ -87,203 +58,17 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-logging.basicConfig(level=logging.WARNING)
 
-
-def log_info(req: str, resp: str) -> None:
-    idem = str(uuid.uuid4())
-    logging.info(f"REQUEST  {idem}: {req}")
-    logging.info(f"RESPONSE {idem}: {resp}")
-
-
-class LoggingRoute(APIRoute):
-    def get_route_handler(self) -> Callable:
-        original_route_handler = super().get_route_handler()
-
-        async def custom_route_handler(request: Request) -> Response:
-            req_body = await request.body()
-            response = await original_route_handler(request)
-            existing_task = response.background
-
-            if isinstance(response, StreamingResponse):
-                task = BackgroundTask(
-                    log_info, req_body.decode(), "streaming response")
-            else:
-                task = BackgroundTask(
-                    log_info, req_body.decode(), response.body.decode()
-                )
-
-            # check if the original response had a background task assigned to it
-            if existing_task:
-                response.background = BackgroundTasks(
-                    tasks=[existing_task, task])
-            else:
-                response.background = task
-
-            return response
-
-        return custom_route_handler
-
-
-router = APIRouter(route_class=LoggingRoute)
-
-
-@router.get("/")
+@app.get("/")
 def hello() -> Message:
     """Welcome to iTELL AI!"""
     return Message(message="This is a summary scoring API for iTELL.")
 
 
-@router.post("/score/summary", dependencies=[Depends(get_role)])
-async def score_summary(
-    input_body: SummaryInputStrapi,
-) -> SummaryResults:
-    """Score a summary.
-    Requires a page_slug.
-    """
-    _, results = await summary_score(input_body)
-    return results
+app.include_router(score.router, dependencies=[Depends(get_role)])
+app.include_router(chat.router, dependencies=[Depends(get_role)])
+app.include_router(generate.router, dependencies=[Depends(developer_role)])
 
-
-@router.post("/score/answer", dependencies=[Depends(get_role)])
-async def score_answer(
-    input_body: AnswerInputStrapi,
-) -> AnswerResults:
-    """Score a constructed response item.
-    Requires a page_slug and chunk_slug.
-    """
-    return await answer_score(input_body)
-
-
-@router.post("/generate/question", dependencies=[Depends(get_role)])
-async def generate_question(input_body: ChunkInput) -> None:
-    """Not implemented."""
-    raise HTTPException(status_code=404, detail="Not Implemented")
-
-
-@router.post("/generate/keyphrases", dependencies=[Depends(get_role)])
-async def generate_keyphrases() -> None:
-    """Not implemented."""
-    raise HTTPException(status_code=404, detail="Not Implemented")
-
-
-@router.post("/generate/transcript", dependencies=[Depends(get_role)])
-async def generate_transcript(input_body: TranscriptInput) -> TranscriptResults:
-    """Generate a transcript from a YouTube video.
-    Intended for use by the Content Management System."""
-    return await transcript_generate(input_body)
-
-
-if not os.environ.get("ENV") == "development":
-    import torch
-    from .embedding import embedding_generate, chunks_retrieve, delete_unused
-    from .chat import moderated_chat, unmoderated_chat, cri_chat, language_feedback_chat
-    from .sert import sert_chat
-
-    @router.get("/gpu", description="Check if GPU is available.")
-    def gpu_is_available() -> Message:
-        """Check if GPU is available."""
-        if torch.cuda.is_available():
-            return Message(message="GPU is available.")
-        else:
-            return Message(message="GPU is not available.")
-
-    @router.post("/chat", dependencies=[Depends(get_role)])
-    async def chat(input_body: ChatInput) -> StreamingResponse:
-        """Responds to user queries incorporating relevant chunks from the current page.
-
-        The response is a StreamingResponse wih the following fields:
-        - **request_id**: a unique identifier for the request
-        - **text**: the response text
-        """
-        return StreamingResponse(
-            content=await moderated_chat(input_body), media_type="text/event-stream"
-        )
-
-    @router.post("/chat/raw", dependencies=[Depends(get_role)])
-    async def raw_chat(input_body: PromptInput) -> StreamingResponse:
-        """Direct access to the underlying chat model.
-        For testing purposes.
-        """
-        return StreamingResponse(
-            content=await unmoderated_chat(input_body), media_type="text/event-stream"
-        )
-
-    @router.post("/chat/CRI", dependencies=[Depends(get_role)])
-    async def chat_cri(input_body: ChatInputCRI) -> StreamingResponse:
-        """Explains why a student's response to a constructed response item
-        was evaluated as incorrect
-        """
-        return StreamingResponse(
-            content=await cri_chat(input_body), media_type="text/event-stream"
-        )
-
-    @router.post(
-        "/score/summary/stairs",
-        response_model=StreamingSummaryResults,
-        dependencies=[Depends(get_role)],
-    )
-    async def score_summary_with_stairs(
-        input_body: SummaryInputStrapi,
-    ) -> StreamingResponse:
-        """Scores a summary. If the summary fails, selects a chunk for re-reading and
-        generates a self-explanation (SERT) question about the chunk.
-
-        The response is a stream of Server-Sent Events (SSEs). The first response will
-        be a SummaryResults object with additional fields for feedback.
-
-        If the summary fails, subsequent responses will be:
-        - **request_id**: a unique identifier for the request
-        - **text**: the self-explanation question text
-        - **chunk**: the slug of the chunk selected for re-reading
-        - **question_type**: the type of SERT question
-        """
-        summary, results = await summary_score(input_body)
-        feedback = summary_feedback(results)
-
-        feedback_stream = None
-
-        # Failing specific scores triggers feedback as a token stream
-        feedback_details = {
-            item.type: item.feedback for item in feedback.prompt_details
-        }
-
-        if not feedback_details["Content"].is_passed:
-            feedback_stream = await sert_chat(summary)
-        elif not feedback_details["Language"].is_passed:
-            feedback_stream = await language_feedback_chat(summary)
-
-        async def stream_results() -> AsyncGenerator[bytes, None]:
-            yield f"event: summaryfeedback\ndata: {feedback.model_dump_json()}\n\n"
-            if feedback_stream:
-                async for chunk in feedback_stream:
-                    yield chunk
-
-        return StreamingResponse(
-            content=stream_results(), media_type="text/event-stream"
-        )
-
-    @router.post("/generate/embedding", dependencies=[Depends(developer_role)])
-    async def generate_embedding(input_body: ChunkInput) -> Response:
-        """This endpoint generates an embedding for a provided chunk of text
-        and saves it to the vector store on SupaBase.
-        It is only intended to be called by the Content Management System.
-        """
-        return await embedding_generate(input_body)
-
-    @router.post("/retrieve/chunks", dependencies=[Depends(get_role)])
-    async def retrieve_chunks(input_body: RetrievalInput) -> RetrievalResults:
-        return await chunks_retrieve(input_body)
-
-    @router.post("/delete/embedding", dependencies=[Depends(developer_role)])
-    async def delete_unused_chunks(input_body: DeleteUnusedInput) -> Response:
-        """This endpoint accepts a list of slugs of chunks currently in STRAPI.
-        It deletes any embeddings in the vector store that are not in the list.
-        """
-        return await delete_unused(input_body)
-
-
-app.include_router(router)
 
 if __name__ == "__main__":
     import uvicorn
