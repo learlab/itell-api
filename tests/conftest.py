@@ -10,7 +10,7 @@ def anyio_backend():
 
 @pytest.fixture(scope="session", autouse=True)
 async def client(anyio_backend):
-    from src.main import app
+    from src.app import app
 
     client = AsyncClient(
         app=app,
