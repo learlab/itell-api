@@ -22,7 +22,7 @@ COPY assets /usr/src/itell-ai/assets/
 COPY src /usr/src/itell-ai/src/
 COPY templates /usr/src/itell-ai/templates/
 
-CMD ["python3", "-m", "src.main"]
+CMD ["python3", "-m", "src.app"]
 
 FROM base as test
 COPY pyproject.toml /usr/src/itell-ai/
