@@ -129,7 +129,7 @@ class Language:
         "Your summary shows an excellent range of lexical and syntactic structures.",
         "Your summary shows an excellent range of lexical and syntactic structures.",
     ]
-    threshold = 1.5
+    threshold = 0
 
     @classmethod
     def generate_feedback(cls, score: float):
