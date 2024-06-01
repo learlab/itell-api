@@ -71,7 +71,8 @@ class Similarity:
 class Content:
     # Threshold was originally -0.3
     # Was decreased to -0.15 for the Cornell volume to increase engagement with STAIRS
-    threshold = -0.15
+    # Set to 0 for Prolific testing
+    threshold = 0
     passing = "You did a good job of including key ideas and details on this page."
     failing = (
         "You need to include more key ideas and details from the page to"
@@ -94,7 +95,8 @@ class Content:
 class Wording:
     # Threshold was originally -1
     # Was decreased to -0.5 for the Cornell volume to increase engagement with STAIRS
-    threshold = -0.5
+    # Set to 0 for Prolific testing
+    threshold = 0
     passing = (
         "You did a good job of paraphrasing words and sentences from the text and"
         " using objective language."
