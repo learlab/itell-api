@@ -258,14 +258,14 @@ if not os.environ.get("ENV") == "development":
         ## e.g.
 
         # for item in feedback.prompt_details:
-        #     if item.type == "Wording":
-        #         wording = item
+        #     if item.type == "Language":
+        #         language = item
         #     elif item.type == "Content":
         #         content = item
 
         # if not content.feedback.is_passed:
         #     stream = await sert_generate(summary)
-        # elif not wording.feedback.is_passed:
+        # elif not language.feedback.is_passed:
         #     stream = await language_feedback_chat(summary)
         # else:
         #     stream = False
