@@ -54,7 +54,7 @@ async def moderated_chat(chat_input: ChatInput) -> AsyncGenerator[bytes, None]:
     )
 
     sampling_params = SamplingParams(
-        temperature=0.4, max_tokens=4096, stop=["<|im_end|>"]
+        temperature=0.4, max_tokens=4096, stop=["<|eot_id|>"]
     )
 
     cited_chunks = [chunk.chunk for chunk in relevant_chunks.matches]
@@ -63,9 +63,7 @@ async def moderated_chat(chat_input: ChatInput) -> AsyncGenerator[bytes, None]:
 
 
 async def unmoderated_chat(raw_chat_input: PromptInput) -> AsyncGenerator[bytes, None]:
-    sampling_params = SamplingParams(
-        temperature=0.4, max_tokens=4096, stop=["<|im_end|>"]
-    )
+    sampling_params = SamplingParams(temperature=0.4, max_tokens=4096)
     return await chat_pipeline(raw_chat_input.message, sampling_params)
 
 
@@ -91,11 +89,10 @@ async def cri_chat(cri_input: ChatInputCRI) -> AsyncGenerator[bytes, None]:
         student_response=cri_input.student_response,
     )
 
-    sampling_params = SamplingParams(
-        temperature=0.4, max_tokens=4096, stop=["<|im_end|>"]
-    )
+    sampling_params = SamplingParams(temperature=0.4, max_tokens=4096)
 
     return await chat_pipeline(prompt, sampling_params, preface_text=prompt_prefix)
+
 
 async def language_feedback_chat(summary: Summary) -> AsyncGenerator[bytes, None]:
     text_meta = await strapi.get_text_meta(summary.page_slug)
@@ -106,7 +103,7 @@ async def language_feedback_chat(summary: Summary) -> AsyncGenerator[bytes, None
     )
 
     sampling_params = SamplingParams(
-        temperature=0.4, max_tokens=4096, stop=["<|im_end|>"]
+        temperature=0.4, max_tokens=4096, stop=["<|eot_id|>"]
     )
 
     return await chat_pipeline(prompt, sampling_params)
