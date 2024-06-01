@@ -46,7 +46,7 @@ def weight_chunks_with_similarity(reading_time_score, similarity):
     return reading_time_score * similarity
 
 
-async def sert_generate(summary: Summary) -> AsyncGenerator[bytes, None]:
+async def sert_chat(summary: Summary) -> AsyncGenerator[bytes, None]:
     text_meta = await strapi.get_text_meta(summary.page_slug)
 
     # Retrieve the chunks that are the least similar to the student's summary
