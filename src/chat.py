@@ -19,8 +19,8 @@ with open("templates/chat.jinja2", "r", encoding="utf8") as file_:
 with open("templates/cri_chat.jinja2", "r", encoding="utf8") as file_:
     cri_prompt_template = Template(file_.read())
 
-with open("templates/wording_feedback.jinja2", "r", encoding="utf8") as file_:
-    wording_feedback_template = Template(file_.read())
+with open("templates/language_feedback.jinja2", "r", encoding="utf8") as file_:
+    language_feedback_template = Template(file_.read())
 
 
 async def moderated_chat(chat_input: ChatInput) -> AsyncGenerator[bytes, None]:
@@ -97,10 +97,10 @@ async def cri_chat(cri_input: ChatInputCRI) -> AsyncGenerator[bytes, None]:
 
     return await chat_pipeline(prompt, sampling_params, preface_text=prompt_prefix)
 
-async def wording_feedback_chat(summary: Summary) -> AsyncGenerator[bytes, None]:
+async def language_feedback_chat(summary: Summary) -> AsyncGenerator[bytes, None]:
     text_meta = await strapi.get_text_meta(summary.page_slug)
 
-    prompt = wording_feedback_template.render(
+    prompt = language_feedback_template.render(
         text_name=text_meta.Title,
         summary=summary.summary.text,
     )
