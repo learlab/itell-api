@@ -13,6 +13,7 @@ from .models.embedding import (
 from .models.chat import ChatInput, PromptInput, ChatInputCRI
 from .models.message import Message
 from .models.transcript import TranscriptInput, TranscriptResults
+from .models.api_keys import CreateAPIKeyInput, DeleteAPIKeyInput
 from typing import AsyncGenerator, Callable
 from src.auth import get_role, developer_role
 
@@ -33,6 +34,7 @@ from .summary_eval import summary_score
 from .summary_feedback import get_feedback
 from .answer_eval import answer_score
 from .transcript import transcript_generate
+from .api_keys import create_new_api_key, delete_api_key
 
 import os
 import sentry_sdk
@@ -170,6 +172,16 @@ async def generate_transcript(input_body: TranscriptInput) -> TranscriptResults:
     """Generate a transcript from a YouTube video.
     Intended for use by the Content Management System."""
     return await transcript_generate(input_body)
+
+@router.post("/generate/api_key", dependencies=[Depends(developer_role)])
+async def generate_api_key(input_body: CreateAPIKeyInput) -> Response:
+    """Creates an API key for the Content Management System."""
+    return await create_new_api_key(input_body)
+
+@router.post("/delete/api_key", dependencies=[Depends(developer_role)])
+async def delete_api_key_endpoint(input_body: DeleteAPIKeyInput) -> Response:
+    """Deletes an API key for the Content Management System."""
+    return await delete_api_key(input_body)
 
 
 if not os.environ.get("ENV") == "development":
