@@ -13,7 +13,7 @@ RUN mkdir /usr/src/itell-ai && \
     mkdir /usr/src/itell-ai/src && \
     mkdir /usr/src/itell-ai/templates
 WORKDIR /usr/src/itell-ai
-COPY requirements/gpu.txt /usr/src/itell-ai/requirements.txt
+COPY requirements/requirements.txt /usr/src/itell-ai/requirements.txt
 RUN pip install -r requirements.txt
 
 ENV HF_HOME=/usr/local/huggingface
