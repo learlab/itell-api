@@ -45,6 +45,7 @@ class SummaryResults(BaseModel):
     suggested_keyphrases: list[str]
     content: Optional[float] = None
     language: Optional[float] = None
+    wording: Optional[float] = None  # Deprecated. Always None.
 
 
 class ScoreType(str, Enum):
@@ -55,6 +56,7 @@ class ScoreType(str, Enum):
     profanity = "Profanity"
     content = "Content"
     language = "Language"
+    wording = "Wording"  # Deprecated.
 
 
 class Feedback(BaseModel):

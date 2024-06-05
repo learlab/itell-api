@@ -92,6 +92,13 @@ class Content:
         return AnalyticFeedback(type=ScoreType.content, feedback=feedback)
 
 
+class Wording:
+    @classmethod
+    def generate_feedback(cls, score: float):
+        feedback = Feedback(is_passed=None, prompt=None)
+        return AnalyticFeedback(type=ScoreType.wording, feedback=feedback)
+
+
 class Language:
     # Threshold currently set to 1.5 (scores are matched to rubric).
     # Set to 1 (or 2?) for Prolific testing
@@ -155,6 +162,7 @@ def summary_feedback(results: SummaryResults) -> SummaryResultsWithFeedback:
     english = English.generate_feedback(results.english)
     profanity = Profanity.generate_feedback(results.profanity)
     language = Language.generate_feedback(results.language)
+    wording = Wording.generate_feedback(results.wording)  # Deprecated
 
     is_passed = all(
         feedback.feedback.is_passed is not False
@@ -191,5 +199,6 @@ def summary_feedback(results: SummaryResults) -> SummaryResultsWithFeedback:
             profanity,
             content,
             language,
+            wording,
         ],
     )
