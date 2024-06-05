@@ -22,7 +22,7 @@ async def chat_pipeline(
     sampling_params: SamplingParams,
     event_type: str = "chat",
     preface_text: str = "",
-    **kwargs
+    **kwargs,
 ) -> AsyncGenerator[bytes, None]:
     """Generate completion for the request.
     - prompt: the prompt to use for the generation.
@@ -38,8 +38,7 @@ async def chat_pipeline(
 
             out_text = preface_text + generated_text
 
-            chat_output = ChatResponse(
-                request_id=request_id, text=out_text, **kwargs)
+            chat_output = ChatResponse(request_id=request_id, text=out_text, **kwargs)
 
             yield f"event: {event_type}\ndata: {chat_output.model_dump_json()}\n\n"
 

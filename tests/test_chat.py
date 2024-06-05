@@ -19,9 +19,7 @@ async def test_chat(client):
         stream = (chunk for chunk in response.split("\n\n"))
 
         # The first chunk is the feedback
-        first_chunk = next(stream).removeprefix(
-            f"event: {EventType.chat}\ndata: "
-        )
+        first_chunk = next(stream).removeprefix(f"event: {EventType.chat}\ndata: ")
 
         # Checks that the first chunk is a valid ChatResponse object.
         try:

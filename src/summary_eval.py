@@ -56,8 +56,7 @@ async def summary_score(
 
     chunk_docs = list(nlp.pipe([chunk.CleanText for chunk in chunks]))
 
-    weighted_chunks = weight_chunks(
-        chunks, chunk_docs, summary_input.focus_time)
+    weighted_chunks = weight_chunks(chunks, chunk_docs, summary_input.focus_time)
 
     bot_messages = None
     if summary_input.chat_history:
@@ -124,7 +123,6 @@ async def summary_score(
     # Summary meets minimum requirements. Score it.
     input_text = summary.summary.text + "</s>" + summary.source.text
     results["content"] = float(content_pipe(input_text)[0]["score"])
-    results["language"] = float(
-        language_pipe(summary.summary.text)[0]["score"])
+    results["language"] = float(language_pipe(summary.summary.text)[0]["score"])
 
     return summary, SummaryResults(**results)

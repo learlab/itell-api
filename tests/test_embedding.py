@@ -56,20 +56,22 @@ async def test_retrieve_chunks(client):
 
 @pytest.fixture
 async def create_embedding(db):
-    db.table("embeddings").upsert([
-        {
-            "chunk": "delete_test_chunk_1",
-            "page": "delete_test_page",
-            "text": "delete_test_text",
-            "content": "delete_test_content",
-        },
-        {
-            "chunk": "delete_test_chunk_2",
-            "page": "delete_test_page",
-            "text": "delete_test_text",
-            "content": "delete_test_content",
-        }
-    ]).execute()
+    db.table("embeddings").upsert(
+        [
+            {
+                "chunk": "delete_test_chunk_1",
+                "page": "delete_test_page",
+                "text": "delete_test_text",
+                "content": "delete_test_content",
+            },
+            {
+                "chunk": "delete_test_chunk_2",
+                "page": "delete_test_page",
+                "text": "delete_test_text",
+                "content": "delete_test_content",
+            },
+        ]
+    ).execute()
 
 
 async def test_delete(client, create_embedding, db):

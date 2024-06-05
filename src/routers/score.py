@@ -1,4 +1,3 @@
-
 from ..models.summary import (
     SummaryInputStrapi,
     Summary,
@@ -42,7 +41,7 @@ async def score_answer(input_body: AnswerInputStrapi) -> AnswerResults:
 
 @router.post("/score/summary/stairs", response_model=StreamingSummaryResults)
 async def score_summary_with_stairs(
-    input_body: SummaryInputStrapi
+    input_body: SummaryInputStrapi,
 ) -> StreamingResponse:
     """Scores a summary. If the summary fails, selects a chunk for re-reading and
     generates a self-explanation (SERT) question about the chunk.
@@ -63,9 +62,7 @@ async def score_summary_with_stairs(
     feedback_stream = None
 
     # Failing specific scores triggers feedback as a token stream
-    feedback_details = {
-        item.type: item.feedback for item in feedback.prompt_details
-    }
+    feedback_details = {item.type: item.feedback for item in feedback.prompt_details}
 
     if not feedback_details["Content"].is_passed:
         feedback_stream = await sert_chat(summary)
@@ -80,6 +77,4 @@ async def score_summary_with_stairs(
             async for chunk in feedback_stream:
                 yield chunk
 
-    return StreamingResponse(
-        content=stream_results(), media_type="text/event-stream"
-    )
+    return StreamingResponse(content=stream_results(), media_type="text/event-stream")

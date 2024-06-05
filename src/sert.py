@@ -1,4 +1,5 @@
 """SERT: Self-Explanation and Reading Strategy Training."""
+
 from .models.summary import Summary, ChunkWithWeight
 from .models.chat import EventType
 from .models.embedding import RetrievalInput, RetrievalStrategy
@@ -100,5 +101,5 @@ async def sert_chat(summary: Summary) -> AsyncGenerator[bytes, None]:
         sampling_params,
         event_type=EventType.content_feedback,
         chunk=selected_chunk.Slug,
-        question_type=question_type
+        question_type=question_type,
     )

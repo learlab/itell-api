@@ -21,7 +21,8 @@ async def test_summary_eval_stairs_language(client):
 
         # The first chunk is the feedback
         feedback = next(stream).removeprefix(
-            f"event: {EventType.summary_feedback}\ndata: ")
+            f"event: {EventType.summary_feedback}\ndata: "
+        )
 
         # Checks that the feedback is a valid SummaryResultsWithFeedback object.
         try:

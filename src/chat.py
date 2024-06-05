@@ -57,10 +57,7 @@ async def moderated_chat(chat_input: ChatInput) -> AsyncGenerator[bytes, None]:
     cited_chunks = [chunk.chunk for chunk in relevant_chunks.matches]
 
     return await chat_pipeline(
-        prompt,
-        sampling_params,
-        event_type=EventType.chat,
-        context=cited_chunks
+        prompt, sampling_params, event_type=EventType.chat, context=cited_chunks
     )
 
 
@@ -98,7 +95,7 @@ async def cri_chat(cri_input: ChatInputCRI) -> AsyncGenerator[bytes, None]:
         prompt,
         sampling_params,
         event_type=EventType.constructed_response_feedback,
-        preface_text=prompt_prefix
+        preface_text=prompt_prefix,
     )
 
 
@@ -111,7 +108,5 @@ async def language_feedback_chat(summary: Summary) -> AsyncGenerator[bytes, None
     )
 
     return await chat_pipeline(
-        prompt,
-        sampling_params,
-        event_type=EventType.language_feedback
+        prompt, sampling_params, event_type=EventType.language_feedback
     )
