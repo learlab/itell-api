@@ -19,7 +19,6 @@ logging.set_verbosity_error()
 strapi = Strapi()
 
 content_pipe = LongformerPipeline("tiedaar/longformer-content-global")
-wording_pipe = LongformerPipeline("tiedaar/longformer-wording-global")
 language_pipe = SummaryPipeline("tiedaar/language-beyond-the-source")
 embedding_pipe = EmbeddingPipeline()
 detector = gcld3.NNetLanguageIdentifier(  # type: ignore
@@ -124,7 +123,6 @@ async def summary_score(
     # Summary meets minimum requirements. Score it.
     input_text = summary.summary.text + "</s>" + summary.source.text
     results["content"] = float(content_pipe(input_text)[0]["score"])
-    results["wording"] = float(wording_pipe(input_text)[0]["score"])
     results["language"] = float(language_pipe(summary.summary.text)[0]["score"])
 
     return summary, SummaryResults(**results)

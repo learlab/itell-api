@@ -1,7 +1,7 @@
 """SERT: Self-Explanation and Reading Strategy Training."""
 
-# flake8: noqa E501
 from .models.summary import Summary, ChunkWithWeight
+from .models.chat import EventType
 from .models.embedding import RetrievalInput, RetrievalStrategy
 from .embedding import chunks_retrieve
 from .pipelines.chat import chat_pipeline
@@ -19,26 +19,11 @@ with open("templates/sert.jinja2", "r", encoding="utf8") as file_:
     prompt_template = Template(file_.read())
 
 question_type_definitions = {
-    "paraphrasing": (
-        "A paraphrasing question asks readers to restate the text in different words."
-    ),
-    "elaboration": (
-        "An elaboration question asks readers to make inferences that"
-        " link what is in the text or sentence to the reader’s background knowledge."
-    ),
-    "logic": (
-        "A logic question asks readers to use general knowledge or logic to infer meaning."
-        " It encourages readers to use logic and common sense to help them make sense of the text."
-    ),
-    "prediction": (
-        "A prediction question asks readers to think about what might come next in the text."
-        " It encouranges readers to predict next ideas or steps."
-    ),
-    "bridging": (
-        "A bridging question asks readers to link ideas and understand the relations between"
-        " text segments. It will encourage readers to generate bridging inferences"
-        " across sentences and to build a coherent mental model."
-    ),
+    "paraphrasing": "A paraphrasing question asks readers to restate the text in different words.",  # noqa E501
+    "elaboration": "An elaboration question asks readers to make inferences that link what is in the text or sentence to the reader’s background knowledge.",  # noqa E501
+    "logic": "A logic question asks readers to use general knowledge or logic to infer meaning. It encourages readers to use logic and common sense to help them make sense of the text.",  # noqa E501
+    "prediction": "A prediction question asks readers to think about what might come next in the text. It encouranges readers to predict next ideas or steps.",  # noqa E501
+    "bridging": "A bridging question asks readers to link ideas and understand the relations between text segments. It will encourage readers to generate bridging inferences across sentences and to build a coherent mental model.",  # noqa E501
 }
 
 
@@ -46,7 +31,7 @@ def weight_chunks_with_similarity(reading_time_score, similarity):
     return reading_time_score * similarity
 
 
-async def sert_generate(summary: Summary) -> AsyncGenerator[bytes, None]:
+async def sert_chat(summary: Summary) -> AsyncGenerator[bytes, None]:
     text_meta = await strapi.get_text_meta(summary.page_slug)
 
     # Retrieve the chunks that are the least similar to the student's summary
@@ -109,10 +94,12 @@ async def sert_generate(summary: Summary) -> AsyncGenerator[bytes, None]:
         question_type_definition=question_type_definitions[question_type],
     )
 
-    sampling_params = SamplingParams(
-        temperature=0.4, max_tokens=4096, stop=["<|im_end|>"]
-    )
+    sampling_params = SamplingParams(temperature=0.4, max_tokens=4096)
 
     return await chat_pipeline(
-        prompt, sampling_params, chunk=selected_chunk.Slug, question_type=question_type
+        prompt,
+        sampling_params,
+        event_type=EventType.content_feedback,
+        chunk=selected_chunk.Slug,
+        question_type=question_type,
     )

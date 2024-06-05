@@ -1,4 +1,3 @@
-import os
 from typing import AsyncGenerator
 
 from vllm.sampling_params import SamplingParams
@@ -8,27 +7,22 @@ from vllm.utils import random_uuid
 
 from ..models.chat import ChatResponse
 
-# For local development on an RTX 3060 with 12GiB of VRAM
-if os.environ.get("ENV") == "gpu-development":
-    engine_args = AsyncEngineArgs(
-        model="gpt2",
-        download_dir="/usr/local/huggingface/hub",
-        gpu_memory_utilization=0.80,
-    )
-else:
-    # For deployment on an RTX A6000 with 48GiB of VRAM
-    engine_args = AsyncEngineArgs(
-        model="meta-llama/Meta-Llama-3-8B-Instruct",
-        download_dir="/usr/local/huggingface/hub",
-        gpu_memory_utilization=0.80,  # this leaves room for batching and other models
-    )
+engine_args = AsyncEngineArgs(
+    model="meta-llama/Meta-Llama-3-8B-Instruct",
+    download_dir="/usr/local/huggingface/hub",
+    gpu_memory_utilization=0.80,  # this leaves room for batching and other models
+)
 
 
 engine = AsyncLLMEngine.from_engine_args(engine_args)
 
 
 async def chat_pipeline(
-    prompt: str, sampling_params: SamplingParams, preface_text: str = "", **kwargs
+    prompt: str,
+    sampling_params: SamplingParams,
+    event_type: str = "chat",
+    preface_text: str = "",
+    **kwargs,
 ) -> AsyncGenerator[bytes, None]:
     """Generate completion for the request.
     - prompt: the prompt to use for the generation.
@@ -46,6 +40,6 @@ async def chat_pipeline(
 
             chat_output = ChatResponse(request_id=request_id, text=out_text, **kwargs)
 
-            yield f"event: completion\ndata: {chat_output.model_dump_json()}\n\n"
+            yield f"event: {event_type}\ndata: {chat_output.model_dump_json()}\n\n"
 
     return stream_results()

@@ -71,7 +71,8 @@ class Similarity:
 class Content:
     # Threshold was originally -0.3
     # Was decreased to -0.15 for the Cornell volume to increase engagement with STAIRS
-    threshold = -0.15
+    # Set to 0 for Prolific testing
+    threshold = 0
     passing = "You did a good job of including key ideas and details on this page."
     failing = (
         "You need to include more key ideas and details from the page to"
@@ -92,33 +93,15 @@ class Content:
 
 
 class Wording:
-    # Threshold was originally -1
-    # Was decreased to -0.5 for the Cornell volume to increase engagement with STAIRS
-    threshold = -0.5
-    passing = (
-        "You did a good job of paraphrasing words and sentences from the text and"
-        " using objective language."
-    )
-    failing = (
-        "You need to paraphrase words and ideas on this page better. Focus on using"
-        " different words and sentences than those used in the text. Also, try to"
-        " use more objective language (or less emotional language)."
-    )
-
     @classmethod
     def generate_feedback(cls, score: float):
-        if score is None:
-            feedback = Feedback(is_passed=None, prompt=None)
-        else:
-            is_passed = score > cls.threshold
-            feedback = Feedback(
-                is_passed=is_passed, prompt=cls.passing if is_passed else cls.failing
-            )
+        feedback = Feedback(is_passed=None, prompt=None)
         return AnalyticFeedback(type=ScoreType.wording, feedback=feedback)
 
 
 class Language:
     # Threshold currently set to 1.5 (scores are matched to rubric).
+    # Set to 1 (or 2?) for Prolific testing
     rubric = [
         "Your summary shows a very basic understanding of lexical and syntactic structures.",  # noqa: E501
         "Your summary shows an understanding of lexical and syntactic structures.",
@@ -126,7 +109,7 @@ class Language:
         "Your summary shows an excellent range of lexical and syntactic structures.",
         "Your summary shows an excellent range of lexical and syntactic structures.",
     ]
-    threshold = 1.5
+    threshold = 0
 
     @classmethod
     def generate_feedback(cls, score: float):
@@ -171,15 +154,15 @@ class Profanity:
         return AnalyticFeedback(type=ScoreType.profanity, feedback=feedback)
 
 
-def get_feedback(results: SummaryResults) -> SummaryResultsWithFeedback:
+def summary_feedback(results: SummaryResults) -> SummaryResultsWithFeedback:
     containment = Containment.generate_feedback(results.containment)
     containment_chat = ContainmentChat.generate_feedback(results.containment_chat)
     similarity = Similarity.generate_feedback(results.similarity)
     content = Content.generate_feedback(results.content)
-    wording = Wording.generate_feedback(results.wording)
     english = English.generate_feedback(results.english)
     profanity = Profanity.generate_feedback(results.profanity)
     language = Language.generate_feedback(results.language)
+    wording = Wording.generate_feedback(results.wording)  # Deprecated
 
     is_passed = all(
         feedback.feedback.is_passed is not False
@@ -189,7 +172,6 @@ def get_feedback(results: SummaryResults) -> SummaryResultsWithFeedback:
             similarity,
             english,
             profanity,
-            wording,
             content,
             language,
         ]
@@ -216,7 +198,7 @@ def get_feedback(results: SummaryResults) -> SummaryResultsWithFeedback:
             english,
             profanity,
             content,
-            wording,
             language,
+            wording,
         ],
     )

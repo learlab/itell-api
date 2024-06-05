@@ -13,22 +13,16 @@ iTELL AI also provides some utility endpoints that are used by the content manag
 ## Usage
 
 The API documention is hosted at the [/redoc](https://itell-api.learlab.vanderbilt.edu/redoc) location.
- - The endpoints are defined in `src/main.py`.
+ - The app is defined in `src/app.py`.
+ - The endpoints are defined in `src/routers/`.
  - The Pydantic models are defined in `src/models/`.
 
 ## Development
 
-This repository can run in three modes: development, gpu-development, and production.
-
- - `development` mode runs without a GPU. Chat is disabled.
- - `gpu-development` mode runs with a GPU and a smaller model for testing chat.
- - `production` mode runs with a GPU and the full chat model.
-
-Please set ENV=development, ENV=gpu-development, or ENV=production in your .env file and make sure these environment variables are loaded in the shell session where you run the API.
- **If no ENV is set, the default is production, which will likely fail on your system.**
+Development requires a GPU with ~50GiB of VRAM.
 
 1. If not using the provided dev container, install `protobuf-compiler` on your system. This is a requirement to build `gcld3`.
-2. Clone the repository and run `pip install -r requirements/dev.in` or `pip install -r requirements/gpu.in` depending on your environment.
+2. Clone the repository and run `pip install -r requirements/requirements.in`
 3. Make sure to create a `.env` file in the application root directory like `.env.example`
    - Ask a team member for the values to use in the `.env` file.
    - If you are on Mac, you will need to add `export ` before each line in the `.env` file.
@@ -40,10 +34,9 @@ Please set ENV=development, ENV=gpu-development, or ENV=production in your .env 
    - Pytest will run the tests appropriate to your environment.
 
 ### Modifying Requirements
-An NVidia GPU is required to pin dependencies for our production environment. If you do not have a GPU and you have changed the dependencies, ask a team member to rebuild the requirements file before deploying. There is no need to compile `requirements/base.in`.
 
-1. Make changes to `requirements/base.in` and/or `requirements/gpu.in`
-2. Run `pip-compile requirements/gpu.in` with a GPU.
+1. Make changes to `requirements/requirements.in`
+2. Run `pip-compile requirements/requirements.in` with a GPU.
 
 ### Using Dev Containers
 This devcontainer only works on machines with an NVidia GPU.

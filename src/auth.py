@@ -17,8 +17,7 @@ def get_role(api_key_header: str = Security(api_key_header)):
     db = get_vector_store()
 
     role = (
-        db.table("api_keys").select("role").eq(
-            "api_key", api_key_header).execute().data
+        db.table("api_keys").select("role").eq("api_key", api_key_header).execute().data
     )
 
     if not role:

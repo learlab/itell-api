@@ -1,9 +1,6 @@
-import pytest
-import os
 import json
 
 
-@pytest.mark.skipif(os.getenv("ENV") == "development", reason="Requires GPU.")
 async def test_chat_CRI(client):
     response = await client.post(
         "/chat/CRI",
