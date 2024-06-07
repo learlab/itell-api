@@ -55,8 +55,8 @@ async def moderated_chat(chat_input: ChatInput) -> AsyncGenerator[bytes, None]:
     )
 
     cited_chunks = [
-        chunk.chunk if chunk.chunk != "itell-documentation" else "[User Guide]"
-        for chunk in relevant_chunks.matches
+        match.chunk if match.page != "itell-documentation" else "[User Guide]"
+        for match in relevant_chunks.matches
     ]
 
     return await chat_pipeline(
