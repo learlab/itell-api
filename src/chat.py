@@ -31,7 +31,7 @@ async def moderated_chat(chat_input: ChatInput) -> AsyncGenerator[bytes, None]:
     relevant_chunks = await chunks_retrieve(
         RetrievalInput(
             text_slug=text_meta.slug,
-            page_slug=chat_input.page_slug,
+            page_slugs=[chat_input.page_slug, "itell-documentation"],
             text=chat_input.message,
             similarity_threshold=0.2,
             match_count=1,
@@ -54,7 +54,10 @@ async def moderated_chat(chat_input: ChatInput) -> AsyncGenerator[bytes, None]:
         student_summary=chat_input.summary,
     )
 
-    cited_chunks = [chunk.chunk for chunk in relevant_chunks.matches]
+    cited_chunks = [
+        match.chunk if match.page != "itell-documentation" else "[User Guide]"
+        for match in relevant_chunks.matches
+    ]
 
     return await chat_pipeline(
         prompt, sampling_params, event_type=EventType.chat, context=cited_chunks

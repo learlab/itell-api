@@ -9,7 +9,7 @@ async def test_summary_eval_stairs_language(client):
         "/score/summary/stairs",
         json={
             "page_slug": "emotional",
-            "summary": "Emotions are physical and mental states brought on by neurophysiological changes, variously associated with thoughts, feelings, behavioral responses, and a degree of pleasure or displeasure. There is no scientific consensus on a definition. Emotions are often intertwined with mood, temperament, personality, disposition, or creativity.",  # noqa: E501
+            "summary": "Emotions are physical and mental states brought on by neurophysiological changes, variously associated with thoughts, feelings, behavioral responses, and a degree of pleasure or displeasure. While there is no scientific consensus on a definition, emotions are often intertwined with mood, temperament, personality, disposition, or creativity.",  # noqa: E501
         },
     ) as response:
         assert response.status_code == 200
@@ -36,7 +36,9 @@ async def test_summary_eval_stairs_language(client):
             item for item in feedback.prompt_details if item.type == "Language"
         )
 
-        assert language.feedback.is_passed, "Language score should be passing."
+        if not language.feedback.is_passed:
+            print(feedback.model_dump_json())
+            raise AssertionError("Language score should be passing.")
 
 
 async def test_bad_page_slug(client):

@@ -19,15 +19,15 @@ class RetrievalStrategy(str, Enum):
 
 class RetrievalInput(BaseModel, use_enum_values=True):
     text_slug: Optional[str] = None
-    page_slug: str
+    page_slugs: list[str]
     text: str  # text to compare to (student summary)
     similarity_threshold: Optional[float] = 0.0
-    include_help: Optional[bool] = True
     retrieve_strategy: Optional[RetrievalStrategy] = RetrievalStrategy.most_similar
     match_count: Optional[int] = 1
 
 
 class Match(BaseModel):
+    page: str
     chunk: str
     content: str
     similarity: float
