@@ -100,8 +100,7 @@ class Wording:
 
 
 class Language:
-    # Threshold currently set to 1.5 (scores are matched to rubric).
-    # Set to 1 (or 2?) for Prolific testing
+    # Set to 2.5 for Prolific testing
     rubric = [
         "Your summary shows a very basic understanding of lexical and syntactic structures.",  # noqa: E501
         "Your summary shows an understanding of lexical and syntactic structures.",
@@ -109,7 +108,7 @@ class Language:
         "Your summary shows an excellent range of lexical and syntactic structures.",
         "Your summary shows an excellent range of lexical and syntactic structures.",
     ]
-    threshold = 0
+    threshold = 2.5
 
     @classmethod
     def generate_feedback(cls, score: float):
