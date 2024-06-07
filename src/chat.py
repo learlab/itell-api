@@ -54,7 +54,10 @@ async def moderated_chat(chat_input: ChatInput) -> AsyncGenerator[bytes, None]:
         student_summary=chat_input.summary,
     )
 
-    cited_chunks = [chunk.chunk for chunk in relevant_chunks.matches]
+    cited_chunks = [
+        chunk.chunk if chunk.chunk != "itell-documentation" else "[User Guide]"
+        for chunk in relevant_chunks.matches
+    ]
 
     return await chat_pipeline(
         prompt, sampling_params, event_type=EventType.chat, context=cited_chunks
