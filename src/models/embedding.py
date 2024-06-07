@@ -27,6 +27,7 @@ class RetrievalInput(BaseModel, use_enum_values=True):
 
 
 class Match(BaseModel):
+    page: str
     chunk: str
     content: str
     similarity: float
