@@ -22,8 +22,7 @@ async def client(anyio_backend):
 
 
 @pytest.fixture(scope="module")
-async def db():
-    from src.connections.vectorstore import get_vector_store
+async def supabase():
+    from src.routers.dependencies.supabase import get_supabase
 
-    db = get_vector_store()
-    yield db
+    yield await get_supabase()

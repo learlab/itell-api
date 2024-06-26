@@ -2,15 +2,14 @@ from .models.chat import ChatInput, PromptInput, ChatInputCRI, EventType
 from .models.summary import Summary
 from .models.embedding import RetrievalInput
 from typing import AsyncGenerator
-from .embedding import chunks_retrieve
 from .pipelines.chat import chat_pipeline
-from .connections.strapi import Strapi
 from fastapi import HTTPException
+from .routers.dependencies.strapi import Strapi
+from .routers.dependencies.supabase import SupabaseClient
 
 from jinja2 import Template
 from vllm.sampling_params import SamplingParams
 
-strapi = Strapi()
 
 with open("templates/chat.jinja2", "r", encoding="utf8") as file_:
     prompt_template = Template(file_.read())
@@ -24,11 +23,15 @@ with open("templates/language_feedback.jinja2", "r", encoding="utf8") as file_:
 sampling_params = SamplingParams(temperature=0.4, max_tokens=4096)
 
 
-async def moderated_chat(chat_input: ChatInput) -> AsyncGenerator[bytes, None]:
+async def moderated_chat(
+    chat_input: ChatInput,
+    strapi: Strapi,
+    supabase: SupabaseClient,
+) -> AsyncGenerator[bytes, None]:
     # Adding in the specific name of the textbook majorly improved response quality
     text_meta = await strapi.get_text_meta(chat_input.page_slug)
 
-    relevant_chunks = await chunks_retrieve(
+    relevant_chunks = await supabase.retrieve_chunks(
         RetrievalInput(
             text_slug=text_meta.slug,
             page_slugs=[chat_input.page_slug, "itell-documentation"],
@@ -72,7 +75,10 @@ async def unmoderated_chat(raw_chat_input: PromptInput) -> AsyncGenerator[bytes,
     )
 
 
-async def cri_chat(cri_input: ChatInputCRI) -> AsyncGenerator[bytes, None]:
+async def cri_chat(
+    cri_input: ChatInputCRI,
+    strapi: Strapi
+) -> AsyncGenerator[bytes, None]:
     chunk = await strapi.get_chunk(cri_input.page_slug, cri_input.chunk_slug)
     text_meta = await strapi.get_text_meta(cri_input.page_slug)
 
@@ -102,7 +108,10 @@ async def cri_chat(cri_input: ChatInputCRI) -> AsyncGenerator[bytes, None]:
     )
 
 
-async def language_feedback_chat(summary: Summary) -> AsyncGenerator[bytes, None]:
+async def language_feedback_chat(
+    summary: Summary,
+    strapi: Strapi
+) -> AsyncGenerator[bytes, None]:
     text_meta = await strapi.get_text_meta(summary.page_slug)
 
     prompt = language_feedback_template.render(

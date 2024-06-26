@@ -8,15 +8,13 @@ from .pipelines.containment import score_containment
 from .pipelines.summary import SummaryPipeline, LongformerPipeline
 from .pipelines.keyphrases import suggest_keyphrases
 from .pipelines.profanity_filter import profanity_filter
-from .connections.strapi import Strapi
-from .embedding import page_similarity
+from .routers.dependencies.strapi import Strapi
+from .routers.dependencies.supabase import SupabaseClient
 
 import gcld3
 from transformers import logging
 
 logging.set_verbosity_error()
-
-strapi = Strapi()
 
 content_pipe = LongformerPipeline("tiedaar/longformer-content-global")
 language_pipe = SummaryPipeline("tiedaar/language-beyond-the-source")
@@ -43,7 +41,9 @@ def weight_chunks(
 
 
 async def summary_score(
-    summary_input: SummaryInputStrapi, do_stairs=False
+    summary_input: SummaryInputStrapi,
+    strapi: Strapi,
+    supabase: SupabaseClient,
 ) -> tuple[Summary, SummaryResults]:
     """Checks summary for text copied from the source and for semantic
     relevance to the source text. If it passes these checks, score the summary
@@ -56,7 +56,8 @@ async def summary_score(
 
     chunk_docs = list(nlp.pipe([chunk.CleanText for chunk in chunks]))
 
-    weighted_chunks = weight_chunks(chunks, chunk_docs, summary_input.focus_time)
+    weighted_chunks = weight_chunks(
+        chunks, chunk_docs, summary_input.focus_time)
 
     bot_messages = None
     if summary_input.chat_history:
@@ -91,7 +92,7 @@ async def summary_score(
     # Check if summary is similar to source text
     summary_embed = embedding_pipe(summary.summary.text)[0].tolist()
     results["similarity"] = (
-        await page_similarity(summary_embed, summary.page_slug) + 0.15
+        await supabase.page_similarity(summary_embed, summary.page_slug) + 0.15
     )  # adding 0.15 to bring similarity score in line with old doc2vec model
 
     # Generate keyphrase suggestions
@@ -123,6 +124,7 @@ async def summary_score(
     # Summary meets minimum requirements. Score it.
     input_text = summary.summary.text + "</s>" + summary.source.text
     results["content"] = float(content_pipe(input_text)[0]["score"])
-    results["language"] = float(language_pipe(summary.summary.text)[0]["score"])
+    results["language"] = float(
+        language_pipe(summary.summary.text)[0]["score"])
 
     return summary, SummaryResults(**results)

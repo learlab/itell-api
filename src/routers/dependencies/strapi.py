@@ -1,18 +1,18 @@
-from ..models.strapi import Chunk, PageWithChunks, PageWithText, Text
+from ...models.strapi import Chunk, PageWithChunks, PageWithText, Text
 
 import os
 import httpx
-from typing import Union, Optional
+from typing import Union, Optional, Annotated
 from pydantic import ValidationError
-from fastapi import HTTPException
+from fastapi import HTTPException, Depends
 
 
 class Strapi:
-    url: str = os.environ["STRAPI_URL"]
-    key: str = os.environ["STRAPI_KEY"]
-
     def __init__(self):
         """Initialize client."""
+        self.url = os.environ["STRAPI_URL"]
+        self.key = os.environ["STRAPI_KEY"]
+
         if not self.url.endswith("/"):
             self.url = self.url + "/"
         self.headers = {"Authorization": f"Bearer {self.key}"}
@@ -22,14 +22,15 @@ class Strapi:
             try:
                 r = await client.get(url, headers=self.headers, params=params)
             except httpx.TimeoutException as err:
-                raise HTTPException(status_code=504, detail=f"Strapi Timeout: {err}")
+                raise HTTPException(
+                    status_code=504, detail=f"Strapi Timeout: {err}")
             if r.status_code != 200:
                 message = (
                     f"Error connecting to Strapi {r.status_code}: {r.reason_phrase}"
                 )
                 raise HTTPException(
                     status_code=404,
-                    detail=(message),
+                    detail=message,
                 )
             result: dict = r.json()
             return result
@@ -63,7 +64,8 @@ class Strapi:
         filters_param: dict = self._stringify_parameters("filters", filters)
         populate_param: dict = self._stringify_parameters("populate", populate)
         fields_param: dict = self._stringify_parameters("fields", fields)
-        pagination_param: dict = self._stringify_parameters("pagination", pagination)
+        pagination_param: dict = self._stringify_parameters(
+            "pagination", pagination)
         publication_state_param: dict = self._stringify_parameters(
             "publicationState", publication_state
         )
@@ -155,3 +157,9 @@ class Strapi:
             )
 
         return page_with_chunks.data[0].attributes.Content
+
+
+async def get_strapi() -> Strapi:
+    return Strapi()
+
+StrapiDep = Annotated[Strapi, Depends(get_strapi)]

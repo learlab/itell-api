@@ -1,3 +1,7 @@
+"""
+Deprecated. No longer in use.
+"""
+
 from gensim.models.doc2vec import Doc2Vec
 from scipy import spatial
 import numpy as np

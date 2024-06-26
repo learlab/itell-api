@@ -1,6 +1,6 @@
 from .models.message import Message
 
-from .auth import get_role, developer_role
+from .routers.dependencies.auth import get_role, developer_role
 
 from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
