@@ -11,6 +11,7 @@ engine_args = AsyncEngineArgs(
     model="meta-llama/Meta-Llama-3-8B-Instruct",
     download_dir="/usr/local/huggingface/hub",
     gpu_memory_utilization=0.80,  # this leaves room for batching and other models
+    enable_prefix_caching=True,
 )
 
 
