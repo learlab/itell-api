@@ -5,9 +5,8 @@ import httpx
 from typing import Union, Optional, Annotated, AsyncGenerator
 from pydantic import ValidationError
 from fastapi import HTTPException, Depends
-from cachetools import TTLCache
+from cachetools import TTLCache, keys
 from .async_cache import acached
-from cachetools.keys import hashkey
 
 
 class Strapi:
@@ -28,7 +27,7 @@ class Strapi:
     def _hash_request_url(self, request: httpx.Request) -> str:
         '''Since all requests are GET without any payload,
         we can cache the response based on the (hashable) URL.'''
-        return hashkey(request.url)
+        return keys.hashkey(request.url)
 
     async def _get(
         self,

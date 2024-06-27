@@ -1,12 +1,18 @@
 from fastapi import Security, HTTPException, status
 from fastapi.security import APIKeyHeader
-from cachetools import cached, TTLCache
+from cachetools import TTLCache, keys
 from .supabase import SupabaseDep
+from .async_cache import acached
 
 api_key_header = APIKeyHeader(name="API-Key")
 
 
-@cached(cache=TTLCache(maxsize=1024, ttl=600))
+def hash_api_key(supabase: SupabaseDep, api_key_header: str) -> str:
+    '''Hash the API key for caching, ignoring the Supabase dependency.'''
+    return keys.hashkey(api_key_header)
+
+
+@acached(cache=TTLCache(maxsize=1024, ttl=600), key=hash_api_key)
 async def get_role(
     supabase: SupabaseDep,
     api_key_header: str = Security(api_key_header),
