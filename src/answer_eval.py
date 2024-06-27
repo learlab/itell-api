@@ -1,12 +1,11 @@
 from .models.answer import AnswerInputStrapi, AnswerResults
 from .pipelines.answer import AnswerPipeline
-from .connections.strapi import Strapi
+from .routers.dependencies.strapi import Strapi
 from fastapi import HTTPException
 from transformers import logging
 
 logging.set_verbosity_error()
 
-strapi = Strapi()
 answer_pipe = AnswerPipeline()
 
 
@@ -29,7 +28,10 @@ class Answer:
             self.results["is_passing"] = True
 
 
-async def answer_score(answer_input: AnswerInputStrapi) -> AnswerResults:
+async def answer_score(
+    answer_input: AnswerInputStrapi,
+    strapi: Strapi
+) -> AnswerResults:
     chunk = await strapi.get_chunk(answer_input.page_slug, answer_input.chunk_slug)
 
     if chunk.ConstructedResponse is None:

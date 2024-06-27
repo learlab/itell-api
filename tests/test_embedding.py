@@ -1,6 +1,3 @@
-import pytest
-
-
 async def test_generate_embeddings(client):
     response = await client.post(
         "/generate/embedding",
@@ -54,9 +51,9 @@ async def test_retrieve_chunks(client):
     assert response.status_code == 200
 
 
-@pytest.fixture
-async def create_embedding(db):
-    db.table("embeddings").upsert(
+async def test_delete(client, supabase):
+    # Create chunks to delete
+    response = await supabase.table("embeddings").upsert(
         [
             {
                 "chunk": "delete_test_chunk_1",
@@ -73,18 +70,20 @@ async def create_embedding(db):
         ]
     ).execute()
 
-
-async def test_delete(client, create_embedding, db):
-    current_slugs = (
-        db.table("embeddings")
+    # Check that 2 chunks were created
+    response = await (
+        supabase
+        .table("embeddings")
         .select("chunk")
         .eq("page", "delete_test_page")
         .execute()
-        .data
     )
+
+    current_slugs = response.data
 
     assert len(current_slugs) == 2
 
+    # Test deletion endpoint
     response = await client.post(
         "/delete/embedding",
         json={
@@ -94,13 +93,16 @@ async def test_delete(client, create_embedding, db):
     )
     assert response.status_code == 202
 
-    current_slugs = (
-        db.table("embeddings")
+    # Check that the correct chunk was deleted
+    response = await (
+        supabase
+        .table("embeddings")
         .select("chunk")
         .eq("page", "delete_test_page")
         .execute()
-        .data
     )
+
+    current_slugs = response.data
 
     assert len(current_slugs) == 1
     assert current_slugs[0]["chunk"] == "delete_test_chunk_1"
