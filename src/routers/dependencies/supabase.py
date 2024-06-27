@@ -16,6 +16,11 @@ key: str = os.environ["VECTOR_KEY"]
 
 
 class SupabaseClient(AsyncClient):
+    '''Supabase client with custom methods for embedding and retrieval.
+    Caching is not possible since each embedding will be different.
+    Could improve performance by creating a local copy of the relatively small
+    vector store and querying that instead of the remote database.'''
+
     embedding_pipeline = EmbeddingPipeline()
 
     async def embed(self, text: str) -> list[float]:

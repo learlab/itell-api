@@ -2,9 +2,12 @@ from ...models.strapi import Chunk, PageWithChunks, PageWithText, Text
 
 import os
 import httpx
-from typing import Union, Optional, Annotated
+from typing import Union, Optional, Annotated, AsyncGenerator
 from pydantic import ValidationError
 from fastapi import HTTPException, Depends
+from cachetools import TTLCache
+from .async_cache import acached
+from cachetools.keys import hashkey
 
 
 class Strapi:
@@ -15,25 +18,45 @@ class Strapi:
 
         if not self.url.endswith("/"):
             self.url = self.url + "/"
-        self.headers = {"Authorization": f"Bearer {self.key}"}
 
-    async def _get(self, url: str, params: dict) -> dict:
-        async with httpx.AsyncClient(timeout=httpx.Timeout(10.0)) as client:
-            try:
-                r = await client.get(url, headers=self.headers, params=params)
-            except httpx.TimeoutException as err:
-                raise HTTPException(
-                    status_code=504, detail=f"Strapi Timeout: {err}")
-            if r.status_code != 200:
-                message = (
-                    f"Error connecting to Strapi {r.status_code}: {r.reason_phrase}"
-                )
-                raise HTTPException(
-                    status_code=404,
-                    detail=message,
-                )
-            result: dict = r.json()
-            return result
+        # Shared client instance allows for HTTP Connection Pooling
+        self.client = httpx.AsyncClient(
+            headers={"Authorization": f"Bearer {self.key}"},
+            timeout=httpx.Timeout(10.0)
+        )
+
+    def _hash_request_url(self, request: httpx.Request) -> str:
+        '''Since all requests are GET without any payload,
+        we can cache the response based on the (hashable) URL.'''
+        return hashkey(request.url)
+
+    async def _get(
+        self,
+        url: str,
+        params: dict,
+    ) -> dict:
+        req = self.client.build_request("GET", url, params=params)
+        resp = await self._send(req)
+
+        return resp.json()
+
+    @acached(cache=TTLCache(maxsize=128, ttl=600), key=_hash_request_url)
+    async def _send(self, request: httpx.Request) -> httpx.Response:
+        try:
+            resp = await self.client.send(request)
+        except httpx.TimeoutException as err:
+            raise HTTPException(
+                status_code=504, detail=f"Strapi Timeout: {err}")
+        if resp.status_code != 200:
+            message = (
+                f"Error connecting to Strapi {resp.status_code}:"
+                f" {resp.reason_phrase}"
+            )
+            raise HTTPException(
+                status_code=404,
+                detail=message,
+            )
+        return resp
 
     async def get_entry(
         self,
@@ -158,8 +181,15 @@ class Strapi:
 
         return page_with_chunks.data[0].attributes.Content
 
+    async def aclose(self):
+        await self.client.aclose()
 
-async def get_strapi() -> Strapi:
-    return Strapi()
+
+async def get_strapi() -> AsyncGenerator[Strapi, None]:
+    strapi = Strapi()
+    try:
+        yield strapi
+    finally:
+        await strapi.aclose()
 
 StrapiDep = Annotated[Strapi, Depends(get_strapi)]
