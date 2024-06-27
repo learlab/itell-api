@@ -236,7 +236,7 @@ packaging==23.2
     #   thinc
     #   transformers
     #   weasel
-postgrest==0.13.0
+postgrest==0.16.8
     # via supabase
 preshed==3.0.9
     # via
@@ -359,7 +359,7 @@ storage3==0.7.0
     # via supabase
 strenum==0.4.15
     # via postgrest
-supabase==2.3.0
+supabase==2.5.1
     # via -r requirements/requirements.in
 supafunc==0.3.1
     # via supabase
