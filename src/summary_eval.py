@@ -1,18 +1,18 @@
-from .models.summary import SummaryInputStrapi, Summary, ChunkWithWeight, SummaryResults
-from .models.strapi import Chunk
-from spacy.tokens import Doc
-
-from .pipelines.nlp import nlp
-from .pipelines.embed import EmbeddingPipeline
-from .pipelines.containment import score_containment
-from .pipelines.summary import SummaryPipeline, LongformerPipeline
-from .pipelines.keyphrases import suggest_keyphrases
-from .pipelines.profanity_filter import profanity_filter
-from .routers.dependencies.strapi import Strapi
-from .routers.dependencies.supabase import SupabaseClient
-
 import gcld3
+from spacy.tokens import Doc
 from transformers import logging
+
+from .dependencies.strapi import Strapi
+from .dependencies.supabase import SupabaseClient
+from .models.strapi import Chunk
+from .models.summary import (ChunkWithWeight, Summary, SummaryInputStrapi,
+                             SummaryResults)
+from .pipelines.containment import score_containment
+from .pipelines.embed import EmbeddingPipeline
+from .pipelines.keyphrases import suggest_keyphrases
+from .pipelines.nlp import nlp
+from .pipelines.profanity_filter import profanity_filter
+from .pipelines.summary import LongformerPipeline, SummaryPipeline
 
 logging.set_verbosity_error()
 
@@ -56,8 +56,7 @@ async def summary_score(
 
     chunk_docs = list(nlp.pipe([chunk.CleanText for chunk in chunks]))
 
-    weighted_chunks = weight_chunks(
-        chunks, chunk_docs, summary_input.focus_time)
+    weighted_chunks = weight_chunks(chunks, chunk_docs, summary_input.focus_time)
 
     bot_messages = None
     if summary_input.chat_history:
@@ -124,7 +123,6 @@ async def summary_score(
     # Summary meets minimum requirements. Score it.
     input_text = summary.summary.text + "</s>" + summary.source.text
     results["content"] = float(content_pipe(input_text)[0]["score"])
-    results["language"] = float(
-        language_pipe(summary.summary.text)[0]["score"])
+    results["language"] = float(language_pipe(summary.summary.text)[0]["score"])
 
     return summary, SummaryResults(**results)

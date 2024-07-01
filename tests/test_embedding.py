@@ -53,27 +53,30 @@ async def test_retrieve_chunks(client):
 
 async def test_delete(client, supabase):
     # Create chunks to delete
-    response = await supabase.table("embeddings").upsert(
-        [
-            {
-                "chunk": "delete_test_chunk_1",
-                "page": "delete_test_page",
-                "text": "delete_test_text",
-                "content": "delete_test_content",
-            },
-            {
-                "chunk": "delete_test_chunk_2",
-                "page": "delete_test_page",
-                "text": "delete_test_text",
-                "content": "delete_test_content",
-            },
-        ]
-    ).execute()
+    response = (
+        await supabase.table("embeddings")
+        .upsert(
+            [
+                {
+                    "chunk": "delete_test_chunk_1",
+                    "page": "delete_test_page",
+                    "text": "delete_test_text",
+                    "content": "delete_test_content",
+                },
+                {
+                    "chunk": "delete_test_chunk_2",
+                    "page": "delete_test_page",
+                    "text": "delete_test_text",
+                    "content": "delete_test_content",
+                },
+            ]
+        )
+        .execute()
+    )
 
     # Check that 2 chunks were created
     response = await (
-        supabase
-        .table("embeddings")
+        supabase.table("embeddings")
         .select("chunk")
         .eq("page", "delete_test_page")
         .execute()
@@ -95,8 +98,7 @@ async def test_delete(client, supabase):
 
     # Check that the correct chunk was deleted
     response = await (
-        supabase
-        .table("embeddings")
+        supabase.table("embeddings")
         .select("chunk")
         .eq("page", "delete_test_page")
         .execute()

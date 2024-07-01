@@ -1,7 +1,7 @@
-from .models.api_keys import CreateAPIKeyInput, DeleteAPIKeyInput
-from .routers.dependencies.supabase import SupabaseClient
+from fastapi import HTTPException, Response
 
-from fastapi import Response, HTTPException
+from .dependencies.supabase import SupabaseClient
+from .models.api_keys import CreateAPIKeyInput, DeleteAPIKeyInput
 
 
 async def create_new_api_key(
@@ -32,8 +32,7 @@ async def delete_api_key(
     supabase: SupabaseClient,
 ) -> Response:
     delete_response = (
-        await supabase
-        .table("api_keys")
+        await supabase.table("api_keys")
         .delete()
         .eq("api_key", api_key.api_key)
         .execute()

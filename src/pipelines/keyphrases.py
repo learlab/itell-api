@@ -1,9 +1,9 @@
+import random
+import re
+
 from spacy.tokens import Doc
 
 from .nlp import nlp
-
-import re
-import random
 
 
 def suggest_keyphrases(summary: Doc, chunks: list) -> tuple[list[str], list[str]]:

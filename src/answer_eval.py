@@ -1,8 +1,9 @@
-from .models.answer import AnswerInputStrapi, AnswerResults
-from .pipelines.answer import AnswerPipeline
-from .routers.dependencies.strapi import Strapi
 from fastapi import HTTPException
 from transformers import logging
+
+from .dependencies.strapi import Strapi
+from .models.answer import AnswerInputStrapi, AnswerResults
+from .pipelines.answer import AnswerPipeline
 
 logging.set_verbosity_error()
 
@@ -29,8 +30,7 @@ class Answer:
 
 
 async def answer_score(
-    answer_input: AnswerInputStrapi,
-    strapi: Strapi
+    answer_input: AnswerInputStrapi, strapi: Strapi
 ) -> AnswerResults:
     chunk = await strapi.get_chunk(answer_input.page_slug, answer_input.chunk_slug)
 

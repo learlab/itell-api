@@ -1,8 +1,8 @@
 from typing import AsyncGenerator
 
-from vllm.sampling_params import SamplingParams
 from vllm.engine.arg_utils import AsyncEngineArgs
 from vllm.engine.async_llm_engine import AsyncLLMEngine
+from vllm.sampling_params import SamplingParams
 from vllm.utils import random_uuid
 
 from ..models.chat import ChatResponse
@@ -11,6 +11,7 @@ engine_args = AsyncEngineArgs(
     model="meta-llama/Meta-Llama-3-8B-Instruct",
     download_dir="/usr/local/huggingface/hub",
     gpu_memory_utilization=0.80,  # this leaves room for batching and other models
+    enable_prefix_caching=True,
 )
 
 

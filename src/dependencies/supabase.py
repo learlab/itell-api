@@ -1,21 +1,17 @@
-import os
+from fastapi import HTTPException, Response
 from supabase.client import AsyncClient
-from ...pipelines.embed import EmbeddingPipeline
-from ...models.embedding import (
-    ChunkInput,
-    RetrievalInput,
-    RetrievalResults,
-    DeleteUnusedInput,
-)
-from typing import Annotated
 
-from fastapi import Response, HTTPException, Depends
-
-url: str = os.environ["VECTOR_HOST"]
-key: str = os.environ["VECTOR_KEY"]
+from ..models.embedding import (ChunkInput, DeleteUnusedInput, RetrievalInput,
+                                RetrievalResults)
+from ..pipelines.embed import EmbeddingPipeline
 
 
 class SupabaseClient(AsyncClient):
+    """Supabase client with custom methods for embedding and retrieval.
+    Caching is not possible since each embedding will be different.
+    Could improve performance by creating a local copy of the relatively small
+    vector store and querying that instead of the remote database."""
+
     embedding_pipeline = EmbeddingPipeline()
 
     async def embed(self, text: str) -> list[float]:
@@ -26,8 +22,7 @@ class SupabaseClient(AsyncClient):
         embedding = await self.embed(input_body.content)
 
         upsert_response = (
-            await self
-            .table("embeddings")
+            await self.table("embeddings")
             .upsert(
                 {
                     "text": input_body.text_slug,
@@ -74,11 +69,7 @@ class SupabaseClient(AsyncClient):
         }
 
         try:
-            response = (
-                await self
-                .rpc("page_similarity", query_params)
-                .execute()
-            )
+            response = await self.rpc("page_similarity", query_params).execute()
         except (TypeError, AttributeError) as error:
             raise HTTPException(status_code=500, detail=str(error))
 
@@ -94,8 +85,7 @@ class SupabaseClient(AsyncClient):
         """Deletes all chunks not in the chunk slugs list."""
 
         response = (
-            await self
-            .table("embeddings")
+            await self.table("embeddings")
             .select("chunk")
             .eq("page", input_body.page_slug)
             .execute()
@@ -112,18 +102,10 @@ class SupabaseClient(AsyncClient):
 
         if unused_slugs:
             (
-                await self
-                .table("embeddings")
+                await self.table("embeddings")
                 .delete()
                 .in_("chunk", unused_slugs)
                 .execute()
             )
 
         return Response(status_code=202)
-
-
-async def get_supabase() -> SupabaseClient:
-
-    return SupabaseClient(url, key)
-
-SupabaseDep = Annotated[SupabaseClient, Depends(get_supabase)]

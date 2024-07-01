@@ -1,14 +1,16 @@
-from .models.message import Message
-
-from .routers.dependencies.auth import get_role, developer_role
-
-from fastapi import FastAPI, Depends
-from fastapi.middleware.cors import CORSMiddleware
-import os
 import logging
-import sentry_sdk
-from .routers import score, chat, generate, admin
+import os
+from contextlib import asynccontextmanager
 
+import sentry_sdk
+from fastapi import Depends, FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+
+from .dependencies.auth import developer_role, get_role
+from .dependencies.strapi import Strapi
+from .dependencies.supabase import SupabaseClient
+from .models.message import Message
+from .routers import admin, chat, generate, score
 
 logging.basicConfig(level=logging.WARNING)
 
@@ -34,7 +36,22 @@ sentry_sdk.init(
 )
 
 
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Load the connections
+    app.state.strapi = Strapi()
+    app.state.supabase = SupabaseClient(
+        os.environ["VECTOR_HOST"], os.environ["VECTOR_KEY"]
+    )
+    try:
+        yield
+    finally:
+        await app.state.strapi.client.aclose()
+
+
 app = FastAPI(
+    lifespan=lifespan,
+    # MetaData
     title="iTELL AI",
     description=description,
     summary="AI for intelligent textbooks",

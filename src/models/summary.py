@@ -1,11 +1,12 @@
-from .strapi import Chunk
-from .chat import ChatMessage
-from typing import Optional
-from pydantic import BaseModel, Field, ConfigDict
 from dataclasses import dataclass, field
-from spacy.tokens import Doc
 from enum import Enum
-from typing import Literal
+from typing import Literal, Optional
+
+from pydantic import BaseModel, ConfigDict, Field
+from spacy.tokens import Doc
+
+from .chat import ChatMessage
+from .strapi import Chunk
 
 
 class SummaryInputStrapi(BaseModel):
@@ -145,8 +146,7 @@ class StreamingSummaryResults(SummaryResultsWithFeedback):
     )
     request_id: str = Field(description="A unique identifier for the request.")
     text: str = Field(description="The token stream.")
-    chunk: str = Field(
-        description="The slug of the chunk selected for re-reading.")
+    chunk: str = Field(description="The slug of the chunk selected for re-reading.")
     question_type: Literal[
         "paraphrasing", "elaboration", "logic", "prediction", "bridging"
     ]

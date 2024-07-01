@@ -2,10 +2,10 @@ FROM nvidia/cuda:12.1.1-devel-ubuntu22.04 as base
 ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && \
     apt-get install -y \
-        python3 \
-        python3-pip \
-        protobuf-compiler \
-        libprotobuf-dev
+    python3 \
+    python3-pip \
+    protobuf-compiler \
+    libprotobuf-dev
 
 # Do requirements first so we can cache them
 RUN mkdir /usr/src/itell-ai && \
@@ -29,5 +29,5 @@ COPY pyproject.toml /usr/src/itell-ai/
 RUN mkdir /usr/src/itell-ai/tests
 
 COPY tests /usr/src/itell-ai/tests/
-RUN pip install pytest
+RUN pip install pytest asgi-lifespan
 CMD ["pytest", "-s"]
