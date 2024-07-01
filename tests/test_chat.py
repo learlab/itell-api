@@ -2,7 +2,7 @@ from pydantic import ValidationError
 from src.models.chat import ChatResponse, EventType
 
 
-async def test_chat(client):
+async def test_chat(client, parser):
     async with client.stream(
         "POST",
         "/chat",
@@ -27,12 +27,14 @@ async def test_chat(client):
         except ValidationError as err:
             print(err)
             raise
+        print("*" * 80)
+        print("CHAT RESPONSE: ", parser(response))
 
     # Check that a chunk was cited
     assert len(message.context) != 0, "A chunk should be cited."
 
 
-async def test_chat_CRI(client):
+async def test_chat_CRI(client, parser):
     response = await client.post(
         "/chat/CRI",
         json={
@@ -42,9 +44,11 @@ async def test_chat_CRI(client):
         },
     )
     assert response.status_code == 200
+    print("*" * 80)
+    print("CHAT CRI: ", parser(response.text))
 
 
-async def test_user_guide_rag(client):
+async def test_user_guide_rag(client, parser):
     async with client.stream(
         "POST",
         "/chat",
@@ -69,6 +73,8 @@ async def test_user_guide_rag(client):
         except ValidationError as err:
             print(err)
             raise
+        print("*" * 80)
+        print("CHAT USER GUIDE RAG:", parser(response))
 
     # Check that the first cited chunk is from the User Guide
     assert message.context[0] == "[User Guide]", "The user guide should be cited."

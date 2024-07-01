@@ -41,6 +41,13 @@ async def moderated_chat(
         )
     )
 
+    if relevant_chunks.matches[0].page == "itell-documentation":
+        text_name = "iTELL Documentation"
+        text_info = "iTELL stands for intelligent texts for enhanced lifelong learning. It is a platform that provides students with a personalized learning experience. This user guide provides information on how to navigate the iTELL platform."  # noqa: E501
+    else:
+        text_name = text_meta.Title
+        text_info = text_meta.Description
+
     # TODO: Retrieve Examples
     # We can set up a database of a questions and responses
     # that the bot will use as a reference.
@@ -49,9 +56,9 @@ async def moderated_chat(
     chat_history = chat_input.history[-4:]
 
     prompt = prompt_template.render(
-        text_name=text_meta.Title,
-        text_info=text_meta.Description,
-        context=relevant_chunks.matches,
+        text_name=text_name,
+        text_info=text_info,
+        context=relevant_chunks.matches[0].content,
         chat_history=[(msg.agent, msg.text) for msg in chat_history],
         user_message=chat_input.message,
         student_summary=chat_input.summary,
@@ -82,7 +89,6 @@ async def cri_chat(
     text_meta = await strapi.get_text_meta(cri_input.page_slug)
 
     target_properties = ["ConstructedResponse", "Question", "CleanText"]
-    prompt_prefix = "Your response"
 
     for prop in target_properties:
         if getattr(chunk, prop) is None:
@@ -103,7 +109,6 @@ async def cri_chat(
         prompt,
         sampling_params,
         event_type=EventType.constructed_response_feedback,
-        preface_text=prompt_prefix,
     )
 
 
