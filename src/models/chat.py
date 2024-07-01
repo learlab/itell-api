@@ -1,6 +1,7 @@
-from pydantic import BaseModel, Field, ConfigDict
-from typing import Optional, Literal
 from enum import Enum
+from typing import Literal, Optional
+
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class ChatMessage(BaseModel):

@@ -1,14 +1,9 @@
-from ..models.transcript import TranscriptInput, TranscriptResults
-from ..models.embedding import (
-    ChunkInput,
-    RetrievalInput,
-    RetrievalResults,
-    DeleteUnusedInput,
-)
+from fastapi import APIRouter, HTTPException, Request, Response
 
+from ..models.embedding import (ChunkInput, DeleteUnusedInput, RetrievalInput,
+                                RetrievalResults)
+from ..models.transcript import TranscriptInput, TranscriptResults
 from ..transcript import transcript_generate
-from .dependencies.supabase import SupabaseDep
-from fastapi import APIRouter, HTTPException, Response
 from .logging_router import LoggingRoute
 
 router = APIRouter(route_class=LoggingRoute)
@@ -36,29 +31,32 @@ async def generate_transcript(input_body: TranscriptInput) -> TranscriptResults:
 @router.post("/generate/embedding")
 async def generate_embedding(
     input_body: ChunkInput,
-    supabase: SupabaseDep,
+    request: Request,
 ) -> Response:
     """This endpoint generates an embedding for a provided chunk of text
     and saves it to the vector store on SupaBase.
     It is only intended to be called by the Content Management System.
     """
+    supabase = request.app.state.supabase
     return await supabase.embedding_generate(input_body)
 
 
 @router.post("/retrieve/chunks")
 async def retrieve_chunks(
     input_body: RetrievalInput,
-    supabase: SupabaseDep,
+    request: Request,
 ) -> RetrievalResults:
+    supabase = request.app.state.supabase
     return await supabase.retrieve_chunks(input_body)
 
 
 @router.post("/delete/embedding")
 async def delete_unused_chunks(
     input_body: DeleteUnusedInput,
-    supabase: SupabaseDep,
+    request: Request,
 ) -> Response:
     """This endpoint accepts a list of slugs of chunks currently in STRAPI.
     It deletes any embeddings in the vector store that are not in the list.
     """
+    supabase = request.app.state.supabase
     return await supabase.delete_unused(input_body)

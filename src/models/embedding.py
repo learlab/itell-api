@@ -1,6 +1,7 @@
-from typing import Optional, List
-from pydantic import BaseModel, ConfigDict
 from enum import Enum
+from typing import List, Optional
+
+from pydantic import BaseModel, ConfigDict
 
 
 class ChunkInput(BaseModel):

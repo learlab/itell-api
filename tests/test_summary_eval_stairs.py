@@ -1,6 +1,6 @@
-from src.models.summary import SummaryResultsWithFeedback
-from src.models.chat import EventType
 from pydantic import ValidationError
+from src.models.chat import EventType
+from src.models.summary import SummaryResultsWithFeedback
 
 
 async def test_summary_eval_stairs_language(client):

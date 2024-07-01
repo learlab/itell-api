@@ -1,7 +1,6 @@
-from typing import Optional
-from pydantic import BaseModel, Field, Json, field_validator
+from typing import Generic, Optional, TypeVar
 
-from typing import TypeVar, Generic
+from pydantic import BaseModel, Field, Json, field_validator
 
 
 class Chunk(BaseModel):

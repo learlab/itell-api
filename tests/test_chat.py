@@ -1,5 +1,5 @@
-from src.models.chat import ChatResponse, EventType
 from pydantic import ValidationError
+from src.models.chat import ChatResponse, EventType
 
 
 async def test_chat(client):
@@ -19,8 +19,7 @@ async def test_chat(client):
         stream = (chunk for chunk in response.split("\n\n"))
 
         # The first chunk is the feedback
-        first_chunk = next(stream).removeprefix(
-            f"event: {EventType.chat}\ndata: ")
+        first_chunk = next(stream).removeprefix(f"event: {EventType.chat}\ndata: ")
 
         # Checks that the first chunk is a valid ChatResponse object.
         try:
@@ -31,6 +30,18 @@ async def test_chat(client):
 
     # Check that a chunk was cited
     assert len(message.context) != 0, "A chunk should be cited."
+
+
+async def test_chat_CRI(client):
+    response = await client.post(
+        "/chat/CRI",
+        json={
+            "page_slug": "emotional",
+            "chunk_slug": "Core-Themes-3-483t",
+            "student_response": "Predictions and goals.",
+        },
+    )
+    assert response.status_code == 200
 
 
 async def test_user_guide_rag(client):
@@ -50,8 +61,7 @@ async def test_user_guide_rag(client):
         stream = (chunk for chunk in response.split("\n\n"))
 
         # The first chunk is the feedback
-        first_chunk = next(stream).removeprefix(
-            f"event: {EventType.chat}\ndata: ")
+        first_chunk = next(stream).removeprefix(f"event: {EventType.chat}\ndata: ")
 
         # Checks that the first chunk is a valid ChatResponse object.
         try:

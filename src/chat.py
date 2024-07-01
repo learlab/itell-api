@@ -1,15 +1,15 @@
-from .models.chat import ChatInput, PromptInput, ChatInputCRI, EventType
-from .models.summary import Summary
-from .models.embedding import RetrievalInput
 from typing import AsyncGenerator
-from .pipelines.chat import chat_pipeline
-from fastapi import HTTPException
-from .routers.dependencies.strapi import Strapi
-from .routers.dependencies.supabase import SupabaseClient
 
+from fastapi import HTTPException
 from jinja2 import Template
 from vllm.sampling_params import SamplingParams
 
+from .dependencies.strapi import Strapi
+from .dependencies.supabase import SupabaseClient
+from .models.chat import ChatInput, ChatInputCRI, EventType, PromptInput
+from .models.embedding import RetrievalInput
+from .models.summary import Summary
+from .pipelines.chat import chat_pipeline
 
 with open("templates/chat.jinja2", "r", encoding="utf8") as file_:
     prompt_template = Template(file_.read())
@@ -76,8 +76,7 @@ async def unmoderated_chat(raw_chat_input: PromptInput) -> AsyncGenerator[bytes,
 
 
 async def cri_chat(
-    cri_input: ChatInputCRI,
-    strapi: Strapi
+    cri_input: ChatInputCRI, strapi: Strapi
 ) -> AsyncGenerator[bytes, None]:
     chunk = await strapi.get_chunk(cri_input.page_slug, cri_input.chunk_slug)
     text_meta = await strapi.get_text_meta(cri_input.page_slug)
@@ -109,8 +108,7 @@ async def cri_chat(
 
 
 async def language_feedback_chat(
-    summary: Summary,
-    strapi: Strapi
+    summary: Summary, strapi: Strapi
 ) -> AsyncGenerator[bytes, None]:
     text_meta = await strapi.get_text_meta(summary.page_slug)
 

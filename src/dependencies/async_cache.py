@@ -3,10 +3,11 @@ Helpers to use [cachetools](https://github.com/tkem/cachetools) with
 asyncio.
 Modified from unmaintained [asyncache](https://github.com/hephex/asyncache)
 """
+
 import asyncio
 import functools
 
-from cachetools import keys, Cache
+from cachetools import Cache, keys
 
 
 def acached(
@@ -20,8 +21,7 @@ def acached(
     """
 
     def decorator(func):
-        assert asyncio.iscoroutinefunction(
-            func), "Function must be a coroutine."
+        assert asyncio.iscoroutinefunction(func), "Function must be a coroutine."
 
         async def wrapper(*args, **kwargs):
             k = key(*args, **kwargs)
