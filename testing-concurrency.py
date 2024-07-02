@@ -25,7 +25,7 @@ async def main(url, num_requests, body):
     return results
 
 url = "http://127.0.0.1:8001/chat"
-num_requests = 100  # Number of concurrent requests to send
+num_requests = 20  # Number of concurrent requests to send
 
 results = asyncio.run(main(url, num_requests, {
                       "page_slug": "emotional", "message": "What are emotions about?"}))
