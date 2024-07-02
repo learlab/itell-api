@@ -1,3 +1,4 @@
+import time
 from .models.message import Message
 
 from .auth import get_role, developer_role
@@ -63,6 +64,14 @@ app.add_middleware(
 def hello() -> Message:
     """Welcome to iTELL AI!"""
     return Message(message="This is a summary scoring API for iTELL.")
+
+@app.middleware("http")
+async def add_process_time_header(request, call_next):
+    start_time = time.time()
+    response = await call_next(request)
+    process_time = time.time() - start_time
+    response.headers["X-Process-Time"] = str(f'{process_time:0.4f} sec')
+    return response
 
 
 app.include_router(score.router, dependencies=[Depends(get_role)])
