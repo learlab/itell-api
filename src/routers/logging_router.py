@@ -1,11 +1,11 @@
-from fastapi.routing import APIRoute
-from fastapi import Request, Response, BackgroundTasks
-from fastapi.responses import StreamingResponse
-from starlette.background import BackgroundTask
+import logging
+import uuid
 from typing import Callable
 
-import uuid
-import logging
+from fastapi import BackgroundTasks, Request, Response
+from fastapi.responses import StreamingResponse
+from fastapi.routing import APIRoute
+from starlette.background import BackgroundTask
 
 
 def log_info(req: str, resp: str) -> None:

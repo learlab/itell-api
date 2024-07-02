@@ -1,11 +1,12 @@
-from .strapi import Chunk
-from .chat import ChatMessage
-from typing import Optional, Dict
-from pydantic import BaseModel, Field, ConfigDict
 from dataclasses import dataclass, field
-from spacy.tokens import Doc
 from enum import Enum
-from typing import Literal
+from typing import Literal, Optional
+
+from pydantic import BaseModel, ConfigDict, Field
+from spacy.tokens import Doc
+
+from .chat import ChatMessage
+from .strapi import Chunk
 
 
 class SummaryInputStrapi(BaseModel):
@@ -13,7 +14,7 @@ class SummaryInputStrapi(BaseModel):
         description="The slug of the current page.", examples=["the-first-chunk-99t"]
     )
     summary: str
-    focus_time: Dict[str, int] = Field(
+    focus_time: dict[str, int] = Field(
         default_factory=dict,
         description="Keys are chunk slugs and values are focus times in seconds.",
         examples=[{"introduction-to-law-79t": 20}],
@@ -152,7 +153,8 @@ class StreamingSummaryResults(SummaryResultsWithFeedback):
 
 
 class ChunkWithWeight(Chunk):
-    KeyPhrase: Optional[list[str]] = None  # This is a Python object rather than json.
+    # This is a Python object rather than json.
+    KeyPhrase: Optional[list[str]] = None
     weight: float
 
 

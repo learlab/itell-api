@@ -1,47 +1,52 @@
-from ..models.summary import (
-    SummaryInputStrapi,
-    Summary,
-    SummaryResults,
-    StreamingSummaryResults,
-    SummaryResultsWithFeedback,
-)
-from ..models.answer import AnswerInputStrapi, AnswerResults
-from ..models.chat import EventType
 from typing import AsyncGenerator
 
+from fastapi import APIRouter, Request
+from fastapi.responses import StreamingResponse
+
 from ..answer_eval import answer_score
+from ..chat import language_feedback_chat
+from ..models.answer import AnswerInputStrapi, AnswerResults
+from ..models.chat import EventType
+from ..models.summary import (StreamingSummaryResults, SummaryInputStrapi,
+                              SummaryResults, SummaryResultsWithFeedback)
+from ..sert import sert_chat
 from ..summary_eval import summary_score
 from ..summary_feedback import summary_feedback
-from ..sert import sert_chat
-from ..chat import language_feedback_chat
-
 from .logging_router import LoggingRoute
-from fastapi import APIRouter
-from fastapi.responses import StreamingResponse
 
 router = APIRouter(route_class=LoggingRoute)
 
 
 @router.post("/score/summary")
-async def score_summary(input_body: SummaryInputStrapi) -> SummaryResults:
+async def score_summary(
+    input_body: SummaryInputStrapi,
+    request: Request,
+) -> SummaryResults:
     """Score a summary.
     Requires a page_slug.
     """
-    _, results = await summary_score(input_body)
+    strapi = request.app.state.strapi
+    supabase = request.app.state.supabase
+    _, results = await summary_score(input_body, strapi, supabase)
     return results
 
 
 @router.post("/score/answer")
-async def score_answer(input_body: AnswerInputStrapi) -> AnswerResults:
+async def score_answer(
+    input_body: AnswerInputStrapi,
+    request: Request,
+) -> AnswerResults:
     """Score a constructed response item.
     Requires a page_slug and chunk_slug.
     """
-    return await answer_score(input_body)
+    strapi = request.app.state.strapi
+    return await answer_score(input_body, strapi)
 
 
 @router.post("/score/summary/stairs", response_model=StreamingSummaryResults)
 async def score_summary_with_stairs(
     input_body: SummaryInputStrapi,
+    request: Request,
 ) -> StreamingResponse:
     """Scores a summary. If the summary fails, selects a chunk for re-reading and
     generates a self-explanation (SERT) question about the chunk.
@@ -55,8 +60,10 @@ async def score_summary_with_stairs(
     - **chunk**: the slug of the chunk selected for re-reading
     - **question_type**: the type of SERT question
     """
-    scoring_results: tuple[Summary, SummaryResults] = await summary_score(input_body)
-    summary, results = scoring_results
+    strapi = request.app.state.strapi
+    supabase = request.app.state.supabase
+    summary, results = await summary_score(input_body, strapi, supabase)
+
     feedback: SummaryResultsWithFeedback = summary_feedback(results)
 
     feedback_stream = None
@@ -65,9 +72,9 @@ async def score_summary_with_stairs(
     feedback_details = {item.type: item.feedback for item in feedback.prompt_details}
 
     if not feedback_details["Content"].is_passed:
-        feedback_stream = await sert_chat(summary)
+        feedback_stream = await sert_chat(summary, strapi, supabase)
     elif not feedback_details["Language"].is_passed:
-        feedback_stream = await language_feedback_chat(summary)
+        feedback_stream = await language_feedback_chat(summary, strapi)
 
     async def stream_results() -> AsyncGenerator[bytes, None]:
         event_str = f"event: {EventType.summary_feedback}"

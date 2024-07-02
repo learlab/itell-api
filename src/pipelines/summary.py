@@ -1,10 +1,8 @@
-from transformers import (
-    AutoModelForSequenceClassification,
-    AutoTokenizer,
-    TextClassificationPipeline,
-)
-import torch
 from typing import Dict
+
+import torch
+from transformers import (AutoModelForSequenceClassification, AutoTokenizer,
+                          TextClassificationPipeline)
 
 
 class SummaryPipeline(TextClassificationPipeline):

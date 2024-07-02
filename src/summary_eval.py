@@ -1,22 +1,20 @@
-from .models.summary import SummaryInputStrapi, Summary, ChunkWithWeight, SummaryResults
-from .models.strapi import Chunk
-from spacy.tokens import Doc
-
-from .pipelines.nlp import nlp
-from .pipelines.embed import EmbeddingPipeline
-from .pipelines.containment import score_containment
-from .pipelines.summary import SummaryPipeline, LongformerPipeline
-from .pipelines.keyphrases import suggest_keyphrases
-from .pipelines.profanity_filter import profanity_filter
-from .connections.strapi import Strapi
-from .embedding import page_similarity
-
 import gcld3
+from spacy.tokens import Doc
 from transformers import logging
 
-logging.set_verbosity_error()
+from .dependencies.strapi import Strapi
+from .dependencies.supabase import SupabaseClient
+from .models.strapi import Chunk
+from .models.summary import (ChunkWithWeight, Summary, SummaryInputStrapi,
+                             SummaryResults)
+from .pipelines.containment import score_containment
+from .pipelines.embed import EmbeddingPipeline
+from .pipelines.keyphrases import suggest_keyphrases
+from .pipelines.nlp import nlp
+from .pipelines.profanity_filter import profanity_filter
+from .pipelines.summary import LongformerPipeline, SummaryPipeline
 
-strapi = Strapi()
+logging.set_verbosity_error()
 
 content_pipe = LongformerPipeline("tiedaar/longformer-content-global")
 language_pipe = SummaryPipeline("tiedaar/language-beyond-the-source")
@@ -43,7 +41,9 @@ def weight_chunks(
 
 
 async def summary_score(
-    summary_input: SummaryInputStrapi, do_stairs=False
+    summary_input: SummaryInputStrapi,
+    strapi: Strapi,
+    supabase: SupabaseClient,
 ) -> tuple[Summary, SummaryResults]:
     """Checks summary for text copied from the source and for semantic
     relevance to the source text. If it passes these checks, score the summary
@@ -91,7 +91,7 @@ async def summary_score(
     # Check if summary is similar to source text
     summary_embed = embedding_pipe(summary.summary.text)[0].tolist()
     results["similarity"] = (
-        await page_similarity(summary_embed, summary.page_slug) + 0.15
+        await supabase.page_similarity(summary_embed, summary.page_slug) + 0.15
     )  # adding 0.15 to bring similarity score in line with old doc2vec model
 
     # Generate keyphrase suggestions

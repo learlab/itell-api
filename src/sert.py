@@ -1,19 +1,18 @@
 """SERT: Self-Explanation and Reading Strategy Training."""
 
-from .models.summary import Summary, ChunkWithWeight
-from .models.chat import EventType
-from .models.embedding import RetrievalInput, RetrievalStrategy
-from .embedding import chunks_retrieve
-from .pipelines.chat import chat_pipeline
-from .connections.strapi import Strapi
+import random
 from typing import AsyncGenerator
 
-import random
-from vllm.sampling_params import SamplingParams
-from jinja2 import Template
 from fastapi import HTTPException
+from jinja2 import Template
+from vllm.sampling_params import SamplingParams
 
-strapi = Strapi()
+from .dependencies.strapi import Strapi
+from .dependencies.supabase import SupabaseClient
+from .models.chat import EventType
+from .models.embedding import RetrievalInput, RetrievalStrategy
+from .models.summary import ChunkWithWeight, Summary
+from .pipelines.chat import chat_pipeline
 
 with open("templates/sert.jinja2", "r", encoding="utf8") as file_:
     prompt_template = Template(file_.read())
@@ -31,11 +30,13 @@ def weight_chunks_with_similarity(reading_time_score, similarity):
     return reading_time_score * similarity
 
 
-async def sert_chat(summary: Summary) -> AsyncGenerator[bytes, None]:
+async def sert_chat(
+    summary: Summary, strapi: Strapi, supabase: SupabaseClient
+) -> AsyncGenerator[bytes, None]:
     text_meta = await strapi.get_text_meta(summary.page_slug)
 
     # Retrieve the chunks that are the least similar to the student's summary
-    least_similar_chunks = await chunks_retrieve(
+    least_similar_chunks = await supabase.retrieve_chunks(
         RetrievalInput(
             text_slug=text_meta.slug,
             page_slugs=[summary.page_slug],

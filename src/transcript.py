@@ -1,8 +1,9 @@
-from .models.transcript import TranscriptInput, TranscriptResults
-
-from youtube_transcript_api import YouTubeTranscriptApi
-from fastapi import HTTPException
 from urllib import parse
+
+from fastapi import HTTPException
+from youtube_transcript_api import YouTubeTranscriptApi
+
+from .models.transcript import TranscriptInput, TranscriptResults
 
 
 async def transcript_generate(transcript_input: TranscriptInput) -> TranscriptResults:

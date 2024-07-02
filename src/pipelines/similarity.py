@@ -1,6 +1,10 @@
+"""
+Deprecated. No longer in use.
+"""
+
+import numpy as np
 from gensim.models.doc2vec import Doc2Vec
 from scipy import spatial
-import numpy as np
 
 doc2vec_mod = Doc2Vec.load("assets/doc2vec-model")
 
