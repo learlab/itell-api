@@ -1,7 +1,12 @@
 import math
 
-from .models.summary import (AnalyticFeedback, Feedback, ScoreType,
-                             SummaryResults, SummaryResultsWithFeedback)
+from .models.summary import (
+    AnalyticFeedback,
+    Feedback,
+    ScoreType,
+    SummaryResults,
+    SummaryResultsWithFeedback,
+)
 
 
 class Containment:

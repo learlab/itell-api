@@ -1,8 +1,11 @@
 from typing import Dict
 
 import torch
-from transformers import (AutoModelForSequenceClassification, AutoTokenizer,
-                          TextClassificationPipeline)
+from transformers import (
+    AutoModelForSequenceClassification,
+    AutoTokenizer,
+    TextClassificationPipeline,
+)
 
 
 class SummaryPipeline(TextClassificationPipeline):

@@ -5,8 +5,7 @@ from transformers import logging
 from .dependencies.strapi import Strapi
 from .dependencies.supabase import SupabaseClient
 from .models.strapi import Chunk
-from .models.summary import (ChunkWithWeight, Summary, SummaryInputStrapi,
-                             SummaryResults)
+from .models.summary import ChunkWithWeight, Summary, SummaryInputStrapi, SummaryResults
 from .pipelines.containment import score_containment
 from .pipelines.embed import EmbeddingPipeline
 from .pipelines.keyphrases import suggest_keyphrases
