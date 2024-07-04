@@ -1,5 +1,6 @@
 import math
-
+import operator
+from typing import Callable, Literal
 from .models.summary import (
     AnalyticFeedback,
     Feedback,
@@ -9,173 +10,122 @@ from .models.summary import (
 )
 
 
-class Containment:
-    threshold = 0.6
-    passing = (
-        "You did a good job of using your own language to describe the main ideas"
-        " of the text."
-    )
-    failing = (
-        "You need to rely less on the language in the text and focus more on"
-        " rewriting the key ideas."
-    )
+class FeedbackProcessor:
+    def __init__(
+        self,
+        score_type: ScoreType,
+        threshold: float,
+        comparator: Callable[[float, float], bool],
+        feedback: list[str],
+        feedback_indexer: Literal["floor"] = None,
+    ):
+        self.score_type = score_type
+        self.threshold = threshold
+        self.comparator = comparator
+        self.feedback = feedback
+        if feedback_indexer == "floor":
+            self.feedback_indexer = self.floor_indexer
+        else:
+            self.feedback_indexer = self.default_indexer
 
-    @classmethod
-    def generate_feedback(cls, score: float):
-        is_passed = score < cls.threshold  # pass if language is original
-        feedback = Feedback(
-            is_passed=is_passed, prompt=cls.passing if is_passed else cls.failing
-        )
-        return AnalyticFeedback(type=ScoreType.containment, feedback=feedback)
+    def default_indexer(self, score: float) -> Literal[0, 1]:
+        """Returns 0 is score is failing, 1 if score is passing."""
+        return 0 if self.comparator(score, self.threshold) else 1
 
+    def floor_indexer(self, score: float) -> int:
+        """Returns the floor of the score."""
+        return math.floor(score)
 
-class ContainmentChat:
-    threshold = 0.6
-    passing = (
-        "You did a good job of using your own language to describe the main ideas"
-        " of the text."
-    )
-    failing = "You need to depend less on the examples provided by iTELL AI."
-
-    @classmethod
-    def generate_feedback(cls, score: float):
+    def __call__(self, score: float):
         if score is None:
             feedback = Feedback(is_passed=None, prompt=None)
         else:
-            is_passed = score < cls.threshold  # pass if language is original
-            feedback = Feedback(
-                is_passed=is_passed, prompt=cls.passing if is_passed else cls.failing
-            )
-        return AnalyticFeedback(type=ScoreType.containment_chat, feedback=feedback)
+            is_passed = self.comparator(score, self.threshold)
+            prompt = self.feedback[self.feedback_indexer(score)]
+            feedback = Feedback(is_passed=is_passed, prompt=prompt)
+        return AnalyticFeedback(type=self.score_type, feedback=feedback)
 
 
-class Similarity:
-    threshold = 0.5
-    passing = (
-        "You did a good job of staying on topic and writing about the main ideas of"
-        " the text."
-    )
-    failing = (
-        "To be successful, you need to stay on topic. Find the main ideas of"
-        " the text and focus your summary on those ideas."
-    )
+containment = FeedbackProcessor(
+    score_type=ScoreType.containment,
+    threshold=0.6,
+    comparator=operator.lt,
+    feedback=[
+        "You need to rely less on the language in the text and focus more on rewriting the key ideas.",  # noqa: E501
+        "You did a good job of using your own language to describe the main ideas of the text.",  # noqa: E501
+    ],
+)
 
-    @classmethod
-    def generate_feedback(cls, score: float):
-        is_passed = score > cls.threshold  # pass if summary is on topic
-        feedback = Feedback(
-            is_passed=is_passed, prompt=cls.passing if is_passed else cls.failing
-        )
-        return AnalyticFeedback(type=ScoreType.similarity, feedback=feedback)
+containment_chat = FeedbackProcessor(
+    score_type=ScoreType.containment_chat,
+    threshold=0.6,
+    comparator=operator.lt,
+    feedback=[
+        "You need to depend less on the examples provided by iTELL AI.",
+        "You did a good job of using your own language to describe the main ideas of the text.",  # noqa: E501
+    ],
+)
 
+similarity = FeedbackProcessor(
+    score_type=ScoreType.similarity,
+    threshold=0.5,
+    comparator=operator.gt,
+    feedback=[
+        "To be successful, you need to stay on topic. Find the main ideas of the text and focus your summary on those ideas.",  # noqa: E501
+        "You did a good job of staying on topic and writing about the main ideas of the text.",  # noqa: E501
+    ],
+)
 
-class Content:
-    # Threshold was originally -0.3
-    # Was decreased to -0.15 for the Cornell volume to increase engagement with STAIRS
-    # Set to 0 for Prolific testing
-    threshold = 0
-    passing = "You did a good job of including key ideas and details on this page."
-    failing = (
-        "You need to include more key ideas and details from the page to"
-        " successfully summarize the content. Consider focusing on the main ideas"
-        " of the text and providing support for those ideas in your summary."
-    )
+content = FeedbackProcessor(
+    score_type=ScoreType.content,
+    threshold=0,  # 0 for Prolific testing
+    comparator=operator.gt,
+    feedback=[
+        "You need to include more key ideas and details from the page to successfully summarize the content. Consider focusing on the main ideas of the text and providing support for those ideas in your summary.",  # noqa: E501
+        "You did a good job of including key ideas and details on this page.",
+    ],
+)
 
-    @classmethod
-    def generate_feedback(cls, score: float):
-        if score is None:
-            feedback = Feedback(is_passed=None, prompt=None)
-        else:
-            is_passed = score > cls.threshold
-            feedback = Feedback(
-                is_passed=is_passed, prompt=cls.passing if is_passed else cls.failing
-            )
-        return AnalyticFeedback(type=ScoreType.content, feedback=feedback)
-
-
-class Wording:
-    @classmethod
-    def generate_feedback(cls, score: float):
-        feedback = Feedback(is_passed=None, prompt=None)
-        return AnalyticFeedback(type=ScoreType.wording, feedback=feedback)
-
-
-class Language:
-    # Set to 2.0 for Prolific testing
-    rubric = [
+language = FeedbackProcessor(
+    score_type=ScoreType.language,
+    threshold=2.0,  # 2.0 for Prolific testing
+    comparator=operator.gt,
+    feedback=[
         "Your summary shows a very basic understanding of lexical and syntactic structures.",  # noqa: E501
         "Your summary shows an understanding of lexical and syntactic structures.",
         "Your summary shows an appropriate range of lexical and syntactic structures.",
         "Your summary shows an excellent range of lexical and syntactic structures.",
         "Your summary shows an excellent range of lexical and syntactic structures.",
-    ]
-    threshold = 2.0
+    ],
+)
 
-    @classmethod
-    def generate_feedback(cls, score: float):
-        if score is None:
-            feedback = Feedback(is_passed=None, prompt=None)
-        else:
-            is_passed = score > cls.threshold
-            try:
-                feedback = Feedback(
-                    is_passed=is_passed, prompt=cls.rubric[math.floor(score)]
-                )
-            except IndexError:
-                feedback = Feedback(is_passed=is_passed, prompt=None)
-        return AnalyticFeedback(type=ScoreType.language, feedback=feedback)
+english = FeedbackProcessor(
+    score_type=ScoreType.english,
+    threshold=False,
+    comparator=operator.gt,
+    feedback=["Please write your summary in English.", None],
+)
 
-
-class English:
-    threshold = False
-    passing = None
-    failing = "Please write your summary in English."
-
-    @classmethod
-    def generate_feedback(cls, score: bool):
-        is_passed = score > cls.threshold  # pass if summary is in English
-        feedback = Feedback(
-            is_passed=is_passed, prompt=cls.passing if is_passed else cls.failing
-        )
-        return AnalyticFeedback(type=ScoreType.english, feedback=feedback)
-
-
-class Profanity:
-    threshold = True
-    passing = None
-    failing = "Please avoid using profanity in your summary."
-
-    @classmethod
-    def generate_feedback(cls, score: bool):
-        is_passed = score < cls.threshold  # pass if summary does not contain profanity
-        feedback = Feedback(
-            is_passed=is_passed, prompt=cls.passing if is_passed else cls.failing
-        )
-        return AnalyticFeedback(type=ScoreType.profanity, feedback=feedback)
+profanity = FeedbackProcessor(
+    score_type=ScoreType.profanity,
+    threshold=True,
+    comparator=operator.lt,
+    feedback=["Please avoid using profanity in your summary.", None],
+)
 
 
 def summary_feedback(results: SummaryResults) -> SummaryResultsWithFeedback:
-    containment = Containment.generate_feedback(results.containment)
-    containment_chat = ContainmentChat.generate_feedback(results.containment_chat)
-    similarity = Similarity.generate_feedback(results.similarity)
-    content = Content.generate_feedback(results.content)
-    english = English.generate_feedback(results.english)
-    profanity = Profanity.generate_feedback(results.profanity)
-    language = Language.generate_feedback(results.language)
-    wording = Wording.generate_feedback(results.wording)  # Deprecated
+    prompt_details = [
+        containment(results.containment),
+        containment_chat(results.containment_chat),
+        similarity(results.similarity),
+        content(results.content),
+        english(results.english),
+        profanity(results.profanity),
+        language(results.language),
+    ]
 
-    is_passed = all(
-        feedback.feedback.is_passed is not False
-        for feedback in [
-            containment,
-            containment_chat,
-            similarity,
-            english,
-            profanity,
-            content,
-            language,
-        ]
-    )
+    is_passed = all(feedback.feedback.is_passed for feedback in prompt_details)
 
     if is_passed:
         prompt = (
@@ -191,14 +141,5 @@ def summary_feedback(results: SummaryResults) -> SummaryResultsWithFeedback:
         **results.model_dump(),
         is_passed=is_passed,
         prompt=prompt,
-        prompt_details=[
-            containment,
-            containment_chat,
-            similarity,
-            english,
-            profanity,
-            content,
-            language,
-            wording,
-        ],
+        prompt_details=prompt_details,
     )
