@@ -16,7 +16,7 @@ from ..models.summary import (
 from ..sert import sert_chat
 from ..summary_eval import summary_score
 from ..summary_feedback import summary_feedback
-from .logging_router import LoggingRoute, LoggingStreamingResponse
+from ..logging.logging_router import LoggingRoute, LoggingStreamingResponse
 
 router = APIRouter(route_class=LoggingRoute)
 

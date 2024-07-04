@@ -3,7 +3,7 @@ from fastapi.responses import StreamingResponse
 
 from ..chat import cri_chat, moderated_chat, unmoderated_chat
 from ..models.chat import ChatInput, ChatInputCRI, PromptInput
-from .logging_router import LoggingRoute, LoggingStreamingResponse
+from ..logging.logging_router import LoggingRoute, LoggingStreamingResponse
 
 router = APIRouter(route_class=LoggingRoute)
 

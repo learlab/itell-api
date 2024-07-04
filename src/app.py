@@ -9,10 +9,15 @@ from fastapi.middleware.cors import CORSMiddleware
 from .dependencies.auth import developer_role, get_role
 from .dependencies.strapi import Strapi
 from .dependencies.supabase import SupabaseClient
+from .logging.setup import setup_logging
 from .models.message import Message
 from .routers import admin, chat, generate, score
+from transformers import logging as transformers_logging
 
-logging.basicConfig(level=logging.WARNING)
+transformers_logging.set_verbosity_error()
+logger = logging.getLogger(__name__)
+
+setup_logging()
 
 description = """
 Welcome to iTELL AI, a REST API for intelligent textbooks.

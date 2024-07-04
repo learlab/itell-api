@@ -8,7 +8,7 @@ from ..models.embedding import (
 )
 from ..models.transcript import TranscriptInput, TranscriptResults
 from ..transcript import transcript_generate
-from .logging_router import LoggingRoute
+from ..logging.logging_router import LoggingRoute
 
 router = APIRouter(route_class=LoggingRoute)
 
