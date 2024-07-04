@@ -38,10 +38,10 @@ sentry_sdk.init(
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Load the connections
     app.state.strapi = Strapi()
     app.state.supabase = SupabaseClient(
-        os.environ["VECTOR_HOST"], os.environ["VECTOR_KEY"]
+        os.environ["VECTOR_HOST"],
+        os.environ["VECTOR_KEY"],
     )
     try:
         yield

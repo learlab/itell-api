@@ -1,8 +1,8 @@
 import asyncio
 import json
 import logging
+import os
 import time
-import uuid
 from typing import AsyncIterator, Callable
 
 from fastapi import BackgroundTasks, Request, Response
@@ -10,11 +10,15 @@ from fastapi.responses import StreamingResponse
 from fastapi.routing import APIRoute
 from starlette.background import BackgroundTask
 
+from ..models.logging import LogEntry
+
 
 class LoggingStreamingResponse(StreamingResponse):
-    """A StreamingResponse that stores the first and last chunk of the stream.
-    Also includes a performance timer and
-    methods to access the first and last messages of the stream as dicts
+    """A starlette.StreamingResponse Wrapper
+    - Stores the first and last chunk of the stream.
+    - Method to parse SSE event chunks as JSON
+    - Performance timing for time-to-first-token and total processing time
+    - Awaitable event to ensure the stream is finished before logging
     """
 
     def __init__(self, content: AsyncIterator, *args, **kwargs):
@@ -25,7 +29,9 @@ class LoggingStreamingResponse(StreamingResponse):
         self._first_chunk = await content.__anext__()
         yield self._first_chunk
 
-        # Time to first token
+        # Time to first token (ttft)
+        # For /score/summary/stairs, represents time to summary feedback
+        # Since summary feedback is the first chunk
         self.ttft = time.perf_counter() - self.start_time
 
         self._last_chunk = None
@@ -33,10 +39,13 @@ class LoggingStreamingResponse(StreamingResponse):
             self._last_chunk = chunk
             yield chunk
 
-        self._is_done.set()
+        # Do not record ttft if stream is one chunk long
+        # Happens when STAIRS is not triggered on /score/summary/stairs
+        if self._last_chunk is None:
+            self.ttft = None
 
-        # Full process time
         self.process_time = time.perf_counter() - self.start_time
+        self._is_done.set()
 
     def parse_sse(self, chunk: str | bytes) -> str:
         if isinstance(chunk, bytes):
@@ -44,8 +53,8 @@ class LoggingStreamingResponse(StreamingResponse):
 
         # get content after "\ndata: "
         try:
-            return json.loads(chunk.split("\ndata: ")[1])
-        except (IndexError, TypeError, json.JSONDecodeError) as e:
+            return json.loads(chunk.split("\ndata: ")[1].strip())
+        except (json.JSONDecodeError, AttributeError, IndexError) as e:
             logging.error(f"Failed to parse SSE chunk: {chunk}. Error: {e}")
 
     @property
@@ -58,51 +67,40 @@ class LoggingStreamingResponse(StreamingResponse):
             return self.parse_sse(self._last_chunk)
 
     async def wait_for_completion(self):
-        # Wait for the last chunk to be generated before logging
         await self._is_done.wait()
 
 
 class LoggingRoute(APIRoute):
+    log_to_stdout = True
+    log_to_db = True  # os.getenv("ENV") == "production"
+
     def get_route_handler(self) -> Callable:
         original_route_handler = super().get_route_handler()
 
         async def custom_route_handler(request: Request) -> Response:
+            # This start time measurement is appropriate for all responses
             start_time = time.perf_counter()
-            req_body = await request.body()
+            await request.body()
             response = await original_route_handler(request)
-            existing_task = response.background
-            process_time = time.perf_counter() - start_time
 
             if isinstance(response, StreamingResponse):
-                response_body = None
-                # For streaming responses, the end time is calculated
-                # when the stream is finished, not here.
                 response.start_time = start_time
             else:
-                response_body = response.body.decode()
-                # Add processing time to response if not a streaming response
-                response.process_time = process_time
+                # Only appropriate for non-streaming responses
+                response.process_time = time.perf_counter() - start_time
 
-            file_log = BackgroundTask(self.file_log, req_body.decode(), response_body)
-            db_log = BackgroundTask(self.db_log, request, response)
-            tasks = [file_log, db_log]
+            tasks = [BackgroundTask(self.log_all, request, response)]
 
-            # Put any existing tasks first
-            if existing_task:
-                tasks = [existing_task, *tasks]
+            # Put any existing task first
+            if response.background:
+                tasks = [response.background, *tasks]
             response.background = BackgroundTasks(tasks=tasks)
 
             return response
 
         return custom_route_handler
 
-    def file_log(self, req: str, resp: str | None) -> None:
-        idem = str(uuid.uuid4())
-        logging.info(f"REQUEST  {idem}: {req}")
-        if resp:
-            logging.info(f"RESPONSE {idem}: {resp}")
-
-    async def db_log(self, request: Request, response: Response) -> None:
+    async def log_all(self, request: Request, response: Response) -> None:
         response_body = {}
         if isinstance(response, LoggingStreamingResponse):
             # Wait for the stream to finish
@@ -116,23 +114,29 @@ class LoggingRoute(APIRoute):
             # Will not exist for passing summaries at /score/summary/stairs
             if response.last_message:
                 response_body.update(response.last_message)
-            else:
-                # Do not record ttft if STAIRS was not triggered
-                response.ttft = None
 
         elif response.body:
-            response_body = response.body
+            response_body = json.loads(response.body)
 
-        payload = {
-            "api_endpoint": request.url.path,
-            "request_method": request.method,
-            "request_body": await request.json(),
-            "response_body": response_body,
-            "status_code": response.status_code,
-            "ip_address": request.client.host,
-            "process_time": response.process_time,
-            "ttft": response.ttft if hasattr(response, "ttft") else None,
-        }
+        log_entry = LogEntry(
+            api_endpoint=request.url.path,
+            request_method=request.method,
+            request_body=await request.json(),
+            response_body=response_body,
+            status_code=response.status_code,
+            client_address=request.client.host,
+            process_time=response.process_time,
+            ttft=response.ttft if hasattr(response, "ttft") else None,
+        )
 
-        print(payload["api_endpoint"], payload["ttft"], payload["process_time"])
+        if self._log_to_stdout:
+            self._log_to_stdout(log_entry)
+        if self.log_to_db:
+            await self._log_to_db(log_entry)
+
+    def _log_to_stdout(self, log_entry: LogEntry) -> None:
+        logging.info(log_entry)
+
+    async def _log_to_db(self, log_entry: LogEntry) -> None:
+        print(log_entry.api_endpoint, log_entry.ttft, log_entry.process_time)
         # await request.app.state.supabase.table("logs").insert(payload).execute()
