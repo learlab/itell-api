@@ -21,8 +21,8 @@ class SupabaseClient(AsyncClient):
 
         embedding = await self.embed(input_body.content)
 
-        upsert_response = (
-            await self.table("embeddings")
+        await (
+            self.table("embeddings")
             .upsert(
                 {
                     "text": input_body.text_slug,
@@ -37,7 +37,7 @@ class SupabaseClient(AsyncClient):
             .execute()
         )
 
-        return Response(content=upsert_response.data[0]["content"], status_code=201)
+        return Response(status_code=201)
 
     async def retrieve_chunks(self, input_body: RetrievalInput) -> RetrievalResults:
 
