@@ -3,6 +3,7 @@ import os
 import pytest
 from asgi_lifespan import LifespanManager
 from httpx import ASGITransport, AsyncClient
+from src.models.chat import ChatResponse
 
 
 @pytest.fixture(scope="session")
@@ -35,3 +36,13 @@ async def supabase():
     from src.dependencies.supabase import SupabaseClient
 
     yield SupabaseClient(url, key)
+
+
+@pytest.fixture(scope="session")
+def parser():
+    def parser(response_text):
+        response_text = response_text.split("\ndata: ")[-1].strip()
+        last_message = ChatResponse.model_validate_json(response_text).text
+        return last_message.strip()
+
+    return parser
