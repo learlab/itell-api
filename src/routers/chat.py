@@ -3,7 +3,7 @@ from fastapi.responses import StreamingResponse
 
 from ..chat import cri_chat, moderated_chat, unmoderated_chat
 from ..models.chat import ChatInput, ChatInputCRI, PromptInput
-from .logging_router import LoggingRoute
+from .logging_router import LoggingRoute, LoggingStreamingResponse
 
 router = APIRouter(route_class=LoggingRoute)
 
@@ -23,7 +23,7 @@ async def chat(
     supabase = request.app.state.supabase
     chat_stream = await moderated_chat(input_body, strapi, supabase)
 
-    return StreamingResponse(content=chat_stream, media_type="text/event-stream")
+    return LoggingStreamingResponse(content=chat_stream, media_type="text/event-stream")
 
 
 @router.post("/chat/raw")
@@ -46,4 +46,4 @@ async def chat_cri(
     """
     strapi = request.app.state.strapi
     chat_stream = await cri_chat(input_body, strapi)
-    return StreamingResponse(content=chat_stream, media_type="text/event-stream")
+    return LoggingStreamingResponse(content=chat_stream, media_type="text/event-stream")

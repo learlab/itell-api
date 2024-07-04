@@ -7,12 +7,16 @@ from ..answer_eval import answer_score
 from ..chat import language_feedback_chat
 from ..models.answer import AnswerInputStrapi, AnswerResults
 from ..models.chat import EventType
-from ..models.summary import (StreamingSummaryResults, SummaryInputStrapi,
-                              SummaryResults, SummaryResultsWithFeedback)
+from ..models.summary import (
+    StreamingSummaryResults,
+    SummaryInputStrapi,
+    SummaryResults,
+    SummaryResultsWithFeedback,
+)
 from ..sert import sert_chat
 from ..summary_eval import summary_score
 from ..summary_feedback import summary_feedback
-from .logging_router import LoggingRoute
+from .logging_router import LoggingRoute, LoggingStreamingResponse
 
 router = APIRouter(route_class=LoggingRoute)
 
@@ -84,4 +88,6 @@ async def score_summary_with_stairs(
             async for chunk in feedback_stream:
                 yield chunk
 
-    return StreamingResponse(content=stream_results(), media_type="text/event-stream")
+    return LoggingStreamingResponse(
+        content=stream_results(), media_type="text/event-stream"
+    )
