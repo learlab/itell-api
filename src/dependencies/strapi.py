@@ -6,8 +6,8 @@ from cachetools import TTLCache, keys
 from fastapi import HTTPException
 from pydantic import ValidationError
 
-from ..models.strapi import Chunk, PageWithChunks, PageWithText, Text
-from .async_cache import acached
+from ..schemas.strapi import Chunk, PageWithChunks, PageWithText, Text
+from ..utils.async_cache import acached
 
 
 class Strapi:

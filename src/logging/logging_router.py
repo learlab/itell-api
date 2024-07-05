@@ -8,7 +8,7 @@ from fastapi.responses import StreamingResponse
 from fastapi.routing import APIRoute
 from starlette.background import BackgroundTask
 
-from ..models.logging import LogEntry
+from ..schemas.logging import LogEntry
 from .logging_streaming_response import LoggingStreamingResponse
 
 logger = logging.getLogger("itell_ai")

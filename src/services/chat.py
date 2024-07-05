@@ -4,12 +4,12 @@ from fastapi import HTTPException
 from jinja2 import Template
 from vllm.sampling_params import SamplingParams
 
-from .dependencies.strapi import Strapi
-from .dependencies.supabase import SupabaseClient
-from .models.chat import ChatInput, ChatInputCRI, EventType, PromptInput
-from .models.embedding import RetrievalInput
-from .models.summary import Summary
-from .pipelines.chat import chat_pipeline
+from ..dependencies.strapi import Strapi
+from ..dependencies.supabase import SupabaseClient
+from ..schemas.chat import ChatInput, ChatInputCRI, EventType, PromptInput
+from ..schemas.embedding import RetrievalInput
+from ..schemas.summary import Summary
+from ..pipelines.chat import chat_pipeline
 
 with open("templates/chat.jinja2", "r", encoding="utf8") as file_:
     prompt_template = Template(file_.read())

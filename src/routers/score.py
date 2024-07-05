@@ -3,19 +3,19 @@ from typing import AsyncGenerator
 from fastapi import APIRouter, Request
 from fastapi.responses import StreamingResponse
 
-from ..answer_eval import answer_score
-from ..chat import language_feedback_chat
-from ..models.answer import AnswerInputStrapi, AnswerResults
-from ..models.chat import EventType
-from ..models.summary import (
+from ..services.answer_eval import answer_score
+from ..services.chat import language_feedback_chat
+from ..schemas.answer import AnswerInputStrapi, AnswerResults
+from ..schemas.chat import EventType
+from ..schemas.summary import (
     StreamingSummaryResults,
     SummaryInputStrapi,
     SummaryResults,
     SummaryResultsWithFeedback,
 )
-from ..sert import sert_chat
-from ..summary_eval import summary_score
-from ..summary_feedback import summary_feedback
+from ..services.sert import sert_chat
+from ..services.summary_eval import summary_score
+from ..services.summary_feedback import summary_feedback
 from ..logging.logging_router import LoggingRoute, LoggingStreamingResponse
 
 router = APIRouter(route_class=LoggingRoute)

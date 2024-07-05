@@ -10,7 +10,7 @@ from .dependencies.auth import developer_role, get_role
 from .dependencies.strapi import Strapi
 from .dependencies.supabase import SupabaseClient
 from .logging.setup import setup_logging
-from .models.message import Message
+from .schemas.message import Message
 from .routers import admin, chat, generate, score
 from transformers import logging as transformers_logging
 

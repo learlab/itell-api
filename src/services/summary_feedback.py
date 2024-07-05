@@ -1,7 +1,7 @@
 import math
 import operator
 from typing import Callable, Literal
-from .models.summary import (
+from ..schemas.summary import (
     AnalyticFeedback,
     Feedback,
     ScoreType,

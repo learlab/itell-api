@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Request, Response
 
-from ..api_keys import create_new_api_key, delete_api_key
-from ..models.api_keys import CreateAPIKeyInput, DeleteAPIKeyInput
+from ..services.api_keys import create_new_api_key, delete_api_key
+from ..schemas.api_keys import CreateAPIKeyInput, DeleteAPIKeyInput
 from ..logging.logging_router import LoggingRoute
 
 router = APIRouter(route_class=LoggingRoute)

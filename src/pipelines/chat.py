@@ -5,7 +5,7 @@ from vllm.engine.async_llm_engine import AsyncLLMEngine
 from vllm.sampling_params import SamplingParams
 from vllm.utils import random_uuid
 
-from ..models.chat import ChatResponse
+from ..schemas.chat import ChatResponse
 
 engine_args = AsyncEngineArgs(
     model="meta-llama/Meta-Llama-3-8B-Instruct",

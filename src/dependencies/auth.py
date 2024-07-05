@@ -4,7 +4,7 @@ from cachetools import TTLCache, keys
 from fastapi import Depends, HTTPException, Request, Security, status
 from fastapi.security import APIKeyHeader
 
-from .async_cache import acached
+from ..utils.async_cache import acached
 from .supabase import SupabaseClient
 
 api_key_header = APIKeyHeader(name="API-Key")

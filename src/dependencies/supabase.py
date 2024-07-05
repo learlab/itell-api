@@ -1,7 +1,7 @@
 from fastapi import HTTPException, Response
 from supabase.client import AsyncClient
 
-from ..models.embedding import (ChunkInput, DeleteUnusedInput, RetrievalInput,
+from ..schemas.embedding import (ChunkInput, DeleteUnusedInput, RetrievalInput,
                                 RetrievalResults)
 from ..pipelines.embed import EmbeddingPipeline
 

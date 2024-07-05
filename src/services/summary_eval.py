@@ -2,16 +2,16 @@ import gcld3
 from spacy.tokens import Doc
 from transformers import logging
 
-from .dependencies.strapi import Strapi
-from .dependencies.supabase import SupabaseClient
-from .models.strapi import Chunk
-from .models.summary import ChunkWithWeight, Summary, SummaryInputStrapi, SummaryResults
-from .pipelines.containment import score_containment
-from .pipelines.embed import EmbeddingPipeline
-from .pipelines.keyphrases import suggest_keyphrases
-from .pipelines.nlp import nlp
-from .pipelines.profanity_filter import profanity_filter
-from .pipelines.summary import LongformerPipeline, SummaryPipeline
+from ..dependencies.strapi import Strapi
+from ..dependencies.supabase import SupabaseClient
+from ..schemas.strapi import Chunk
+from ..schemas.summary import ChunkWithWeight, Summary, SummaryInputStrapi, SummaryResults
+from ..pipelines.containment import score_containment
+from ..pipelines.embed import EmbeddingPipeline
+from ..pipelines.keyphrases import suggest_keyphrases
+from ..pipelines.nlp import nlp
+from ..pipelines.profanity_filter import profanity_filter
+from ..pipelines.summary import LongformerPipeline, SummaryPipeline
 
 logging.set_verbosity_error()
 

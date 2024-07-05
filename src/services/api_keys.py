@@ -1,7 +1,7 @@
 from fastapi import HTTPException, Response
 
-from .dependencies.supabase import SupabaseClient
-from .models.api_keys import CreateAPIKeyInput, DeleteAPIKeyInput
+from ..dependencies.supabase import SupabaseClient
+from ..schemas.api_keys import CreateAPIKeyInput, DeleteAPIKeyInput
 
 
 async def create_new_api_key(
