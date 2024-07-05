@@ -1,5 +1,6 @@
 import json
 import logging
+import os
 import time
 from typing import Callable
 
@@ -15,6 +16,8 @@ logger = logging.getLogger("itell_ai")
 
 
 class LoggingRoute(APIRoute):
+    log_to_db = os.getenv("ITELL_AI_LOG_TO_DB", "FALSE") == "TRUE"
+
     def get_route_handler(self) -> Callable:
         original_route_handler = super().get_route_handler()
 
@@ -62,15 +65,19 @@ class LoggingRoute(APIRoute):
         log_entry = LogEntry(
             api_endpoint=request.url.path,
             request_method=request.method,
-            request_body=await request.json(),
-            response_body=response_body,
-            status_code=response.status_code,
             client_address=request.client.host,
-            process_time=response.process_time,
+            request_body=await request.json(),
+            status_code=response.status_code,
+            response_body=response_body,
             ttft=response.ttft if hasattr(response, "ttft") else None,
+            process_time=response.process_time,
         )
 
         logger.info("Request Processed", extra=log_entry.model_dump())
 
-        # Log to Supabase
-        # await request.app.state.supabase.table("logs").insert(log_entry)
+        if self.log_to_db:
+            await (
+                request.app.state.supabase.table("logs")
+                .insert(log_entry.model_dump())
+                .execute()
+            )

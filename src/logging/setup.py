@@ -5,7 +5,7 @@ import logging.handlers
 from multiprocessing import Queue  # in case we start using multiprocessing
 from pathlib import Path
 
-from .json_logger import JSONFormatter
+from .json_log_formatter import JSONFormatter
 
 
 def setup_logging():
