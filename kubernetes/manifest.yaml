@@ -24,12 +24,17 @@ spec:
           limits:
             nvidia.com/gpu: "1"
         volumeMounts:
-        - name: pvc
+        - name: models-pvc
           mountPath: /usr/local/huggingface
+        - name: logs-pvc
+          mountPath: /usr/src/itell-ai/logs
       volumes:
-      - name: pvc
+      - name: models-pvc
         persistentVolumeClaim:
           claimName: models-nfs
+      - name: logs-pvc
+        persistentVolumeClaim:
+          claimName: itell-ai-logs-pvc
 ---
 apiVersion: v1
 kind: Service
