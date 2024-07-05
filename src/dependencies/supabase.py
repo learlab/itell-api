@@ -1,9 +1,13 @@
 from fastapi import HTTPException, Response
 from supabase.client import AsyncClient
 
-from ..schemas.embedding import (ChunkInput, DeleteUnusedInput, RetrievalInput,
-                                RetrievalResults)
 from ..pipelines.embed import EmbeddingPipeline
+from ..schemas.embedding import (
+    ChunkInput,
+    DeleteUnusedInput,
+    RetrievalInput,
+    RetrievalResults,
+)
 
 
 class SupabaseClient(AsyncClient):

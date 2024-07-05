@@ -35,8 +35,8 @@ def setup_logging():
 
     file_json_handler = logging.handlers.RotatingFileHandler(
         filename="logs/my_app.log.jsonl",
-        maxBytes=1_000_000,  # 1MB
-        backupCount=3,
+        maxBytes=10_000_000,  # 10MB
+        backupCount=10,
     )
     file_json_handler.setLevel(logging.INFO)
     file_json_handler.setFormatter(json_formatter)
