@@ -70,7 +70,7 @@ class LoggingRoute(APIRoute):
             ttft=response.ttft if hasattr(response, "ttft") else None,
         )
 
-        logger("Request Processed", extra=log_entry.model_dump())
+        logger.info("Request Processed", extra=log_entry.model_dump())
 
         # Log to Supabase
         # await request.app.state.supabase.table("logs").insert(log_entry)
