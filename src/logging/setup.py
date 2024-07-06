@@ -34,7 +34,7 @@ def setup_logging():
     stderr_handler.setFormatter(simple_formatter)
 
     file_json_handler = logging.handlers.RotatingFileHandler(
-        filename="logs/my_app.log.jsonl",
+        filename="logs/itell-ai.log.jsonl",
         maxBytes=10_000_000,  # 10MB
         backupCount=10,
     )
