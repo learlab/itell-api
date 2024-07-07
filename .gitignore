@@ -1,6 +1,10 @@
 # Large files
 huggingface
 
+# Temporary location for query history
+# May contain private student data!!!
+tests/performance/data
+
 #logs
 logs
 

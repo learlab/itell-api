@@ -1,9 +1,9 @@
 from fastapi import APIRouter, Request
 from fastapi.responses import StreamingResponse
 
-from ..services.chat import cri_chat, moderated_chat, unmoderated_chat
-from ..schemas.chat import ChatInput, ChatInputCRI, PromptInput
 from ..logging.logging_router import LoggingRoute, LoggingStreamingResponse
+from ..schemas.chat import ChatInput, ChatInputCRI, PromptInput
+from ..services.chat import cri_chat, moderated_chat, unmoderated_chat
 
 router = APIRouter(route_class=LoggingRoute)
 
@@ -31,7 +31,7 @@ async def raw_chat(input_body: PromptInput) -> StreamingResponse:
     """Direct access to the underlying chat model.
     For testing purposes.
     """
-    return StreamingResponse(
+    return LoggingStreamingResponse(
         content=await unmoderated_chat(input_body), media_type="text/event-stream"
     )
 
