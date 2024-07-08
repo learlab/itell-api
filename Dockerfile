@@ -30,4 +30,4 @@ RUN mkdir /usr/src/itell-ai/tests
 
 COPY tests /usr/src/itell-ai/tests/
 RUN pip install pytest asgi-lifespan
-CMD ["ITELL_AI_LOG_TO_DB=FALSE", "pytest", "-s"]
+CMD ITELL_AI_LOG_TO_DB=FALSE pytest -s

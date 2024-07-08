@@ -41,7 +41,12 @@ async def moderated_chat(
         )
     )
 
-    if relevant_chunks.matches[0].page == "itell-documentation":
+    try:
+        relevant_chunk_page = relevant_chunks.matches[0].page
+    except (IndexError, AttributeError):
+        relevant_chunk_page = None
+
+    if relevant_chunk_page == "itell-documentation":
         text_name = "iTELL Documentation"
         text_info = "iTELL stands for intelligent texts for enhanced lifelong learning. It is a platform that provides students with a personalized learning experience. This user guide provides information on how to navigate the iTELL platform."  # noqa: E501
     else:
