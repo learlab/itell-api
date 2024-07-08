@@ -77,8 +77,8 @@ If you need to make any quick fixes to get the deployment working, please do not
 If you make any changes to the required environment variables, these must be udpated using a kubernetes secret.
 
 1. Manually update the .env file on the production server. This is not version controlled.
-2. `microk8s kubectl delete secret supabase-itell`
-3. `microk8s kubectl create secret generic supabase-itell --from-env-file=.env`
+2. `microk8s kubectl delete secret itell-ai`
+3. `microk8s kubectl create secret generic itell-ai --from-env-file=.env`
 
 ## Access the Running Container
 

@@ -19,7 +19,7 @@ spec:
         image: localhost:32000/itell-score-api
         envFrom:
         - secretRef:
-            name: supabase-itell
+            name: itell-ai
         resources:
           limits:
             nvidia.com/gpu: "1"
@@ -34,7 +34,7 @@ spec:
           claimName: models-nfs
       - name: logs-pvc
         persistentVolumeClaim:
-          claimName: itell-ai-logs-pvc
+          claimName: itell-ai-logs
 ---
 apiVersion: v1
 kind: Service

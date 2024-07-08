@@ -1,29 +1,22 @@
-apiVersion: v1
-kind: PersistentVolume
+kind: StorageClass
+apiVersion: storage.k8s.io/v1
 metadata:
-  name: itell-ai-logs-pv
-spec:
-  capacity:
-    storage: 2Gi
-  volumeMode: Filesystem
-  accessModes:
-  - ReadWriteMany
-  persistentVolumeReclaimPolicy: Retain
-  storageClassName: local-storage
-  local:
-    path: /var/logs/itell-ai
----    
+  name: logs-hostpath
+provisioner: microk8s.io/hostpath
+reclaimPolicy: Retain
+parameters:
+  pvDir: /var/log/itell-ai
+volumeBindingMode: Immediate
+---
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: itell-ai-logs
   namespace: jhub
 spec:
-  volumeMode: Filesystem
   accessModes:
     - ReadWriteMany
-  storageClassName: local-storage
+  storageClassName: logs-hostpath
   resources:
     requests:
-      storage: 2Gi
-  volumeName: itell-ai-logs
+      storage: 1Gi
