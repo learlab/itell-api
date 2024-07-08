@@ -1,10 +1,14 @@
 from fastapi import APIRouter, HTTPException, Request, Response
 
-from ..models.embedding import (ChunkInput, DeleteUnusedInput, RetrievalInput,
-                                RetrievalResults)
-from ..models.transcript import TranscriptInput, TranscriptResults
-from ..transcript import transcript_generate
-from .logging_router import LoggingRoute
+from ..schemas.embedding import (
+    ChunkInput,
+    DeleteUnusedInput,
+    RetrievalInput,
+    RetrievalResults,
+)
+from ..schemas.transcript import TranscriptInput, TranscriptResults
+from ..services.transcript import transcript_generate
+from ..logging.logging_router import LoggingRoute
 
 router = APIRouter(route_class=LoggingRoute)
 

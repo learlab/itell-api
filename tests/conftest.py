@@ -3,7 +3,7 @@ import os
 import pytest
 from asgi_lifespan import LifespanManager
 from httpx import ASGITransport, AsyncClient
-from src.models.chat import ChatResponse
+from src.schemas.chat import ChatResponse
 
 
 @pytest.fixture(scope="session")

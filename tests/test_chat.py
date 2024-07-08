@@ -1,5 +1,5 @@
 from pydantic import ValidationError
-from src.models.chat import ChatResponse, EventType
+from src.schemas.chat import ChatResponse, EventType
 
 
 async def test_chat(client, parser):

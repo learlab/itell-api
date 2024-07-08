@@ -7,5 +7,6 @@ RUN apt-get update \
     libprotobuf-dev
 
 # Specify where we want hf to cache downloads
-
 ENV HF_HOME=/usr/local/huggingface
+
+COPY requirements/requirements.in /tmp/requirements.txt

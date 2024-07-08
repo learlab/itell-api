@@ -1,6 +1,6 @@
 from pydantic import ValidationError
-from src.models.chat import EventType
-from src.models.summary import SummaryResultsWithFeedback
+from src.schemas.chat import EventType
+from src.schemas.summary import SummaryResultsWithFeedback
 
 
 async def test_summary_eval_stairs(client, parser):

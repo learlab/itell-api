@@ -1,9 +1,9 @@
 from fastapi import HTTPException
 from transformers import logging
 
-from .dependencies.strapi import Strapi
-from .models.answer import AnswerInputStrapi, AnswerResults
-from .pipelines.answer import AnswerPipeline
+from ..dependencies.strapi import Strapi
+from ..schemas.answer import AnswerInputStrapi, AnswerResults
+from ..pipelines.answer import AnswerPipeline
 
 logging.set_verbosity_error()
 
