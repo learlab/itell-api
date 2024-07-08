@@ -4,10 +4,10 @@ import re
 import spacy
 from spacy.tokens import Doc
 
-from ..pipelines.model_runner import Pipes
+from .model_runner import Pipes
 from ..schemas.summary import ChunkWithWeight
 
-nlp = spacy.load("en_core_web_sm", enable=["tagger", "lemmatizer"])
+nlp = spacy.load("en_core_web_sm", enable=["tagger", "attribute_ruler", "lemmatizer"])
 
 
 async def suggest_keyphrases(

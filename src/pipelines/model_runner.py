@@ -9,11 +9,15 @@ from .embed import EmbeddingPipeline
 from .summary import LongformerPipeline, SummaryPipeline
 
 
-@ray.remote
+@ray.remote(num_cpus=8, num_gpus=1)
 class Pipes:
     def __init__(self):
         self.embedding_pipe = EmbeddingPipeline()
-        self.spacy = spacy.load("en_core_web_sm", enable=["tagger", "lemmatizer"])
+        
+        # SpaCy is currently only used for tokenization, lemmatization, and stop words.
+        self.spacy = spacy.load(
+            "en_core_web_sm", enable=["tagger", "attribute_ruler", "lemmatizer"]
+        )
         self.answer_pipe = AnswerPipeline()
         self.content_pipe = LongformerPipeline("tiedaar/longformer-content-global")
         self.language_pipe = SummaryPipeline("tiedaar/language-beyond-the-source")
