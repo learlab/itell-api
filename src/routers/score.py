@@ -3,8 +3,7 @@ from typing import AsyncGenerator
 from fastapi import APIRouter, Request
 from fastapi.responses import StreamingResponse
 
-from ..services.answer_eval import answer_score
-from ..services.chat import language_feedback_chat
+from ..logging.logging_router import LoggingRoute, LoggingStreamingResponse
 from ..schemas.answer import AnswerInputStrapi, AnswerResults
 from ..schemas.chat import EventType
 from ..schemas.summary import (
@@ -13,10 +12,11 @@ from ..schemas.summary import (
     SummaryResults,
     SummaryResultsWithFeedback,
 )
+from ..services.answer_eval import answer_score
+from ..services.chat import language_feedback_chat
 from ..services.sert import sert_chat
 from ..services.summary_eval import summary_score
 from ..services.summary_feedback import summary_feedback
-from ..logging.logging_router import LoggingRoute, LoggingStreamingResponse
 
 router = APIRouter(route_class=LoggingRoute)
 
@@ -44,7 +44,8 @@ async def score_answer(
     Requires a page_slug and chunk_slug.
     """
     strapi = request.app.state.strapi
-    return await answer_score(input_body, strapi)
+    pipes = request.app.state.pipes
+    return await answer_score(input_body, strapi, pipes)
 
 
 @router.post("/score/summary/stairs", response_model=StreamingSummaryResults)
@@ -66,7 +67,8 @@ async def score_summary_with_stairs(
     """
     strapi = request.app.state.strapi
     supabase = request.app.state.supabase
-    summary, results = await summary_score(input_body, strapi, supabase)
+    pipes = request.app.state.pipes
+    summary, results = await summary_score(input_body, strapi, supabase, pipes)
 
     feedback: SummaryResultsWithFeedback = summary_feedback(results)
 

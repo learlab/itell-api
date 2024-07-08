@@ -32,6 +32,13 @@ class SummaryPipeline(TextClassificationPipeline):
 
         return {k: torch.tensor([v]) for k, v in input_dict.items()}
 
+    def score(self, input_str: str, **kwargs) -> float:
+        try:
+            score = self(input_str, **kwargs)[0]["score"]
+        except (IndexError, KeyError) as e:
+            raise ValueError(f"Failed to get score: {e}")
+        return float(score)
+
 
 class LongformerPipeline(SummaryPipeline):
     def preprocess(self, input_str: str, **tokenizer_kwargs) -> Dict[str, torch.Tensor]:

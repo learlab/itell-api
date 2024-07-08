@@ -3,6 +3,7 @@ import os
 import pytest
 from asgi_lifespan import LifespanManager
 from httpx import ASGITransport, AsyncClient
+
 from src.schemas.chat import ChatResponse
 
 
@@ -13,7 +14,9 @@ def anyio_backend():
 
 @pytest.fixture(scope="session")
 async def app():
-    from src.app import app
+    from src.app import get_app
+
+    app = get_app()
 
     async with LifespanManager(app) as manager:
         yield manager.app

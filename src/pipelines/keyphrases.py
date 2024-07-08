@@ -1,12 +1,18 @@
 import random
 import re
 
+import spacy
 from spacy.tokens import Doc
 
-from .nlp import nlp
+from ..pipelines.model_runner import Pipes
+from ..schemas.summary import ChunkWithWeight
+
+nlp = spacy.load("en_core_web_sm", enable=["tagger", "lemmatizer"])
 
 
-def suggest_keyphrases(summary: Doc, chunks: list) -> tuple[list[str], list[str]]:
+async def suggest_keyphrases(
+    summary: Doc, chunks: list[ChunkWithWeight], pipes: Pipes
+) -> tuple[list[str], list[str]]:
     """Return keyphrases that were included in the summary and suggests
     keyphrases that were not included.
     """
@@ -20,8 +26,10 @@ def suggest_keyphrases(summary: Doc, chunks: list) -> tuple[list[str], list[str]
         if not chunk.KeyPhrase:
             continue
 
-        for keyphrase in nlp.pipe(chunk.KeyPhrase):
-            keyphrase_lemmas = [t.lemma_ for t in keyphrase if not t.is_stop]
+        # Should use async generator somehow
+        for keyphrase_doc in nlp.pipe(chunk.KeyPhrase):
+            keyphrase = keyphrase_doc.text
+            keyphrase_lemmas = [t.lemma_ for t in keyphrase_doc if not t.is_stop]
             keyphrase_included = re.search(
                 re.escape(r" ".join(keyphrase_lemmas)),
                 summary_lemmas,
@@ -29,15 +37,15 @@ def suggest_keyphrases(summary: Doc, chunks: list) -> tuple[list[str], list[str]
             )
             if keyphrase_included:
                 # keyphrase is included in summary
-                included_keyphrases.append(keyphrase.text)
-            elif keyphrase.text in candidate_keyphrases:
+                included_keyphrases.append(keyphrase)
+            elif keyphrase in candidate_keyphrases:
                 # keyphrase has already been suggested
                 # increase the weight of this keyphrase suggestion
-                keyphrase_index = candidate_keyphrases.index(keyphrase.text)
+                keyphrase_index = candidate_keyphrases.index(keyphrase)
                 weights[keyphrase_index] += chunk.weight
             else:
                 # New keyphrase suggestion
-                candidate_keyphrases.append(keyphrase.text)
+                candidate_keyphrases.append(keyphrase)
                 # weight keyphrase suggestions by inverse focus time
                 weights.append(chunk.weight)
 

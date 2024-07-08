@@ -9,10 +9,10 @@ from vllm.sampling_params import SamplingParams
 
 from ..dependencies.strapi import Strapi
 from ..dependencies.supabase import SupabaseClient
+from ..pipelines.chat import chat_pipeline
 from ..schemas.chat import EventType
 from ..schemas.embedding import RetrievalInput, RetrievalStrategy
 from ..schemas.summary import ChunkWithWeight, Summary
-from ..pipelines.chat import chat_pipeline
 
 with open("templates/sert.jinja2", "r", encoding="utf8") as file_:
     prompt_template = Template(file_.read())

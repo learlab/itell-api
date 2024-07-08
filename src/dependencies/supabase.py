@@ -64,11 +64,11 @@ class SupabaseClient(AsyncClient):
 
         return RetrievalResults(matches=matches)
 
-    async def page_similarity(self, embedding: list[float], page_slug: str) -> float:
+    async def page_similarity(self, text: str, page_slug: str) -> float:
         """Returns the similarity between the embedding and the target page."""
 
         query_params = {
-            "summary_embedding": embedding,
+            "summary_embedding": await self.embed(text),
             "target_page": page_slug,
         }
 
