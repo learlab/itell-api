@@ -41,12 +41,12 @@ async def moderated_chat(
         )
     )
 
-    try:
-        relevant_chunk_page = relevant_chunks.matches[0].page
-    except (IndexError, AttributeError):
-        relevant_chunk_page = None
+    if len(relevant_chunks.matches) > 0:
+        relevant_chunk = relevant_chunks.matches[0]
+    else:
+        relevant_chunk = None
 
-    if relevant_chunk_page == "itell-documentation":
+    if relevant_chunk and relevant_chunk.page == "itell-documentation":
         text_name = "iTELL Documentation"
         text_info = "iTELL stands for intelligent texts for enhanced lifelong learning. It is a platform that provides students with a personalized learning experience. This user guide provides information on how to navigate the iTELL platform."  # noqa: E501
     else:
@@ -63,7 +63,7 @@ async def moderated_chat(
     prompt = prompt_template.render(
         text_name=text_name,
         text_info=text_info,
-        context=relevant_chunks.matches,
+        context=relevant_chunk.content if relevant_chunk else None,
         chat_history=[(msg.agent, msg.text) for msg in chat_history],
         user_message=chat_input.message,
         student_summary=chat_input.summary,
