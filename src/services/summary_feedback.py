@@ -102,16 +102,22 @@ language = FeedbackProcessor(
 
 english = FeedbackProcessor(
     score_type=ScoreType.english,
-    threshold=False,
     comparator=operator.gt,
-    feedback=["Please write your summary in English.", None],
+    threshold=False,
+    feedback=[
+        None,
+        "Please write your summary in English.",
+    ],
 )
 
 profanity = FeedbackProcessor(
     score_type=ScoreType.profanity,
-    threshold=True,
     comparator=operator.lt,
-    feedback=["Please avoid using profanity in your summary.", None],
+    threshold=True,
+    feedback=[
+        None,
+        "Please avoid using profanity in your summary.",
+    ],
 )
 
 
