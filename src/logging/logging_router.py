@@ -9,6 +9,7 @@ from fastapi.responses import StreamingResponse
 from fastapi.routing import APIRoute
 from starlette.background import BackgroundTask
 
+from ..schemas.api_keys import AuthEntry
 from ..schemas.logging import LogEntry
 from .logging_streaming_response import LoggingStreamingResponse
 
@@ -62,14 +63,12 @@ class LoggingRoute(APIRoute):
         elif response.body:
             response_body = json.loads(response.body)
 
-        nickname: str = (
-            request.state.auth.nickname if hasattr(request.state, "auth") else None
-        )
+        auth: AuthEntry = request.state.auth if hasattr(request.state, "auth") else None
 
         log_entry = LogEntry(
             api_endpoint=request.url.path,
             request_method=request.method,
-            client_name=nickname,
+            client_name=auth.nickname,
             request_body=await request.json(),
             status_code=response.status_code,
             response_body=response_body,
