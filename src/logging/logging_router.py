@@ -37,7 +37,7 @@ class LoggingRoute(APIRoute):
 
             # Put any existing task first
             if response.background:
-                tasks = [response.background, *tasks]
+                tasks.insert(0, response.background)
             response.background = BackgroundTasks(tasks=tasks)
 
             return response
@@ -62,10 +62,14 @@ class LoggingRoute(APIRoute):
         elif response.body:
             response_body = json.loads(response.body)
 
+        nickname: str = (
+            request.state.auth.nickname if hasattr(request.state, "auth") else None
+        )
+
         log_entry = LogEntry(
             api_endpoint=request.url.path,
             request_method=request.method,
-            client_address=request.client.host,
+            client_name=nickname,
             request_body=await request.json(),
             status_code=response.status_code,
             response_body=response_body,

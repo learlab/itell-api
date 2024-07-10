@@ -9,7 +9,7 @@ class LogEntry(BaseModel):
     request_body: dict
     response_body: Optional[dict]
     status_code: int
-    client_address: str
+    client_name: str
     process_time: float
     ttft: Optional[float] = Field(
         None,
