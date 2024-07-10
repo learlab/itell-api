@@ -1,6 +1,7 @@
 import math
 import operator
 from typing import Callable, Literal
+
 from ..schemas.summary import (
     AnalyticFeedback,
     Feedback,
@@ -17,26 +18,26 @@ class FeedbackProcessor:
         threshold: float,
         comparator: Callable[[float, float], bool],
         feedback: list[str],
-        feedback_indexer: Literal["floor"] = None,
+        feedback_indexer: Literal["floor"] | None = None,
     ):
         self.score_type = score_type
         self.threshold = threshold
         self.comparator = comparator
         self.feedback = feedback
         if feedback_indexer == "floor":
-            self.feedback_indexer = self.floor_indexer
+            self.feedback_indexer = self._floor_indexer
         else:
-            self.feedback_indexer = self.default_indexer
+            self.feedback_indexer = self._default_indexer
 
-    def default_indexer(self, score: float) -> Literal[0, 1]:
-        """Returns 0 is score is failing, 1 if score is passing."""
+    def _default_indexer(self, score: float) -> Literal[0, 1]:
+        """Returns 0 is score is passing, 1 if score is failing."""
         return 0 if self.comparator(score, self.threshold) else 1
 
-    def floor_indexer(self, score: float) -> int:
+    def _floor_indexer(self, score: float) -> int:
         """Returns the floor of the score."""
         return math.floor(score)
 
-    def __call__(self, score: float):
+    def __call__(self, score: float | None) -> AnalyticFeedback:
         if score is None:
             feedback = Feedback(is_passed=None, prompt=None)
         else:
@@ -51,8 +52,8 @@ containment = FeedbackProcessor(
     threshold=0.6,
     comparator=operator.lt,
     feedback=[
-        "You need to rely less on the language in the text and focus more on rewriting the key ideas.",  # noqa: E501
         "You did a good job of using your own language to describe the main ideas of the text.",  # noqa: E501
+        "You need to rely less on the language in the text and focus more on rewriting the key ideas.",  # noqa: E501
     ],
 )
 
@@ -61,8 +62,8 @@ containment_chat = FeedbackProcessor(
     threshold=0.6,
     comparator=operator.lt,
     feedback=[
-        "You need to depend less on the examples provided by iTELL AI.",
         "You did a good job of using your own language to describe the main ideas of the text.",  # noqa: E501
+        "You need to depend less on the examples provided by iTELL AI.",
     ],
 )
 
@@ -71,8 +72,8 @@ similarity = FeedbackProcessor(
     threshold=0.5,
     comparator=operator.gt,
     feedback=[
-        "To be successful, you need to stay on topic. Find the main ideas of the text and focus your summary on those ideas.",  # noqa: E501
         "You did a good job of staying on topic and writing about the main ideas of the text.",  # noqa: E501
+        "To be successful, you need to stay on topic. Find the main ideas of the text and focus your summary on those ideas.",  # noqa: E501
     ],
 )
 
@@ -81,8 +82,8 @@ content = FeedbackProcessor(
     threshold=0,  # 0 for Prolific testing
     comparator=operator.gt,
     feedback=[
-        "You need to include more key ideas and details from the page to successfully summarize the content. Consider focusing on the main ideas of the text and providing support for those ideas in your summary.",  # noqa: E501
         "You did a good job of including key ideas and details on this page.",
+        "You need to include more key ideas and details from the page to successfully summarize the content. Consider focusing on the main ideas of the text and providing support for those ideas in your summary.",  # noqa: E501
     ],
 )
 
@@ -125,7 +126,11 @@ def summary_feedback(results: SummaryResults) -> SummaryResultsWithFeedback:
         language(results.language),
     ]
 
-    is_passed = all(feedback.feedback.is_passed for feedback in prompt_details)
+    is_passed = all(
+        feedback.feedback.is_passed
+        for feedback in prompt_details
+        if feedback.feedback.is_passed is not None
+    )
 
     if is_passed:
         prompt = (
