@@ -4,6 +4,7 @@ from cachetools import TTLCache, keys
 from fastapi import Depends, HTTPException, Request, Security, status
 from fastapi.security import APIKeyHeader
 
+from ..schemas.api_keys import AuthEntry
 from ..utils.async_cache import acached
 from .supabase import SupabaseClient
 
@@ -28,27 +29,43 @@ async def get_role(
         )
 
     response = (
-        await supabase.table("api_keys").select("role").eq("api_key", token).execute()
+        await supabase.table("api_keys")
+        .select("role", "nickname")
+        .eq("api_key", token)
+        .execute()
     )
 
-    role = response.data
-
-    if not role:
+    if not response.data:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid API key"
         )
 
-    return role[0]["role"]
+    try:
+        auth_entry = AuthEntry(**response.data[0])
+    except IndexError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid API key"
+        )
+    except ValueError as e:  # Model validation failed
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Invalid response from database during authentication. {e}",
+        )
+
+    # Add nickname to (global) request state for use in logging
+    request.state.auth = auth_entry
+
+    return auth_entry
 
 
 async def developer_role(
-    role: Annotated[str, Depends(get_role)],
+    auth: Annotated[AuthEntry, Depends(get_role)],
 ) -> str:
 
-    if not role == "developer":
+    if not auth.role == "developer":
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="You do not have permission to access this resource",
         )
 
-    return role
+    return auth

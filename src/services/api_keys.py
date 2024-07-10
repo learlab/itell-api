@@ -1,7 +1,7 @@
 from fastapi import HTTPException, Response
 
 from ..dependencies.supabase import SupabaseClient
-from ..schemas.api_keys import CreateAPIKeyInput, DeleteAPIKeyInput
+from ..schemas.api_keys import AuthEntry, CreateAPIKeyInput, DeleteAPIKeyInput
 
 
 async def create_new_api_key(
@@ -24,7 +24,9 @@ async def create_new_api_key(
         .execute()
     )
 
-    return Response(content=upsert_response.data[0]["api_key"], status_code=201)
+    auth_entry = AuthEntry(**upsert_response.data[0])
+
+    return Response(content=auth_entry.api_key, status_code=201)
 
 
 async def delete_api_key(
@@ -38,4 +40,6 @@ async def delete_api_key(
         .execute()
     )
 
-    return Response(content=delete_response.data[0]["api_key"], status_code=200)
+    auth_entry = AuthEntry(**delete_response.data[0])
+
+    return Response(content=auth_entry.api_key, status_code=200)

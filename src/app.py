@@ -5,14 +5,14 @@ from contextlib import asynccontextmanager
 import sentry_sdk
 from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from transformers import logging as transformers_logging
 
 from .dependencies.auth import developer_role, get_role
 from .dependencies.strapi import Strapi
 from .dependencies.supabase import SupabaseClient
 from .logging.setup import setup_logging
-from .schemas.message import Message
 from .routers import admin, chat, generate, score
-from transformers import logging as transformers_logging
+from .schemas.message import Message
 
 transformers_logging.set_verbosity_error()
 logger = logging.getLogger(__name__)
