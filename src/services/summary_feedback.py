@@ -151,8 +151,7 @@ def summary_feedback(results: SummaryResults) -> SummaryResultsWithFeedback:
         language(results.language),
     ]
 
-    ### Overall Feedback
-
+    # Overall Feedback
     # Check if all feedback that exists is passing
     # Ignores feedback with .is_passed = None
     is_passed: bool = all(
