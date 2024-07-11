@@ -12,7 +12,7 @@ api_key_header = APIKeyHeader(name="API-Key")
 
 
 def hash_api_key(token: str, request: Request) -> str:
-    """Hash the API key for caching, ignoring the Supabase dependency."""
+    """Hash the API key for caching, ignoring the request."""
     return keys.hashkey(token)
 
 
