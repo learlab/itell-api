@@ -9,10 +9,10 @@ from vllm.sampling_params import SamplingParams
 
 from ..dependencies.strapi import Strapi
 from ..dependencies.supabase import SupabaseClient
+from ..pipelines.chat import chat_pipeline
 from ..schemas.chat import EventType
 from ..schemas.embedding import RetrievalInput, RetrievalStrategy
 from ..schemas.summary import ChunkWithWeight, Summary
-from ..pipelines.chat import chat_pipeline
 
 with open("templates/sert.jinja2", "r", encoding="utf8") as file_:
     prompt_template = Template(file_.read())
@@ -38,7 +38,7 @@ async def sert_chat(
     # Retrieve the chunks that are the least similar to the student's summary
     least_similar_chunks = await supabase.retrieve_chunks(
         RetrievalInput(
-            text_slug=text_meta.slug,
+            text_slug=text_meta.Slug,
             page_slugs=[summary.page_slug],
             text=summary.summary.text,
             retrieve_strategy=RetrievalStrategy.least_similar,

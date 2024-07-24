@@ -6,10 +6,10 @@ from vllm.sampling_params import SamplingParams
 
 from ..dependencies.strapi import Strapi
 from ..dependencies.supabase import SupabaseClient
+from ..pipelines.chat import chat_pipeline
 from ..schemas.chat import ChatInput, ChatInputCRI, EventType, PromptInput
 from ..schemas.embedding import RetrievalInput
 from ..schemas.summary import Summary
-from ..pipelines.chat import chat_pipeline
 
 with open("templates/chat.jinja2", "r", encoding="utf8") as file_:
     prompt_template = Template(file_.read())
@@ -33,7 +33,7 @@ async def moderated_chat(
 
     relevant_chunks = await supabase.retrieve_chunks(
         RetrievalInput(
-            text_slug=text_meta.slug,
+            text_slug=text_meta.Slug,
             page_slugs=[chat_input.page_slug, "itell-documentation"],
             text=chat_input.message,
             similarity_threshold=0.2,
