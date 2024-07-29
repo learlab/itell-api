@@ -7,6 +7,7 @@ If the models disagree, return 1.
 If both models agree that it is incorrect, return 0.
 """
 
+import torch
 from transformers import pipeline
 
 
@@ -16,9 +17,9 @@ class AnswerPipeline:
     bleurt_threshold = 0.7
 
     def __init__(self):
-        self.mpnet_classifier = pipeline("text-classification", model=self.mpnet_model)
+        self.mpnet_classifier = pipeline("text-classification", model=self.mpnet_model, device=0 if torch.cuda.is_available() else -1)
         self.bleurt_classifier = pipeline(
-            "text-classification", model=self.bleurt_model
+            "text-classification", model=self.bleurt_model, device=0 if torch.cuda.is_available() else -1
         )
 
     def __call__(self, candidate: str, reference: str) -> int:

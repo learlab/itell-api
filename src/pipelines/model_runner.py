@@ -3,6 +3,7 @@ from typing import Generator, Iterable
 import ray
 import spacy
 from spacy.tokens import Doc
+import torch
 
 from .answer import AnswerPipeline
 from .embed import EmbeddingPipeline

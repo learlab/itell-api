@@ -15,7 +15,7 @@ class SummaryPipeline(TextClassificationPipeline):
             model=AutoModelForSequenceClassification.from_pretrained(model),
             tokenizer=AutoTokenizer.from_pretrained(model, use_fast=False),
             function_to_apply="None",
-            device="cuda" if torch.cuda.is_available() else "cpu",
+            device=0 if torch.cuda.is_available() else -1,
             truncation=True,
             max_length=4096,
             *args,

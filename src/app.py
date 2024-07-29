@@ -1,10 +1,12 @@
 import os
+import asyncio
 from contextlib import asynccontextmanager
 
 import sentry_sdk
 from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from transformers import logging as transformers_logging
+from fastapi_utils.tasks import repeat_every
 
 from .dependencies.auth import developer_role, get_role
 from .dependencies.strapi import Strapi
@@ -13,6 +15,7 @@ from .logging.setup import setup_logging
 from .pipelines.model_runner import Pipes
 from .routers import admin, chat, generate, score
 from .schemas.message import Message
+from .local_database.create_faiss import FAISS_Wrapper
 
 transformers_logging.set_verbosity_error()
 setup_logging()
@@ -49,9 +52,20 @@ def get_app():
             os.environ["VECTOR_KEY"],
         )
         app.state.pipes = Pipes.remote()
+        app.state.faiss = FAISS_Wrapper(app.state.supabase)
+
+        async def periodic_task():
+            while True:
+                print("Running periodic task")
+                # Add your task code here
+                await asyncio.sleep(5)
+
+        # Start the periodic task
+        task = asyncio.create_task(periodic_task())
         try:
             yield
         finally:
+            task.cancel()
             await app.state.strapi.client.aclose()
 
     app = FastAPI(
