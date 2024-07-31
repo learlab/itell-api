@@ -10,7 +10,7 @@ from ..pipelines.chat import chat_pipeline
 from ..schemas.chat import (
     ChatInput,
     ChatInputCRI,
-    ChatInputSERT,
+    ChatInputSTAIRS,
     EventType,
     PromptInput,
 )
@@ -19,7 +19,9 @@ from ..schemas.strapi import Chunk
 from ..schemas.summary import Summary
 
 with open("templates/chat.jinja2", "r", encoding="utf8") as file_:
-    prompt_template = Template(file_.read())
+    moderated_chat_template = Template(file_.read())
+
+# TODO: Consider creating custom chat templates for sert_chat and stairs_chat
 
 with open("templates/cri_chat.jinja2", "r", encoding="utf8") as file_:
     cri_prompt_template = Template(file_.read())
@@ -39,7 +41,7 @@ def choose_relevant_chunk(relevant_chunks: list[Match], current_chunk: str):
     if current_chunk in relevant_chunk_dict:
         return relevant_chunk_dict[current_chunk]
     else:
-        return relevant_chunks.matches[0]
+        return max(relevant_chunks.matches, key=lambda match: match.similarity)
 
 
 async def moderated_chat(
@@ -72,7 +74,7 @@ async def moderated_chat(
     # Get last 4 messages from chat history
     chat_history = [(msg.agent, msg.text) for msg in chat_input.history[-4:]]
 
-    prompt = prompt_template.render(
+    prompt = moderated_chat_template.render(
         text_name=text_name,
         text_info=text_info,
         context=relevant_chunk.content if relevant_chunk else None,
@@ -82,9 +84,10 @@ async def moderated_chat(
     )
 
     if relevant_chunk.page == "itell-documentation":
-        cited_chunk = "[User Guide]"
+        cited_chunk = ["[User Guide]"]
     else:
-        cited_chunk = relevant_chunk.chunk
+        print("Cited chunk: ", relevant_chunk.chunk)
+        cited_chunk = [relevant_chunk.chunk]
 
     return await chat_pipeline(
         prompt, sampling_params, event_type=EventType.chat, context=cited_chunk
@@ -100,7 +103,7 @@ async def unmoderated_chat(raw_chat_input: PromptInput) -> AsyncGenerator[bytes,
 
 
 async def sert_chat(
-    chat_input: ChatInputSERT, strapi: Strapi
+    chat_input: ChatInputSTAIRS, strapi: Strapi
 ) -> AsyncGenerator[bytes, None]:
     text_meta = await strapi.get_text_meta(chat_input.page_slug)
     current_chunk: Chunk = await strapi.get_chunk(
@@ -110,7 +113,30 @@ async def sert_chat(
     # Get last 4 messages from chat history
     chat_history = [(msg.agent, msg.text) for msg in chat_input.history[-4:]]
 
-    prompt = prompt_template.render(
+    prompt = moderated_chat_template.render(
+        text_name=text_meta.Title,
+        text_info=text_meta.Description,
+        context=current_chunk.CleanText,
+        chat_history=chat_history,
+        user_message=chat_input.message,
+        student_summary=chat_input.summary,
+    )
+
+    return await chat_pipeline(prompt, sampling_params, event_type=EventType.chat)
+
+
+async def stairs_chat(
+    chat_input: ChatInputSTAIRS, strapi: Strapi
+) -> AsyncGenerator[bytes, None]:
+    text_meta = await strapi.get_text_meta(chat_input.page_slug)
+    current_chunk: Chunk = await strapi.get_chunk(
+        chat_input.page_slug, chat_input.current_chunk
+    )
+
+    # Get last 4 messages from chat history
+    chat_history = [(msg.agent, msg.text) for msg in chat_input.history[-4:]]
+
+    prompt = moderated_chat_template.render(
         text_name=text_meta.Title,
         text_info=text_meta.Description,
         context=current_chunk.CleanText,

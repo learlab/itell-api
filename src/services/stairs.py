@@ -38,6 +38,7 @@ question_type_definitions = {
 async def select_chunk(
     supabase: SupabaseClient, summary: Summary, text_meta: Volume
 ) -> ChunkWithWeight:
+    """Select a chunk for rereading based on the user's summary and reading behavior."""
 
     # Retrieve the chunks that are the least similar to the student's summary.
     least_similar_chunks = await supabase.retrieve_chunks(
@@ -86,7 +87,7 @@ async def select_chunk(
     return selected_chunk
 
 
-async def sert_chat(
+async def sert_question(
     summary: Summary, strapi: Strapi, supabase: SupabaseClient
 ) -> AsyncGenerator[bytes, None]:
     text_meta = await strapi.get_text_meta(summary.page_slug)
@@ -119,7 +120,7 @@ async def sert_chat(
     )
 
 
-async def stairs_chat(
+async def think_aloud(
     summary: Summary, strapi: Strapi, supabase: SupabaseClient
 ) -> AsyncGenerator[bytes, None]:
     text_meta = await strapi.get_text_meta(summary.page_slug)
@@ -130,10 +131,10 @@ async def stairs_chat(
         : min(2000, len(selected_chunk.CleanText))  # first 2,000 characters
     ]
 
-    # Construct the SERT prompt
+    # Construct the STAIRS prompt
     prompt = stairs_template.render(
         text_name=text_meta.Title,
-        text_info=text_meta.Info,
+        text_info=text_meta.Description,
         context=chunk_text,
     )
 
