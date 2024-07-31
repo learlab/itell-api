@@ -7,6 +7,7 @@ from fastapi import HTTPException
 from jinja2 import Template
 from vllm.sampling_params import SamplingParams
 
+from ..dependencies.faiss import FAISS
 from ..dependencies.strapi import Strapi
 from ..dependencies.supabase import SupabaseClient
 from ..pipelines.chat import chat_pipeline
@@ -31,12 +32,12 @@ def weight_chunks_with_similarity(reading_time_score, similarity):
 
 
 async def sert_chat(
-    summary: Summary, strapi: Strapi, supabase: SupabaseClient
+    summary: Summary, strapi: Strapi, faiss: FAISS
 ) -> AsyncGenerator[bytes, None]:
     text_meta = await strapi.get_text_meta(summary.page_slug)
 
     # Retrieve the chunks that are the least similar to the student's summary
-    least_similar_chunks = await supabase.retrieve_chunks(
+    least_similar_chunks = await faiss.retrieve_chunks(
         RetrievalInput(
             text_slug=text_meta.slug,
             page_slugs=[summary.page_slug],
