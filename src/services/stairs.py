@@ -12,10 +12,19 @@ from ..dependencies.supabase import SupabaseClient
 from ..pipelines.chat import chat_pipeline
 from ..schemas.chat import EventType
 from ..schemas.embedding import RetrievalInput, RetrievalStrategy
+from ..schemas.strapi import Volume
 from ..schemas.summary import ChunkWithWeight, Summary
 
 with open("templates/sert.jinja2", "r", encoding="utf8") as file_:
-    prompt_template = Template(file_.read())
+    sert_template = Template(file_.read())
+
+with open("templates/think_aloud.jinja2", "r", encoding="utf8") as file_:
+    stairs_template = Template(file_.read())
+
+
+def weight_chunks_with_similarity(reading_time_score, similarity):
+    return reading_time_score * similarity
+
 
 question_type_definitions = {
     "paraphrasing": "A paraphrasing question asks readers to restate the text in different words.",  # noqa E501
@@ -26,16 +35,11 @@ question_type_definitions = {
 }
 
 
-def weight_chunks_with_similarity(reading_time_score, similarity):
-    return reading_time_score * similarity
+async def select_chunk(
+    supabase: SupabaseClient, summary: Summary, text_meta: Volume
+) -> ChunkWithWeight:
 
-
-async def sert_chat(
-    summary: Summary, strapi: Strapi, supabase: SupabaseClient
-) -> AsyncGenerator[bytes, None]:
-    text_meta = await strapi.get_text_meta(summary.page_slug)
-
-    # Retrieve the chunks that are the least similar to the student's summary
+    # Retrieve the chunks that are the least similar to the student's summary.
     least_similar_chunks = await supabase.retrieve_chunks(
         RetrievalInput(
             text_slug=text_meta.Slug,
@@ -79,6 +83,16 @@ async def sert_chat(
     # Select the chunk with the lowest score
     selected_chunk, _ = min(chunks, key=lambda x: x[1])
 
+    return selected_chunk
+
+
+async def sert_chat(
+    summary: Summary, strapi: Strapi, supabase: SupabaseClient
+) -> AsyncGenerator[bytes, None]:
+    text_meta = await strapi.get_text_meta(summary.page_slug)
+
+    selected_chunk = await select_chunk(supabase, summary, text_meta)
+
     chunk_text = selected_chunk.CleanText[
         : min(2000, len(selected_chunk.CleanText))  # first 2,000 characters
     ]
@@ -86,7 +100,7 @@ async def sert_chat(
     question_type = random.choice(list(question_type_definitions.keys()))
 
     # Construct the SERT prompt
-    prompt = prompt_template.render(
+    prompt = sert_template.render(
         text_name=text_meta.Title,
         excerpt_chunk=chunk_text,
         student_summary=summary.summary.text,
@@ -102,4 +116,32 @@ async def sert_chat(
         event_type=EventType.content_feedback,
         chunk=selected_chunk.Slug,
         question_type=question_type,
+    )
+
+
+async def stairs_chat(
+    summary: Summary, strapi: Strapi, supabase: SupabaseClient
+) -> AsyncGenerator[bytes, None]:
+    text_meta = await strapi.get_text_meta(summary.page_slug)
+
+    selected_chunk = await select_chunk(supabase, summary, text_meta)
+
+    chunk_text = selected_chunk.CleanText[
+        : min(2000, len(selected_chunk.CleanText))  # first 2,000 characters
+    ]
+
+    # Construct the SERT prompt
+    prompt = stairs_template.render(
+        text_name=text_meta.Title,
+        text_info=text_meta.Info,
+        context=chunk_text,
+    )
+
+    sampling_params = SamplingParams(temperature=0.4, max_tokens=4096)
+
+    return await chat_pipeline(
+        prompt,
+        sampling_params,
+        event_type=EventType.content_feedback,
+        chunk=selected_chunk.Slug,
     )
