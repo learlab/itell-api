@@ -43,7 +43,7 @@ async def moderated_chat(
     # )
     relevant_chunks = await faiss.retrieve_chunks(
         RetrievalInput(
-            text_slug=text_meta.slug,
+            text_slug=text_meta.Slug,
             page_slugs=[chat_input.page_slug, "itell-documentation"],
             text=chat_input.message,
             similarity_threshold=0.2,

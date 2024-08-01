@@ -7,6 +7,7 @@ from ..pipelines.containment import score_containment
 from ..pipelines.keyphrases import suggest_keyphrases
 from ..pipelines.model_runner import Pipes
 from ..pipelines.profanity_filter import profanity_filter
+from ..pipelines.summary import LongformerPipeline, SummaryPipeline
 from ..schemas.strapi import Chunk
 from ..schemas.summary import (
     ChunkWithWeight,
@@ -111,9 +112,9 @@ async def summary_score(
 
     # Check if summary fails to meet minimum requirements
     junk_filter = (
-        results["containment"] > 0.5
-        or results.get("containment_chat", 0.0) > 0.5
-        or results["similarity"] < 0.3
+        results["containment"] > 0.6
+        or results.get("containment_chat", 0.0) > 0.6
+        or results["similarity"] < 0.5
         or results["english"] is False
         or results["profanity"] is True
     )

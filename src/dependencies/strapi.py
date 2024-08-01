@@ -6,7 +6,7 @@ from cachetools import TTLCache, keys
 from fastapi import HTTPException
 from pydantic import ValidationError
 
-from ..schemas.strapi import Chunk, PageWithChunks, PageWithText, Text
+from ..schemas.strapi import Chunk, PageWithChunks, PageWithVolume, Volume
 from ..utils.async_cache import acached
 
 
@@ -127,7 +127,7 @@ class Strapi:
         Should return a component dictionary."""
         json_response = await self.get_entries(
             plural_api_id="pages",
-            filters={"slug": {"$eq": page_slug}},
+            filters={"Slug": {"$eq": page_slug}},
             populate={"Content": {"filters": {"Slug": {"$eq": chunk_slug}}}},
         )
 
@@ -141,22 +141,22 @@ class Strapi:
 
         return page_with_chunks.data[0].attributes.Content[0]
 
-    async def get_text_meta(self, page_slug) -> Text:
+    async def get_text_meta(self, page_slug) -> Volume:
         json_response = await self.get_entries(
             plural_api_id="pages",
-            filters={"slug": {"$eq": page_slug}},
-            populate=["text"],
+            filters={"Slug": {"$eq": page_slug}},
+            populate=["Volume"],
         )
 
         try:
-            page_with_text = PageWithText(**json_response)
+            page_with_text = PageWithVolume(**json_response)
         except ValidationError as error:
             raise HTTPException(
                 status_code=404,
                 detail=f"No parent text found for {page_slug}. {error}",
             )
 
-        text_meta = page_with_text.data[0].attributes.text.data.attributes
+        text_meta = page_with_text.data[0].attributes.Volume.data.attributes
 
         return text_meta
 
@@ -165,7 +165,7 @@ class Strapi:
         Should return a list of component dictionaries."""
         json_response = await self.get_entries(
             plural_api_id="pages",
-            filters={"slug": {"$eq": page_slug}},
+            filters={"Slug": {"$eq": page_slug}},
             populate={"Content": "*"},
         )
         try:

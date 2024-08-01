@@ -39,7 +39,7 @@ async def sert_chat(
     # Retrieve the chunks that are the least similar to the student's summary
     least_similar_chunks = await faiss.retrieve_chunks(
         RetrievalInput(
-            text_slug=text_meta.slug,
+            text_slug=text_meta.Slug,
             page_slugs=[summary.page_slug],
             text=summary.summary.text,
             retrieve_strategy=RetrievalStrategy.least_similar,

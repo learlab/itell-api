@@ -1,6 +1,6 @@
 import math
 import operator
-from typing import Callable, Literal
+from typing import Callable, Literal, Union
 
 from ..schemas.summary import (
     AnalyticFeedback,
@@ -12,22 +12,35 @@ from ..schemas.summary import (
 
 
 class FeedbackProcessor:
+    """A generic class for calculating feedback.
+    Initialized with a comparator function, a passing threshold,
+    and a list of feedback strings.
+
+    The comparator callable is used by the __call__ method and should accept the score
+    as the first argument and the threshold as the second argument.
+    It should return True when the score is passing and False when the score is failing.
+    Example: operator.gt(score, threshold) returns True when score > threshold.
+
+    Feedback_indexers determine how the score (and threshold) should be translated
+    into an int that is used to index the appropriate feedback string.
+    """
+
     def __init__(
         self,
         score_type: ScoreType,
-        threshold: float,
-        comparator: Callable[[float, float], bool],
+        threshold: float | bool,
+        comparator: Callable[[any, any], bool],
         feedback: list[str],
-        feedback_indexer: Literal["floor"] | None = None,
+        feedback_indexer: Literal["default", "floor"] = "default",
     ):
         self.score_type = score_type
         self.threshold = threshold
         self.comparator = comparator
         self.feedback = feedback
-        if feedback_indexer == "floor":
-            self.feedback_indexer = self._floor_indexer
-        else:
+        if feedback_indexer == "default":
             self.feedback_indexer = self._default_indexer
+        elif feedback_indexer == "floor":
+            self.feedback_indexer = self._floor_indexer
 
     def _default_indexer(self, score: float) -> Literal[0, 1]:
         """Returns 0 is score is passing, 1 if score is failing."""
@@ -37,7 +50,7 @@ class FeedbackProcessor:
         """Returns the floor of the score."""
         return math.floor(score)
 
-    def __call__(self, score: float | None) -> AnalyticFeedback:
+    def __call__(self, score: Union[float, bool, None]) -> AnalyticFeedback:
         if score is None:
             feedback = Feedback(is_passed=None, prompt=None)
         else:
@@ -47,6 +60,7 @@ class FeedbackProcessor:
         return AnalyticFeedback(type=self.score_type, feedback=feedback)
 
 
+# Passing summaries have less than threshold containment score
 containment = FeedbackProcessor(
     score_type=ScoreType.containment,
     threshold=0.6,
@@ -57,6 +71,7 @@ containment = FeedbackProcessor(
     ],
 )
 
+# Passing summaries have less than threshold containment score
 containment_chat = FeedbackProcessor(
     score_type=ScoreType.containment_chat,
     threshold=0.6,
@@ -100,29 +115,33 @@ language = FeedbackProcessor(
     ],
 )
 
+# Passing summaries have > False English score (English is detected)
 english = FeedbackProcessor(
     score_type=ScoreType.english,
     comparator=operator.gt,
     threshold=False,
     feedback=[
-        None,
+        None,  # No feedback for passing
         "Please write your summary in English.",
     ],
 )
 
+# Passing summaries have < True profanity score (Profanity is not detected)
 profanity = FeedbackProcessor(
     score_type=ScoreType.profanity,
     comparator=operator.lt,
     threshold=True,
     feedback=[
-        None,
+        None,  # No feedback for passing
         "Please avoid using profanity in your summary.",
     ],
 )
 
 
 def summary_feedback(results: SummaryResults) -> SummaryResultsWithFeedback:
-    prompt_details = [
+    """Provide feedback on a summary based on the results
+    of the summary scoring model."""
+    prompt_details: list[AnalyticFeedback] = [
         containment(results.containment),
         containment_chat(results.containment_chat),
         similarity(results.similarity),
@@ -132,7 +151,10 @@ def summary_feedback(results: SummaryResults) -> SummaryResultsWithFeedback:
         language(results.language),
     ]
 
-    is_passed = all(
+    # Overall Feedback
+    # Check if all feedback that exists is passing
+    # Ignores feedback with .is_passed = None
+    is_passed: bool = all(
         feedback.feedback.is_passed
         for feedback in prompt_details
         if feedback.feedback.is_passed is not None

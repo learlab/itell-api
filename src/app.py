@@ -5,7 +5,6 @@ from contextlib import asynccontextmanager
 import sentry_sdk
 from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi_utils.tasks import repeat_every
 from transformers import logging as transformers_logging
 
 from .dependencies.auth import developer_role, get_role
