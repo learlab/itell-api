@@ -1,4 +1,5 @@
 from pydantic import ValidationError
+
 from src.schemas.chat import ChatResponse, EventType
 
 
