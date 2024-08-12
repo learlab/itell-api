@@ -43,27 +43,6 @@ class SupabaseClient(AsyncClient):
 
         return Response(status_code=201)
 
-    async def retrieve_chunks(self, input_body: RetrievalInput) -> RetrievalResults:
-
-        embedding = await self.embed(input_body.text)
-
-        query_params = {
-            "embed": embedding,
-            "match_threshold": input_body.similarity_threshold,
-            "match_count": input_body.match_count,
-            "retrieve_strategy": input_body.retrieve_strategy,
-            "page_slugs": input_body.page_slugs,
-        }
-
-        try:
-            response = await self.rpc("retrieve_chunks", query_params).execute()
-        except (TypeError, AttributeError) as error:
-            raise HTTPException(status_code=500, detail=str(error))
-
-        matches = response.data
-
-        return RetrievalResults(matches=matches)
-
     async def page_similarity(self, text: str, page_slug: str) -> float:
         """Returns the similarity between the embedding and the target page."""
 

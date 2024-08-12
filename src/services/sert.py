@@ -58,8 +58,6 @@ async def sert_chat(
         match.chunk: match.similarity for match in least_similar_chunks.matches
     }
 
-    # print(similarity_dict)
-
     for chunk in similarity_dict.keys():
         if chunk in summary.excluded_chunks:
             # -1 to similarity of excluded chunks will make them unlikely selections
@@ -96,8 +94,7 @@ async def sert_chat(
         question_type=question_type,
         question_type_definition=question_type_definitions[question_type],
     )
-    print(prompt)
-
+    
     sampling_params = SamplingParams(temperature=0.4, max_tokens=4096)
 
     return await chat_pipeline(

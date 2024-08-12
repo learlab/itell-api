@@ -78,12 +78,10 @@ class FAISS_Wrapper:
         else:
             search_docs = self.db.similarity_search_with_score(
                 input_body.text,
-                k=10,
+                k=input_body.match_count,
                 filter=search_filter,
                 score_threshold=input_body.similarity_threshold,
             )
-            for i in sorted(search_docs, key=lambda x: x[1], reverse=False):
-                print(i[0].metadata["chunk"], i[1])
         matches = []
         for doc in search_docs:
             matches.append(
@@ -96,6 +94,18 @@ class FAISS_Wrapper:
             )
         return RetrievalResults(matches=matches)
         return searchDocs
+    
+    async def page_similarity(self, text: str, page_slug: str) -> float:
+        """Returns the similarity between the embedding and the target page."""
+        results = self.db.similarity_search_with_score(
+            text,
+            k=1000,  # get all docs
+            filter={"page": page_slug},
+        )
+        if not results:
+            return 100.0
+        similarities = [result[1] for result in results]
+        return sum(similarities) / len(similarities)
 
 
 # pip install -U langchain-community faiss-cpu langchain-openai tiktoken

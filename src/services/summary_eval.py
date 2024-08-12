@@ -2,7 +2,7 @@ import gcld3
 from transformers import logging
 
 from ..dependencies.strapi import Strapi
-from ..dependencies.supabase import SupabaseClient
+from ..dependencies.faiss import FAISS
 from ..pipelines.containment import score_containment
 from ..pipelines.keyphrases import suggest_keyphrases
 from ..pipelines.model_runner import Pipes
@@ -41,7 +41,7 @@ def weight_chunks(chunks: list[Chunk], focus_time_dict: dict) -> list[ChunkWithW
 async def summary_score(
     summary_input: SummaryInputStrapi,
     strapi: Strapi,
-    supabase: SupabaseClient,
+    faiss: FAISS,
     pipes: Pipes,
 ) -> tuple[Summary, SummaryResults]:
     """Checks summary for text copied from the source and for semantic
@@ -91,9 +91,8 @@ async def summary_score(
 
     # Check if summary is similar to source text
     results["similarity"] = (
-        await supabase.page_similarity(summary.summary.text, summary.page_slug) + 0.15
+        await faiss.page_similarity(summary.summary.text, summary.page_slug)
     )  # adding 0.15 to bring similarity score in line with old doc2vec model
-
     # Generate keyphrase suggestions
     included, suggested = await suggest_keyphrases(
         summary.summary, summary.chunks, pipes
@@ -114,7 +113,7 @@ async def summary_score(
     junk_filter = (
         results["containment"] > 0.6
         or results.get("containment_chat", 0.0) > 0.6
-        or results["similarity"] < 0.5
+        or results["similarity"] > 1.15
         or results["english"] is False
         or results["profanity"] is True
     )

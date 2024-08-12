@@ -84,8 +84,8 @@ containment_chat = FeedbackProcessor(
 
 similarity = FeedbackProcessor(
     score_type=ScoreType.similarity,
-    threshold=0.5,
-    comparator=operator.gt,
+    threshold=1.15,
+    comparator=operator.lt,
     feedback=[
         "You did a good job of staying on topic and writing about the main ideas of the text.",  # noqa: E501
         "To be successful, you need to stay on topic. Find the main ideas of the text and focus your summary on those ideas.",  # noqa: E501

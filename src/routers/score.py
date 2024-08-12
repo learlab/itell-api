@@ -30,8 +30,8 @@ async def score_summary(
     Requires a page_slug.
     """
     strapi = request.app.state.strapi
-    supabase = request.app.state.supabase
-    _, results = await summary_score(input_body, strapi, supabase)
+    faiss = request.app.state.faiss
+    _, results = await summary_score(input_body, strapi, faiss)
     return results
 
 
@@ -66,10 +66,9 @@ async def score_summary_with_stairs(
     - **question_type**: the type of SERT question
     """
     strapi = request.app.state.strapi
-    supabase = request.app.state.supabase
     faiss = request.app.state.faiss
     pipes = request.app.state.pipes
-    summary, results = await summary_score(input_body, strapi, supabase, pipes)
+    summary, results = await summary_score(input_body, strapi, faiss, pipes)
 
     feedback: SummaryResultsWithFeedback = summary_feedback(results)
 
@@ -79,7 +78,6 @@ async def score_summary_with_stairs(
     feedback_details = {item.type: item.feedback for item in feedback.prompt_details}
 
     if not feedback_details["Content"].is_passed:
-        print("Content feedback")
         feedback_stream = await sert_chat(summary, strapi, faiss)
     elif not feedback_details["Language"].is_passed:
         feedback_stream = await language_feedback_chat(summary, strapi)
