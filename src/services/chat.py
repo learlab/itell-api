@@ -6,7 +6,6 @@ from vllm.sampling_params import SamplingParams
 
 from ..dependencies.faiss import FAISS_Wrapper
 from ..dependencies.strapi import Strapi
-from ..dependencies.supabase import SupabaseClient
 from ..pipelines.chat import chat_pipeline
 from ..schemas.chat import ChatInput, ChatInputCRI, EventType, PromptInput
 from ..schemas.embedding import RetrievalInput

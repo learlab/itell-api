@@ -90,8 +90,8 @@ async def summary_score(
         )
 
     # Check if summary is similar to source text
-    results["similarity"] = (
-        await faiss.page_similarity(summary.summary.text, summary.page_slug)
+    results["similarity"] = await faiss.page_similarity(
+        summary.summary.text, summary.page_slug
     )  # adding 0.15 to bring similarity score in line with old doc2vec model
     # Generate keyphrase suggestions
     included, suggested = await suggest_keyphrases(

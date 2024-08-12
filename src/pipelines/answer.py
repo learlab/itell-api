@@ -17,9 +17,15 @@ class AnswerPipeline:
     bleurt_threshold = 0.7
 
     def __init__(self):
-        self.mpnet_classifier = pipeline("text-classification", model=self.mpnet_model, device=0 if torch.cuda.is_available() else -1)
+        self.mpnet_classifier = pipeline(
+            "text-classification",
+            model=self.mpnet_model,
+            device=0 if torch.cuda.is_available() else -1,
+        )
         self.bleurt_classifier = pipeline(
-            "text-classification", model=self.bleurt_model, device=0 if torch.cuda.is_available() else -1
+            "text-classification",
+            model=self.bleurt_model,
+            device=0 if torch.cuda.is_available() else -1,
         )
 
     def __call__(self, candidate: str, reference: str) -> int:

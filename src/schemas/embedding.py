@@ -22,7 +22,7 @@ class RetrievalInput(BaseModel, use_enum_values=True):
     text_slug: Optional[str] = None
     page_slugs: list[str]
     text: str  # text to compare to (student summary)
-    similarity_threshold: Optional[float] = 10.0 # Lower is more similar
+    similarity_threshold: Optional[float] = 10.0  # Lower is more similar
     retrieve_strategy: Optional[RetrievalStrategy] = RetrievalStrategy.most_similar
     match_count: Optional[int] = 1
 

@@ -14,7 +14,7 @@ from .summary import LongformerPipeline, SummaryPipeline
 class Pipes:
     def __init__(self):
         self.embedding_pipe = EmbeddingPipeline()
-        
+
         # SpaCy is currently only used for tokenization, lemmatization, and stop words.
         self.spacy = spacy.load(
             "en_core_web_sm", enable=["tagger", "attribute_ruler", "lemmatizer"]

@@ -94,7 +94,7 @@ class FAISS_Wrapper:
             )
         return RetrievalResults(matches=matches)
         return searchDocs
-    
+
     async def page_similarity(self, text: str, page_slug: str) -> float:
         """Returns the similarity between the embedding and the target page."""
         results = self.db.similarity_search_with_score(
