@@ -27,7 +27,7 @@ class Embedding(Embeddings):
         return EmbeddingPipeline()(text).tolist()[0]
 
 
-class FAISS:
+class FAISS_Wrapper:
     def __init__(self, supabase: SupabaseClient) -> None:
         self.supabase = supabase
         self.db = None
@@ -57,36 +57,44 @@ class FAISS:
 
         embedding = Embedding()
 
-        self.db = FAISS.from_embeddings(embeddings, embedding)
+        self.db = FAISS.from_embeddings(embeddings, embedding, metadata)
         self.db.save_local(folder_path="faiss_db", index_name="myFaissIndex")
-        print(self.db.index.ntotal)
-
-        # searchDocs = self.db.similarity_search("What is governance?")
-        # print(searchDocs[0])
 
     async def retrieve_chunks(self, input_body: RetrievalInput) -> RetrievalResults:
         def search_filter(doc):
-            return doc["page_slug"] in input_body.page_slugs
+            return doc["page"] in input_body.page_slugs
 
+        search_docs = []
         if input_body.retrieve_strategy == RetrievalStrategy.least_similar:
-            search_docs = self.db.similarity_search_with_score(
+            results = self.db.similarity_search_with_score(
                 input_body.text,
                 k=1000,  # get all docs
                 filter=search_filter,
-                score_threshold=input_body.similarity_threshold,
-                reverse=True,
+                # score_threshold=input_body.similarity_threshold,
             )
 
-            # sort in ascending order
-            search_docs = sorted(search_docs, key=lambda x: x[1])
-            return search_docs[: input_body.match_count]
-
-        searchDocs = self.db.similarity_search_with_score(
-            input_body.text,
-            k=input_body.match_count,
-            filter=search_filter,
-            score_threshold=input_body.similarity_threshold,
-        )
+            # sort in descending order
+            results = sorted(results, key=lambda x: x[1], reverse=True)
+            search_docs = results[: input_body.match_count]
+            print(search_docs)
+        else:
+            search_docs = self.db.similarity_search_with_score(
+                input_body.text,
+                k=input_body.match_count,
+                filter=search_filter,
+                # score_threshold=input_body.similarity_threshold,
+            )
+        matches = []
+        for doc in search_docs:
+            matches.append(
+                {
+                    "chunk": doc[0].metadata["chunk"],
+                    "page": doc[0].metadata["page"],
+                    "content": doc[0].metadata["context"],
+                    "similarity": doc[1],
+                }
+            )
+        return RetrievalResults(matches=matches)
         return searchDocs
 
 

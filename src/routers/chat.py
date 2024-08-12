@@ -1,7 +1,6 @@
 from fastapi import APIRouter, Request
 from fastapi.responses import StreamingResponse
 
-from ..dependencies.faiss import FAISS
 from ..logging.logging_router import LoggingRoute, LoggingStreamingResponse
 from ..schemas.chat import ChatInput, ChatInputCRI, PromptInput
 from ..services.chat import cri_chat, moderated_chat, unmoderated_chat
@@ -25,15 +24,6 @@ async def chat(
     chat_stream = await moderated_chat(input_body, strapi, faiss)
 
     return LoggingStreamingResponse(content=chat_stream, media_type="text/event-stream")
-
-
-@router.post("/test")
-async def test_faiss(
-    request: Request,
-) -> None:
-    supabase = request.app.state.supabase
-    faiss = FAISS(supabase)
-    return await faiss.create_faiss_index()
 
 
 @router.post("/chat/raw")

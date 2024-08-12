@@ -58,11 +58,13 @@ async def sert_chat(
         match.chunk: match.similarity for match in least_similar_chunks.matches
     }
 
+    # print(similarity_dict)
+
     for chunk in similarity_dict.keys():
         if chunk in summary.excluded_chunks:
-            # +1 to similarity of excluded chunks will make them unlikely selections
+            # -1 to similarity of excluded chunks will make them unlikely selections
             # May still be selected if no other chunks are available
-            similarity_dict[chunk] += 1
+            similarity_dict[chunk] -= 1
 
     # Calculate final score for rereading: reading_time_score * similarity
     chunks: list[tuple[ChunkWithWeight, float]] = [
@@ -77,8 +79,8 @@ async def sert_chat(
             detail="No chunks in the vector store match the provided list of chunks.",
         )
 
-    # Select the chunk with the lowest score
-    selected_chunk, _ = min(chunks, key=lambda x: x[1])
+    # Select the chunk with the highest score
+    selected_chunk, _ = max(chunks, key=lambda x: x[1])
 
     chunk_text = selected_chunk.CleanText[
         : min(2000, len(selected_chunk.CleanText))  # first 2,000 characters
@@ -89,11 +91,12 @@ async def sert_chat(
     # Construct the SERT prompt
     prompt = prompt_template.render(
         text_name=text_meta.Title,
-        excerpt_chunk=chunk_text,
+        context=chunk_text,
         student_summary=summary.summary.text,
         question_type=question_type,
         question_type_definition=question_type_definitions[question_type],
     )
+    print(prompt)
 
     sampling_params = SamplingParams(temperature=0.4, max_tokens=4096)
 

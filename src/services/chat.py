@@ -4,7 +4,7 @@ from fastapi import HTTPException
 from jinja2 import Template
 from vllm.sampling_params import SamplingParams
 
-from ..dependencies.faiss import FAISS
+from ..dependencies.faiss import FAISS_Wrapper
 from ..dependencies.strapi import Strapi
 from ..dependencies.supabase import SupabaseClient
 from ..pipelines.chat import chat_pipeline
@@ -27,20 +27,11 @@ sampling_params = SamplingParams(temperature=0.4, max_tokens=4096)
 async def moderated_chat(
     chat_input: ChatInput,
     strapi: Strapi,
-    faiss: FAISS,
+    faiss: FAISS_Wrapper,
 ) -> AsyncGenerator[bytes, None]:
     # Adding in the specific name of the textbook majorly improved response quality
     text_meta = await strapi.get_text_meta(chat_input.page_slug)
 
-    # relevant_chunks = await supabase.retrieve_chunks(
-    #     RetrievalInput(
-    #         text_slug=text_meta.slug,
-    #         page_slugs=[chat_input.page_slug, "itell-documentation"],
-    #         text=chat_input.message,
-    #         similarity_threshold=0.2,
-    #         match_count=1,
-    #     )
-    # )
     relevant_chunks = await faiss.retrieve_chunks(
         RetrievalInput(
             text_slug=text_meta.Slug,

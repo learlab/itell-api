@@ -67,6 +67,7 @@ async def score_summary_with_stairs(
     """
     strapi = request.app.state.strapi
     supabase = request.app.state.supabase
+    faiss = request.app.state.faiss
     pipes = request.app.state.pipes
     summary, results = await summary_score(input_body, strapi, supabase, pipes)
 
@@ -78,7 +79,8 @@ async def score_summary_with_stairs(
     feedback_details = {item.type: item.feedback for item in feedback.prompt_details}
 
     if not feedback_details["Content"].is_passed:
-        feedback_stream = await sert_chat(summary, strapi, supabase)
+        print("Content feedback")
+        feedback_stream = await sert_chat(summary, strapi, faiss)
     elif not feedback_details["Language"].is_passed:
         feedback_stream = await language_feedback_chat(summary, strapi)
 

@@ -8,7 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from transformers import logging as transformers_logging
 
 from .dependencies.auth import developer_role, get_role
-from .dependencies.faiss import FAISS
+from .dependencies.faiss import FAISS_Wrapper
 from .dependencies.strapi import Strapi
 from .dependencies.supabase import SupabaseClient
 from .logging.setup import setup_logging
@@ -51,11 +51,12 @@ def get_app():
             os.environ["VECTOR_KEY"],
         )
         app.state.pipes = Pipes.remote()
-        app.state.faiss = FAISS(app.state.supabase)
+        app.state.faiss = FAISS_Wrapper(app.state.supabase)
+        await app.state.faiss.create_faiss_index()
 
         async def periodic_task():
             while True:
-                app.state.faiss = FAISS(app.state.supabase)
+                await app.state.faiss.create_faiss_index()
                 await asyncio.sleep(10 * 60)
 
         # Start the periodic task
