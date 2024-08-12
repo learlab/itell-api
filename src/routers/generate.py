@@ -50,8 +50,6 @@ async def retrieve_chunks(
     input_body: RetrievalInput,
     request: Request,
 ) -> RetrievalResults:
-    # supabase = request.app.state.supabase
-    # return await supabase.retrieve_chunks(input_body)
     faiss = request.app.state.faiss
     return await faiss.retrieve_chunks(input_body)
 

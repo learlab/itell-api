@@ -9,7 +9,6 @@ from vllm.sampling_params import SamplingParams
 
 from ..dependencies.faiss import FAISS
 from ..dependencies.strapi import Strapi
-from ..dependencies.supabase import SupabaseClient
 from ..pipelines.chat import chat_pipeline
 from ..schemas.chat import EventType
 from ..schemas.embedding import RetrievalInput, RetrievalStrategy
@@ -94,7 +93,7 @@ async def sert_chat(
         question_type=question_type,
         question_type_definition=question_type_definitions[question_type],
     )
-    
+
     sampling_params = SamplingParams(temperature=0.4, max_tokens=4096)
 
     return await chat_pipeline(

@@ -43,27 +43,6 @@ class SupabaseClient(AsyncClient):
 
         return Response(status_code=201)
 
-    async def page_similarity(self, text: str, page_slug: str) -> float:
-        """Returns the similarity between the embedding and the target page."""
-
-        query_params = {
-            "summary_embedding": await self.embed(text),
-            "target_page": page_slug,
-        }
-
-        try:
-            response = await self.rpc("page_similarity", query_params).execute()
-        except (TypeError, AttributeError) as error:
-            raise HTTPException(status_code=500, detail=str(error))
-
-        similarity = response.data[0]["similarity"]
-
-        if similarity is None:
-            message = f"Page similarity not found for {page_slug}"
-            raise HTTPException(status_code=404, detail=message)
-
-        return similarity
-
     async def delete_unused(self, input_body: DeleteUnusedInput) -> Response:
         """Deletes all chunks not in the chunk slugs list."""
 
