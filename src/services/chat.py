@@ -37,7 +37,7 @@ async def moderated_chat(
             text_slug=text_meta.Slug,
             page_slugs=[chat_input.page_slug, "itell-documentation"],
             text=chat_input.message,
-            similarity_threshold=0.2,
+            similarity_threshold=1.3,
             match_count=1,
         )
     )

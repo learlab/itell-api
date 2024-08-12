@@ -70,20 +70,20 @@ class FAISS_Wrapper:
                 input_body.text,
                 k=1000,  # get all docs
                 filter=search_filter,
-                # score_threshold=input_body.similarity_threshold,
             )
 
             # sort in descending order
             results = sorted(results, key=lambda x: x[1], reverse=True)
             search_docs = results[: input_body.match_count]
-            print(search_docs)
         else:
             search_docs = self.db.similarity_search_with_score(
                 input_body.text,
-                k=input_body.match_count,
+                k=10,
                 filter=search_filter,
-                # score_threshold=input_body.similarity_threshold,
+                score_threshold=input_body.similarity_threshold,
             )
+            for i in sorted(search_docs, key=lambda x: x[1], reverse=False):
+                print(i[0].metadata["chunk"], i[1])
         matches = []
         for doc in search_docs:
             matches.append(
