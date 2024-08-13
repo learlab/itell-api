@@ -7,8 +7,15 @@ from vllm.sampling_params import SamplingParams
 from ..dependencies.faiss import FAISS_Wrapper
 from ..dependencies.strapi import Strapi
 from ..pipelines.chat import chat_pipeline
-from ..schemas.chat import ChatInput, ChatInputCRI, EventType, PromptInput
-from ..schemas.embedding import RetrievalInput
+from ..schemas.chat import (
+    ChatInput,
+    ChatInputCRI,
+    ChatInputSERT,
+    EventType,
+    PromptInput,
+)
+from ..schemas.embedding import Match, RetrievalInput
+from ..schemas.strapi import Chunk
 from ..schemas.summary import Summary
 
 with open("templates/chat.jinja2", "r", encoding="utf8") as file_:
@@ -21,6 +28,20 @@ with open("templates/language_feedback.jinja2", "r", encoding="utf8") as file_:
     language_feedback_template = Template(file_.read())
 
 sampling_params = SamplingParams(temperature=0.4, max_tokens=4096)
+
+
+def choose_relevant_chunk(
+    relevant_chunks: list[Match], current_chunk: str | None
+) -> Match | None:
+    if not relevant_chunks:
+        return None
+
+    relevant_chunk_dict = {match.chunk: match for match in relevant_chunks}
+
+    if current_chunk and current_chunk in relevant_chunk_dict:
+        return relevant_chunk_dict[current_chunk]
+    else:
+        return max(relevant_chunks, key=lambda match: match.similarity)
 
 
 async def moderated_chat(
@@ -37,45 +58,40 @@ async def moderated_chat(
             page_slugs=[chat_input.page_slug, "itell-documentation"],
             text=chat_input.message,
             similarity_threshold=1.3,
-            match_count=1,
+            match_count=10,
         )
     )
 
-    if len(relevant_chunks.matches) > 0:
-        relevant_chunk = relevant_chunks.matches[0]
-    else:
-        relevant_chunk = None
+    relevant_chunk = choose_relevant_chunk(
+        relevant_chunks.matches, chat_input.current_chunk
+    )
 
     if relevant_chunk and relevant_chunk.page == "itell-documentation":
         text_name = "iTELL Documentation"
         text_info = "iTELL stands for intelligent texts for enhanced lifelong learning. It is a platform that provides students with a personalized learning experience. This user guide provides information on how to navigate the iTELL platform."  # noqa: E501
+        cited_chunk = "[User Guide]"
     else:
         text_name = text_meta.Title
         text_info = text_meta.Description
-
-    # TODO: Retrieve Examples
-    # We can set up a database of a questions and responses
-    # that the bot will use as a reference.
+        cited_chunk = relevant_chunk.chunk if relevant_chunk else None
 
     # Get last 4 messages from chat history
-    chat_history = chat_input.history[-4:]
+    chat_history = [(msg.agent, msg.text) for msg in chat_input.history[-4:]]
 
     prompt = prompt_template.render(
         text_name=text_name,
         text_info=text_info,
         context=relevant_chunk.content if relevant_chunk else None,
-        chat_history=[(msg.agent, msg.text) for msg in chat_history],
+        chat_history=chat_history,
         user_message=chat_input.message,
         student_summary=chat_input.summary,
     )
 
-    cited_chunks = [
-        match.chunk if match.page != "itell-documentation" else "[User Guide]"
-        for match in relevant_chunks.matches
-    ]
-
     return await chat_pipeline(
-        prompt, sampling_params, event_type=EventType.chat, context=cited_chunks
+        prompt,
+        sampling_params,
+        event_type=EventType.chat,
+        context=[cited_chunk] if cited_chunk else None,
     )
 
 
@@ -85,6 +101,29 @@ async def unmoderated_chat(raw_chat_input: PromptInput) -> AsyncGenerator[bytes,
         sampling_params,
         event_type=EventType.chat,
     )
+
+
+async def sert_chat(
+    chat_input: ChatInputSERT, strapi: Strapi
+) -> AsyncGenerator[bytes, None]:
+    text_meta = await strapi.get_text_meta(chat_input.page_slug)
+    current_chunk: Chunk = await strapi.get_chunk(
+        chat_input.page_slug, chat_input.current_chunk
+    )
+
+    # Get last 4 messages from chat history
+    chat_history = [(msg.agent, msg.text) for msg in chat_input.history[-4:]]
+
+    prompt = prompt_template.render(
+        text_name=text_meta.Title,
+        text_info=text_meta.Description,
+        context=current_chunk.CleanText,
+        chat_history=chat_history,
+        user_message=chat_input.message,
+        student_summary=chat_input.summary,
+    )
+
+    return await chat_pipeline(prompt, sampling_params, event_type=EventType.chat)
 
 
 async def cri_chat(

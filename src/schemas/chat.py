@@ -22,6 +22,23 @@ class ChatInput(BaseModel):
     )
     summary: Optional[str] = None
     message: str
+    current_chunk: Optional[str] = None
+
+
+class ChatInputSERT(BaseModel):
+    """Chat input for SERT dialogues."""
+
+    page_slug: str
+    history: list[ChatMessage] = Field(
+        default_factory=list,
+        description=(
+            "The full chat history as a list of {'agent': 'user'|'bot', 'text': str}"
+            " dicts."
+        ),
+    )
+    summary: Optional[str] = None
+    message: str
+    current_chunk: str
 
 
 class ChatInputCRI(BaseModel):
