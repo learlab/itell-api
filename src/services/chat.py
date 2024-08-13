@@ -30,16 +30,18 @@ with open("templates/language_feedback.jinja2", "r", encoding="utf8") as file_:
 sampling_params = SamplingParams(temperature=0.4, max_tokens=4096)
 
 
-def choose_relevant_chunk(relevant_chunks: list[Match], current_chunk: str):
-    if len(relevant_chunks.matches) == 0:
+def choose_relevant_chunk(
+    relevant_chunks: list[Match], current_chunk: str | None
+) -> Match | None:
+    if not relevant_chunks:
         return None
 
-    relevant_chunk_dict = {match.chunk: match for match in relevant_chunks.matches}
+    relevant_chunk_dict = {match.chunk: match for match in relevant_chunks}
 
-    if current_chunk in relevant_chunk_dict:
+    if current_chunk and current_chunk in relevant_chunk_dict:
         return relevant_chunk_dict[current_chunk]
     else:
-        return relevant_chunks.matches[0]
+        return max(relevant_chunks, key=lambda match: match.similarity)
 
 
 async def moderated_chat(
@@ -60,14 +62,18 @@ async def moderated_chat(
         )
     )
 
-    relevant_chunk = choose_relevant_chunk(relevant_chunks, chat_input.current_chunk)
+    relevant_chunk = choose_relevant_chunk(
+        relevant_chunks.matches, chat_input.current_chunk
+    )
 
     if relevant_chunk and relevant_chunk.page == "itell-documentation":
         text_name = "iTELL Documentation"
         text_info = "iTELL stands for intelligent texts for enhanced lifelong learning. It is a platform that provides students with a personalized learning experience. This user guide provides information on how to navigate the iTELL platform."  # noqa: E501
+        cited_chunk = "[User Guide]"
     else:
         text_name = text_meta.Title
         text_info = text_meta.Description
+        cited_chunk = relevant_chunk.chunk if relevant_chunk else None
 
     # Get last 4 messages from chat history
     chat_history = [(msg.agent, msg.text) for msg in chat_input.history[-4:]]
@@ -81,13 +87,11 @@ async def moderated_chat(
         student_summary=chat_input.summary,
     )
 
-    if relevant_chunk.page == "itell-documentation":
-        cited_chunk = "[User Guide]"
-    else:
-        cited_chunk = relevant_chunk.chunk
-
     return await chat_pipeline(
-        prompt, sampling_params, event_type=EventType.chat, context=cited_chunk
+        prompt,
+        sampling_params,
+        event_type=EventType.chat,
+        context=[cited_chunk] if cited_chunk else None,
     )
 
 
