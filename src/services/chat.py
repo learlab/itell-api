@@ -21,6 +21,12 @@ from ..schemas.summary import Summary
 with open("templates/chat.jinja2", "r", encoding="utf8") as file_:
     prompt_template = Template(file_.read())
 
+with open("templates/sert_chat_general.jinja2", "r", encoding="utf8") as file_:
+    sert_template = Template(file_.read())
+
+with open("templates/sert_chat_final.jinja2", "r", encoding="utf8") as file_:
+    sert_template_final = Template(file_.read())
+
 with open("templates/cri_chat.jinja2", "r", encoding="utf8") as file_:
     cri_prompt_template = Template(file_.read())
 
@@ -111,17 +117,27 @@ async def sert_chat(
         chat_input.page_slug, chat_input.current_chunk
     )
 
-    # Get last 4 messages from chat history
-    chat_history = [(msg.agent, msg.text) for msg in chat_input.history[-4:]]
+    # Get full chat history
+    chat_history = [(msg.agent, msg.text) for msg in chat_input.history]
 
-    prompt = prompt_template.render(
-        text_name=text_meta.Title,
-        text_info=text_meta.Description,
-        context=current_chunk.CleanText,
-        chat_history=chat_history,
-        user_message=chat_input.message,
-        student_summary=chat_input.summary,
-    )
+    input_dict = {
+        "text_name": text_meta.Title,
+        "text_info": text_meta.Description,
+        "context": current_chunk.CleanText,
+        "chat_history": chat_history,
+        "user_message": chat_input.message,
+        "student_summary": chat_input.summary,
+    }
+
+    # If this is the user's second response to the bot, prompt should be different
+    # chat_history will contain [bot_msg, user_msg, bot_msg]
+    # 1st bot_msg is SERT question.
+    # current user_message is stored in chat_input.message
+    # next bot_msg should be the final response
+    if len(chat_history) >= 3:
+        prompt = sert_template_final.render(**input_dict)
+    else:
+        prompt = sert_template.render(**input_dict)
 
     return await chat_pipeline(prompt, sampling_params, event_type=EventType.chat)
 

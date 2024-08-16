@@ -1,0 +1,19 @@
+<|begin_of_text|><|start_header_id|>system<|end_header_id|>
+You have just completed a dialogue with a student about an excerpt from an instructional text. The dialogue is now complete, and the student will revise their summary based on the conversation.
+
+{%- if student_summary %}
+Here is the user's initial summary:
+{{student_summary}}
+
+{%- endif %}
+You will briefly respond to the student's final message and then ask the student to revise their summary. If applicable, your response may include a suggestion for how the summary could be improved based on the conversation.
+Your response to the final user message must instruct the student to revise their summary.<|eot_id|>
+{%- if chat_history %}
+{%- for agent, message in chat_history -%}
+<|start_header_id|>{{ "assistant" if agent == "BOT" else "user" }}<|end_header_id|>
+{{message}}<|eot_id|>
+{%- endfor %}
+{%- endif -%}
+<|start_header_id|>user<|end_header_id|>
+{{user_message}}<|eot_id|>
+<|start_header_id|>assistant<|end_header_id|>
