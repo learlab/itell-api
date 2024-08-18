@@ -1,6 +1,5 @@
 import gcld3
 from spacy.tokens import Doc
-from transformers import logging
 
 from ..dependencies.strapi import Strapi
 from ..dependencies.supabase import SupabaseClient
@@ -17,8 +16,7 @@ from ..schemas.summary import (
     SummaryInputStrapi,
     SummaryResults,
 )
-
-logging.set_verbosity_error()
+from ..services.summary_feedback import feedback_processors
 
 content_pipe = LongformerPipeline("tiedaar/longformer-content-global")
 language_pipe = SummaryPipeline("tiedaar/language-beyond-the-source")
@@ -113,12 +111,17 @@ async def summary_score(
     results["profanity"] = profanity_filter(summary.summary)
 
     # Check if summary fails to meet minimum requirements
-    junk_filter = (
-        results["containment"] > 0.6
-        or results.get("containment_chat", 0.0) > 0.6
-        or results["similarity"] < 0.5
-        or results["english"] is False
-        or results["profanity"] is True
+    junk_filter = any(
+        score.feedback.is_passed is False
+        for score in [
+            feedback_processors["containment"](results["containment"]),
+            feedback_processors["containment_chat"](
+                results.get("containment_chat", 0.0)
+            ),
+            feedback_processors["similarity"](results["similarity"]),
+            feedback_processors["english"](results["english"]),
+            feedback_processors["profanity"](results["profanity"]),
+        ]
     )
 
     if junk_filter:
