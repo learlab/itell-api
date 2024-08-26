@@ -1,5 +1,6 @@
 from fastapi import APIRouter, HTTPException, Request, Response
 
+from ..logging.logging_router import LoggingRoute
 from ..schemas.embedding import (
     ChunkInput,
     DeleteUnusedInput,
@@ -8,7 +9,6 @@ from ..schemas.embedding import (
 )
 from ..schemas.transcript import TranscriptInput, TranscriptResults
 from ..services.transcript import transcript_generate
-from ..logging.logging_router import LoggingRoute
 
 router = APIRouter(route_class=LoggingRoute)
 
@@ -50,8 +50,8 @@ async def retrieve_chunks(
     input_body: RetrievalInput,
     request: Request,
 ) -> RetrievalResults:
-    supabase = request.app.state.supabase
-    return await supabase.retrieve_chunks(input_body)
+    faiss = request.app.state.faiss
+    return await faiss.retrieve_chunks(input_body)
 
 
 @router.post("/delete/embedding")
