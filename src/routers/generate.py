@@ -42,7 +42,10 @@ async def generate_embedding(
     It is only intended to be called by the Content Management System.
     """
     supabase = request.app.state.supabase
-    return await supabase.embedding_generate(input_body)
+    faiss = request.app.state.faiss
+    response = await supabase.embedding_generate(input_body, faiss)
+    faiss.create_faiss_index()
+    return response
 
 
 @router.post("/retrieve/chunks")
@@ -62,5 +65,8 @@ async def delete_unused_chunks(
     """This endpoint accepts a list of slugs of chunks currently in STRAPI.
     It deletes any embeddings in the vector store that are not in the list.
     """
+    faiss = request.app.state.faiss
     supabase = request.app.state.supabase
-    return await supabase.delete_unused(input_body)
+    response = await supabase.delete_unused(input_body, faiss)
+    await faiss.create_faiss_index()
+    return response

@@ -41,10 +41,11 @@ class SupabaseClient(AsyncClient):
             .execute()
         )
 
+        faiss.create_faiss_index()
+
         return Response(status_code=201)
 
     async def retrieve_chunks(self, input_body: RetrievalInput) -> RetrievalResults:
-
         embedding = await self.embed(input_body.text)
 
         query_params = {
