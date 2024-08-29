@@ -1,21 +1,12 @@
+import time
 from typing import Any, List
 
-# from langchain_community.vectorstores import FAISS
-# from langchain_core.embeddings import Embeddings
 import faiss
 import numpy as np
 
 from ..pipelines.embed import EmbeddingPipeline
 from ..schemas.embedding import RetrievalInput, RetrievalResults, RetrievalStrategy
 from .supabase import SupabaseClient
-
-# class Embedding(Embeddings):
-#     def __call__(self, *args: Any, **kwds: Any) -> Any:
-#         self.embed_query(*args, **kwds)
-
-#     def embed_documents(self, texts: List[str]) -> List[List[float]]:
-#         """Embed search docs."""
-#         return [EmbeddingPipeline()(text).tolist() for text in texts]
 
 
 def embed_query(text: str) -> List[float]:
@@ -33,8 +24,9 @@ class FAISS_Wrapper:
         """Creates a FAISS index for the vector store."""
         response = await self.supabase.table("embeddings").select("*").execute()
         vector_data = response.data
+        dim = 384
 
-        embeddings = np.array([[0] * 384])
+        embeddings = np.array([[0] * dim])
         metadata = np.array(
             [
                 {
@@ -47,7 +39,6 @@ class FAISS_Wrapper:
                 }
             ]
         )
-        dim = 384
 
         vector_data = filter(lambda x: x["embedding"] is not None, vector_data)
 
