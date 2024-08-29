@@ -72,7 +72,7 @@ class FAISS_Wrapper:
 
         print("Indexing embeddings...")
         # embeddings_reshaped = np.array(embeddings).reshape(-1, dim)
-        # faiss.normalize_L2(embeddings.astype(np.float32))
+        faiss.normalize_L2(embeddings.astype(np.float32))
         index.add(embeddings)
         print(f"Indexing complete. {index.ntotal} embeddings indexed.")
 
@@ -84,7 +84,7 @@ class FAISS_Wrapper:
             return doc["page"] in input_body.page_slugs
 
         query_embedding = np.array([embed_query(input_body.text)])
-        # faiss.normalize_L2(query_embedding.astype(np.float32))
+        faiss.normalize_L2(query_embedding.astype(np.float32))
 
         search_docs = []
         if input_body.retrieve_strategy == RetrievalStrategy.least_similar:
@@ -106,7 +106,6 @@ class FAISS_Wrapper:
                     search_filter(doc)
                     and similarities[0][j] >= input_body.similarity_threshold
                 ):
-                    print("appending")
                     search_docs.append((doc, similarities[0][j]))
             search_docs = sorted(search_docs, key=lambda x: x[1], reverse=True)[
                 0 : input_body.match_count
@@ -126,7 +125,7 @@ class FAISS_Wrapper:
     async def page_similarity(self, embedding: list[float], page_slug: str) -> float:
         """Returns the similarity between the embedding and the target page."""
         embedding_arr = np.array([embedding])
-        # faiss.normalize_L2(embedding_arr.astype(np.float32))
+        faiss.normalize_L2(embedding_arr.astype(np.float32))
 
         distances, results = self.index.search(embedding_arr, 1000)
         similarities = [
