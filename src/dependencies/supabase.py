@@ -45,47 +45,6 @@ class SupabaseClient(AsyncClient):
 
         return Response(status_code=201)
 
-    async def retrieve_chunks(self, input_body: RetrievalInput) -> RetrievalResults:
-        embedding = await self.embed(input_body.text)
-
-        query_params = {
-            "embed": embedding,
-            "match_threshold": input_body.similarity_threshold,
-            "match_count": input_body.match_count,
-            "retrieve_strategy": input_body.retrieve_strategy,
-            "page_slugs": input_body.page_slugs,
-        }
-
-        try:
-            response = await self.rpc("retrieve_chunks", query_params).execute()
-        except (TypeError, AttributeError) as error:
-            raise HTTPException(status_code=500, detail=str(error))
-
-        matches = response.data
-
-        return RetrievalResults(matches=matches)
-
-    async def page_similarity(self, embedding: list[float], page_slug: str) -> float:
-        """Returns the similarity between the embedding and the target page."""
-
-        query_params = {
-            "summary_embedding": embedding,
-            "target_page": page_slug,
-        }
-
-        try:
-            response = await self.rpc("page_similarity", query_params).execute()
-        except (TypeError, AttributeError) as error:
-            raise HTTPException(status_code=500, detail=str(error))
-
-        similarity = response.data[0]["similarity"]
-
-        if similarity is None:
-            message = f"Page similarity not found for {page_slug}"
-            raise HTTPException(status_code=404, detail=message)
-
-        return similarity
-
     async def delete_unused(self, input_body: DeleteUnusedInput) -> Response:
         """Deletes all chunks not in the chunk slugs list."""
 

@@ -71,7 +71,6 @@ class FAISS_Wrapper:
         index = faiss.index_factory(dim, "Flat", faiss.METRIC_INNER_PRODUCT)
 
         print("Indexing embeddings...")
-        # embeddings_reshaped = np.array(embeddings).reshape(-1, dim)
         faiss.normalize_L2(embeddings.astype(np.float32))
         index.add(embeddings)
         print(f"Indexing complete. {index.ntotal} embeddings indexed.")
