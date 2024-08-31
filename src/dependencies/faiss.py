@@ -1,5 +1,6 @@
+import logging
 import time
-from typing import Any, List
+from typing import List
 
 import faiss
 import numpy as np
@@ -9,16 +10,16 @@ from ..schemas.embedding import RetrievalInput, RetrievalResults, RetrievalStrat
 from .supabase import SupabaseClient
 
 
-def embed_query(text: str) -> List[float]:
-    """Embed query text."""
-    return EmbeddingPipeline()(text).tolist()[0]
-
-
 class FAISS_Wrapper:
     def __init__(self, supabase: SupabaseClient) -> None:
         self.supabase = supabase
         self.index = None
         self.metadata = []
+        self.pipeline = EmbeddingPipeline()
+    
+    def embed_query(self, text: str) -> List[float]:
+        """Embed query text."""
+        return self.pipeline(text).tolist()[0]
 
     async def create_faiss_index(self) -> None:
         """Creates a FAISS index for the vector store."""
@@ -54,26 +55,28 @@ class FAISS_Wrapper:
             metadata = np.append(metadata, data_info)
             embedding = data["embedding"].replace("[", "").replace("]", "").split(",")
             if len(embedding) != dim:
-                print(f"Skipping {data['chunk']} due to incorrect embedding length")
+                logging.info(f"Skipping {data['chunk']} due to incorrect embedding length")
                 continue
-            arr = np.array([float(i) for i in embedding])
+            arr = np.asarray(embedding, dtype=np.float32)
             embeddings = np.append(embeddings, [arr], axis=0)
 
+        res = faiss.StandardGpuResources()  # use a single GPU
         index = faiss.index_factory(dim, "Flat", faiss.METRIC_INNER_PRODUCT)
+        gpu_index_flat = faiss.index_cpu_to_gpu(res, 0, index)
 
-        print("Indexing embeddings...")
+        logging.info("Indexing embeddings...")
         faiss.normalize_L2(embeddings.astype(np.float32))
-        index.add(embeddings)
-        print(f"Indexing complete. {index.ntotal} embeddings indexed.")
+        gpu_index_flat.add(embeddings)
+        logging.info(f"Indexing complete. {gpu_index_flat.ntotal} embeddings indexed.")
 
-        self.index = index
+        self.index = gpu_index_flat
         self.metadata = metadata
 
     async def retrieve_chunks(self, input_body: RetrievalInput) -> RetrievalResults:
         def search_filter(doc):
             return doc["page"] in input_body.page_slugs
 
-        query_embedding = np.array([embed_query(input_body.text)])
+        query_embedding = np.array([self.embed_query(input_body.text)])
         faiss.normalize_L2(query_embedding.astype(np.float32))
 
         search_docs = []
