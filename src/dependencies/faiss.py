@@ -103,16 +103,10 @@ class FAISS_Wrapper:
             search_docs = sorted(search_docs, key=lambda x: x[1], reverse=True)[
                 0 : input_body.match_count
             ]
-        matches = []
-        for doc in search_docs:
-            matches.append(
-                {
-                    "chunk": doc[0]["chunk"],
+        matches = [{"chunk": doc[0]["chunk"],
                     "page": doc[0]["page"],
                     "content": doc[0]["context"],
-                    "similarity": doc[1],
-                }
-            )
+                    "similarity": doc[1]} for doc in search_docs]
         return RetrievalResults(matches=matches)
 
     async def page_similarity(self, embedding: list[float], page_slug: str) -> float:
