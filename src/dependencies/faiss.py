@@ -81,15 +81,12 @@ class FAISS_Wrapper:
 
         search_docs = []
         if input_body.retrieve_strategy == RetrievalStrategy.least_similar:
-            similarities, results = self.index.search(query_embedding, 1000)
+            similarities, results = self.index.search(query_embedding * -1, 1000)
             # apply filter
             for j, i in enumerate(results[0]):
                 doc = self.metadata[i]
                 if search_filter(doc):
                     search_docs.append((doc, similarities[0][j]))
-            search_docs = sorted(search_docs, key=lambda x: x[1], reverse=False)[
-                0 : input_body.match_count
-            ]
         else:
             similarities, results = self.index.search(query_embedding, 20)
             # apply filter
@@ -100,9 +97,9 @@ class FAISS_Wrapper:
                     and similarities[0][j] >= input_body.similarity_threshold
                 ):
                     search_docs.append((doc, similarities[0][j]))
-            search_docs = sorted(search_docs, key=lambda x: x[1], reverse=True)[
-                0 : input_body.match_count
-            ]
+        search_docs = sorted(search_docs, key=lambda x: x[1], reverse=True)[
+            0 : input_body.match_count
+        ]
         matches = [{"chunk": doc[0]["chunk"],
                     "page": doc[0]["page"],
                     "content": doc[0]["context"],
