@@ -20,8 +20,8 @@ async def chat(
     - **text**: the response text
     """
     strapi = request.app.state.strapi
-    supabase = request.app.state.supabase
-    chat_stream = await moderated_chat(input_body, strapi, supabase)
+    faiss = request.app.state.faiss
+    chat_stream = await moderated_chat(input_body, strapi, faiss)
 
     return LoggingStreamingResponse(content=chat_stream, media_type="text/event-stream")
 

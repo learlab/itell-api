@@ -7,6 +7,8 @@ from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from transformers import logging as transformers_logging
 
+from src.dependencies.faiss import FAISS_Wrapper
+
 from .dependencies.auth import developer_role, get_role
 from .dependencies.strapi import Strapi
 from .dependencies.supabase import SupabaseClient
@@ -48,6 +50,8 @@ async def lifespan(app: FastAPI):
         os.environ["VECTOR_HOST"],
         os.environ["VECTOR_KEY"],
     )
+    app.state.faiss = FAISS_Wrapper(app.state.supabase)
+    await app.state.faiss.create_faiss_index()
     try:
         yield
     finally:
