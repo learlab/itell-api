@@ -1,5 +1,4 @@
 import logging
-import time
 from typing import List
 
 import faiss
@@ -16,7 +15,7 @@ class FAISS_Wrapper:
         self.index = None
         self.metadata = []
         self.pipeline = EmbeddingPipeline()
-    
+
     def embed_query(self, text: str) -> List[float]:
         """Embed query text."""
         return self.pipeline(text).tolist()[0]
@@ -55,7 +54,9 @@ class FAISS_Wrapper:
             metadata = np.append(metadata, data_info)
             embedding = data["embedding"].replace("[", "").replace("]", "").split(",")
             if len(embedding) != dim:
-                logging.info(f"Skipping {data['chunk']} due to incorrect embedding length")
+                logging.info(
+                    f"Skipping {data['chunk']} due to incorrect embedding length"
+                )
                 continue
             arr = np.asarray(embedding, dtype=np.float32)
             embeddings = np.append(embeddings, [arr], axis=0)
@@ -100,10 +101,15 @@ class FAISS_Wrapper:
         search_docs = sorted(search_docs, key=lambda x: x[1], reverse=True)[
             0 : input_body.match_count
         ]
-        matches = [{"chunk": doc[0]["chunk"],
-                    "page": doc[0]["page"],
-                    "content": doc[0]["context"],
-                    "similarity": doc[1]} for doc in search_docs]
+        matches = [
+            {
+                "chunk": doc[0]["chunk"],
+                "page": doc[0]["page"],
+                "content": doc[0]["context"],
+                "similarity": doc[1],
+            }
+            for doc in search_docs
+        ]
         return RetrievalResults(matches=matches)
 
     async def page_similarity(self, embedding: list[float], page_slug: str) -> float:
@@ -112,11 +118,14 @@ class FAISS_Wrapper:
         faiss.normalize_L2(embedding_arr.astype(np.float32))
 
         distances, results = self.index.search(embedding_arr, 1000)
+
         similarities = [
             distances[0][j]
             for j, i in enumerate(results[0])
             if self.metadata[i]["page"] == page_slug
         ]
-        if not results.any():
-            return 100.0
+
+        if len(similarities) == 0:
+            return -100.0
+
         return sum(similarities) / len(similarities)

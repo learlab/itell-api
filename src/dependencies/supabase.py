@@ -1,13 +1,8 @@
-from fastapi import HTTPException, Response
+from fastapi import Response
 from supabase.client import AsyncClient
 
 from ..pipelines.embed import EmbeddingPipeline
-from ..schemas.embedding import (
-    ChunkInput,
-    DeleteUnusedInput,
-    RetrievalInput,
-    RetrievalResults,
-)
+from ..schemas.embedding import ChunkInput, DeleteUnusedInput
 
 
 class SupabaseClient(AsyncClient):
@@ -40,8 +35,6 @@ class SupabaseClient(AsyncClient):
             )
             .execute()
         )
-
-        faiss.create_faiss_index()
 
         return Response(status_code=201)
 

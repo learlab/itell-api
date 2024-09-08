@@ -43,8 +43,8 @@ async def generate_embedding(
     """
     supabase = request.app.state.supabase
     faiss = request.app.state.faiss
-    response = await supabase.embedding_generate(input_body, faiss)
-    faiss.create_faiss_index()
+    response = await supabase.embedding_generate(input_body)
+    await faiss.create_faiss_index()
     return response
 
 
@@ -67,6 +67,6 @@ async def delete_unused_chunks(
     """
     faiss = request.app.state.faiss
     supabase = request.app.state.supabase
-    response = await supabase.delete_unused(input_body, faiss)
+    response = await supabase.delete_unused(input_body)
     await faiss.create_faiss_index()
     return response
