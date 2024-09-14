@@ -20,7 +20,7 @@ from ..schemas.summary import (
 )
 from ..services.summary_feedback import feedback_processors
 
-content_pipe = LongformerPipeline("tiedaar/longformer-content-global")
+content_pipe = LongformerPipeline("tiedaar/longformer-content-global2")
 language_pipe = SummaryPipeline("tiedaar/language-beyond-the-source")
 embedding_pipe = EmbeddingPipeline()
 detector = gcld3.NNetLanguageIdentifier(  # type: ignore
