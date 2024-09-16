@@ -62,7 +62,7 @@ async def moderated_chat(
     relevant_chunks = await faiss.retrieve_chunks(
         RetrievalInput(
             text_slug=text_meta.Slug,
-            page_slugs=[chat_input.page_slug, "itell-documentation"],
+            page_slugs=[chat_input.page_slug, "user-guide-baseline"],
             text=chat_input.message,
             similarity_threshold=0.15,
             match_count=10,
@@ -73,8 +73,8 @@ async def moderated_chat(
         relevant_chunks.matches, chat_input.current_chunk
     )
 
-    if relevant_chunk and relevant_chunk.page == "itell-documentation":
-        text_name = "iTELL Documentation"
+    if relevant_chunk and relevant_chunk.page == "user-guide-baseline":
+        text_name = "iTELL User Guide"
         text_info = "iTELL stands for intelligent texts for enhanced lifelong learning. It is a platform that provides students with a personalized learning experience. This user guide provides information on how to navigate the iTELL platform."  # noqa: E501
         cited_chunk = "[User Guide]"
     else:

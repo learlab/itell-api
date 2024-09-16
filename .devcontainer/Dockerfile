@@ -8,8 +8,6 @@ ARG MINICONDA_URL="https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x
 
 RUN apt-get update \
     && apt-get install --no-install-recommends --assume-yes \
-    # protobuf-compiler \
-    # libprotobuf-dev \
     wget
 
 # Install Miniconda on x86 or ARM platforms
@@ -20,6 +18,8 @@ RUN wget $MINICONDA_URL -O miniconda.sh && \
     conda init bash
 
 COPY requirements/requirements.in /tmp/requirements.txt
+
+# Protobuf required for Chromium Language Detection Library (gcld3)
 RUN conda install -c conda-forge protobuf
 RUN conda install --name base --yes -c pytorch -c nvidia faiss-gpu=1.8.0
 RUN pip install --no-cache-dir -r /tmp/requirements.txt
