@@ -34,6 +34,10 @@ class SummaryInputStrapi(BaseModel):
             " response item about a chunk."
         ),
     )
+    score_history: list[float] = Field(
+        default_factory=list,
+        description="A list of the user's previous content scores.",
+    )
 
 
 class SummaryResults(BaseModel):
@@ -45,6 +49,7 @@ class SummaryResults(BaseModel):
     included_keyphrases: list[str]
     suggested_keyphrases: list[str]
     content: Optional[float] = None
+    content_threshold: Optional[float] = None
     language: Optional[float] = None
     wording: Optional[float] = None  # Deprecated. Always None.
 
@@ -67,6 +72,7 @@ class Feedback(BaseModel):
 
 class AnalyticFeedback(BaseModel):
     type: ScoreType
+    threshold: float | bool
     feedback: Feedback
 
 

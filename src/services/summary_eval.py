@@ -5,12 +5,14 @@ from src.dependencies.faiss import FAISS_Wrapper
 
 from ..dependencies.strapi import Strapi
 from ..dependencies.supabase import SupabaseClient
+from ..pipelines.conjugate_normal import ConjugateNormal
 from ..pipelines.containment import score_containment
 from ..pipelines.embed import EmbeddingPipeline
 from ..pipelines.keyphrases import suggest_keyphrases
 from ..pipelines.nlp import nlp
 from ..pipelines.profanity_filter import profanity_filter
 from ..pipelines.summary import LongformerPipeline, SummaryPipeline
+from ..schemas.prior import VolumePrior
 from ..schemas.strapi import Chunk
 from ..schemas.summary import (
     ChunkWithWeight,
@@ -47,6 +49,7 @@ def weight_chunks(
 async def summary_score(
     summary_input: SummaryInputStrapi,
     strapi: Strapi,
+    supabase: SupabaseClient,
     faiss: FAISS_Wrapper,
 ) -> tuple[Summary, SummaryResults]:
     """Checks summary for text copied from the source and for semantic
@@ -96,7 +99,7 @@ async def summary_score(
     summary_embed = embedding_pipe(summary.summary.text)[0].tolist()
     results["similarity"] = (
         await faiss.page_similarity(summary_embed, summary.page_slug) + 0.15
-    )  # adding 0.15 to bring similarity score in line with old doc2vec model
+    )
 
     # Generate keyphrase suggestions
     included, suggested = suggest_keyphrases(summary.summary, summary.chunks)
@@ -129,9 +132,37 @@ async def summary_score(
     if junk_filter:
         return summary, SummaryResults(**results)
 
+    volume = await strapi.get_text_meta(summary_input.page_slug)
+
     # Summary meets minimum requirements. Score it.
     input_text = summary.summary.text + "</s>" + summary.source.text
     results["content"] = float(content_pipe(input_text)[0]["score"])
     results["language"] = float(language_pipe(summary.summary.text)[0]["score"])
+
+    # Calculate threshold for content feedback
+
+    # Fetch prior from Supabase
+    prior_data = await supabase.get_volume_prior(volume.Slug)
+    volume_prior = ConjugateNormal(prior_data)
+    results["content_threshold"] = volume_prior.threshold
+
+    # Update prior with score_history
+    if summary_input.score_history:
+        prior_data.support = 3  # Assign a weight of 3 to the volume prior
+        student_prior = ConjugateNormal(prior_data)
+        student_prior.update(summary_input.score_history)
+        results["content_threshold"] = student_prior.threshold
+
+    # Update prior in Supabase
+    volume_prior.update([results["content"]])
+    updated_prior = VolumePrior(
+        slug=volume.Slug,
+        mean=volume_prior.mu,
+        support=volume_prior.k,
+        alpha=volume_prior.alpha,
+        beta=volume_prior.beta,
+    )
+
+    await supabase.update_volume_prior(updated_prior)
 
     return summary, SummaryResults(**results)

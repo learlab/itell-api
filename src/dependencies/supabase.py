@@ -1,8 +1,10 @@
-from fastapi import Response
+from fastapi import HTTPException, Response
+from pydantic import ValidationError
 from supabase.client import AsyncClient
 
 from ..pipelines.embed import EmbeddingPipeline
 from ..schemas.embedding import ChunkInput, DeleteUnusedInput
+from ..schemas.prior import VolumePrior
 
 
 class SupabaseClient(AsyncClient):
@@ -66,3 +68,65 @@ class SupabaseClient(AsyncClient):
             )
 
         return Response(status_code=202)
+
+    async def get_volume_prior(self, volume_slug: str) -> VolumePrior:
+
+        response = (
+            await self.table("volume_priors")
+            .select("*")
+            .eq("slug", volume_slug)
+            .execute()
+        )
+
+        # Default prior if none exists
+        if not response.data:
+            return VolumePrior(
+                slug=volume_slug,
+                mean=0.2,
+                support=15,
+                alpha=3.5,
+                beta=4.0,
+            )
+        else:
+            try:
+                prior = VolumePrior(**response.data[0])
+            except ValidationError as error:
+                raise HTTPException(
+                    status_code=404,
+                    detail=f"Failed to parse volume prior for {volume_slug}. {error}",
+                )
+
+            return prior
+
+    async def update_volume_prior(self, prior: VolumePrior) -> Response:
+        """Updates the volume prior for a given volume."""
+
+        await (
+            self.table("volume_priors")
+            .upsert(
+                prior.model_dump(),
+                on_conflict="slug",  # Triggers an update if the slug already exists
+            )
+            .execute()
+        )
+
+        return Response(status_code=201)
+
+    async def reset_volume_prior(self, volume_slug: str) -> Response:
+        """Resets the volume prior for a given volume."""
+
+        await (
+            self.table("volume_priors")
+            .update(
+                {
+                    "mean": 0.2,
+                    "support": 15,
+                    "alpha": 3.5,
+                    "beta": 4.0,
+                }
+            )
+            .eq("slug", volume_slug)
+            .execute()
+        )
+
+        return Response(status_code=201)
