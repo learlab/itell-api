@@ -20,6 +20,6 @@ RUN wget $MINICONDA_URL -O miniconda.sh && \
 COPY requirements/requirements.in /tmp/requirements.txt
 
 # Protobuf required for Chromium Language Detection Library (gcld3)
-RUN conda install -c conda-forge protobuf
-RUN conda install --name base --yes -c pytorch -c nvidia faiss-gpu=1.8.0
+RUN conda install -c conda-forge libprotobuf 
+RUN conda install --yes -c pytorch -c nvidia faiss-gpu=1.8.0 --solver classic
 RUN pip install --no-cache-dir -r /tmp/requirements.txt
