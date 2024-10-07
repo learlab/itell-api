@@ -82,7 +82,7 @@ class SupabaseClient(AsyncClient):
         if not response.data:
             return VolumePrior(
                 slug=volume_slug,
-                mean=0.2,
+                mean=0.8,
                 support=15,
                 alpha=3.5,
                 beta=4.0,
@@ -119,7 +119,7 @@ class SupabaseClient(AsyncClient):
             self.table("volume_priors")
             .update(
                 {
-                    "mean": 0.2,
+                    "mean": 0.8,
                     "support": 15,
                     "alpha": 3.5,
                     "beta": 4.0,
