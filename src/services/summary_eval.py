@@ -58,7 +58,7 @@ async def summary_score(
     # 3.33 words per second is an average reading pace
     chunks = await strapi.get_chunks(summary_input.page_slug)
 
-    chunk_docs = list(nlp.pipe([chunk.CleanText for chunk in chunks]))
+    chunk_docs = list(nlp.pipe([chunk.Header + "\n" + chunk.CleanText for chunk in chunks]))
 
     weighted_chunks = weight_chunks(chunks, chunk_docs, summary_input.focus_time)
 
