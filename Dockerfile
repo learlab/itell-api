@@ -1,8 +1,8 @@
 FROM nvidia/cuda:12.6.0-devel-ubuntu24.04 as base
 ENV DEBIAN_FRONTEND=noninteractive
 ENV HF_HOME=/usr/local/huggingface
-ENV PATH="/root/miniconda3/bin:${PATH}"
-ARG PATH="/root/miniconda3/bin:${PATH}"
+ENV PATH="/opt/miniconda3/bin:${PATH}"
+ARG PATH="/opt/miniconda3/bin:${PATH}"
 ARG MINICONDA_URL="https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh"
 
 RUN apt-get update && \

@@ -75,9 +75,9 @@ async def score_summary_with_stairs(
     # Failing specific scores triggers feedback as a token stream
     feedback_details = {item.type: item.feedback for item in feedback.prompt_details}
 
-    if not feedback_details["Content"].is_passed:
+    if feedback_details["Content"].is_passed == False:
         feedback_stream = await sert_chat(summary, strapi, faiss)
-    elif not feedback_details["Language"].is_passed:
+    elif feedback_details["Language"].is_passed == False:
         feedback_stream = await language_feedback_chat(summary, strapi)
 
     async def stream_results() -> AsyncGenerator[bytes, None]:
