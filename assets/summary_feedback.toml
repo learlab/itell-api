@@ -27,7 +27,7 @@ feedback = [
 
 [content]
 score_type = "Content"
-threshold = -0.20 # AugustaTech initial value is `-0.20`
+threshold = 0.0
 comparator = "gt"
 feedback = [
     "You need to include more key ideas and details from the page to successfully summarize the content. Consider focusing on the main ideas of the text and providing support for those ideas in your summary.",

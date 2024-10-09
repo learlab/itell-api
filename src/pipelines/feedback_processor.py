@@ -46,11 +46,19 @@ class FeedbackProcessor:
         """Returns the floor of the score."""
         return math.floor(score)
 
-    def __call__(self, score: Union[float, bool, None]) -> AnalyticFeedback:
+    def __call__(
+        self,
+        score: Union[float, bool, None],
+        threshold: float | bool | None = None,
+    ) -> AnalyticFeedback:
+        if threshold is None:
+            threshold = self.threshold
         if score is None:
             feedback = Feedback(is_passed=None, prompt=None)
         else:
-            is_passed = self.comparator(score, self.threshold)
+            is_passed = self.comparator(score, threshold)
             prompt = self.feedback[self.feedback_indexer(score)]
             feedback = Feedback(is_passed=is_passed, prompt=prompt)
-        return AnalyticFeedback(type=self.score_type, feedback=feedback)
+        return AnalyticFeedback(
+            type=self.score_type, threshold=threshold, feedback=feedback
+        )
