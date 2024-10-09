@@ -108,6 +108,7 @@ class StreamingSummaryResults(SummaryResultsWithFeedback):
                     "prompt_details": [
                         {
                             "type": "Language Borrowing",
+                            "threshold": 0.6,
                             "feedback": {
                                 "is_passed": False,
                                 "prompt": (
@@ -118,10 +119,12 @@ class StreamingSummaryResults(SummaryResultsWithFeedback):
                         },
                         {
                             "type": "Language Borrowing (from iTELL AI)",
+                            "threshold": 0.6,
                             "feedback": {"is_passed": False, "prompt": None},
                         },
                         {
                             "type": "Relevance",
+                            "threshold": 0.5,
                             "feedback": {
                                 "is_passed": False,
                                 "prompt": (
@@ -133,10 +136,12 @@ class StreamingSummaryResults(SummaryResultsWithFeedback):
                         },
                         {
                             "type": "Content",
+                            "threshold": 0.07,
                             "feedback": {"is_passed": False, "prompt": None},
                         },
                         {
                             "type": "Language",
+                            "threshold": 2.0,
                             "feedback": {"is_passed": False, "prompt": None},
                         },
                     ],
