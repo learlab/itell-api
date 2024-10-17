@@ -65,8 +65,9 @@ async def score_summary_with_stairs(
     - **question_type**: the type of SERT question
     """
     strapi = request.app.state.strapi
+    supabase = request.app.state.supabase
     faiss = request.app.state.faiss
-    summary, results = await summary_score(input_body, strapi, faiss)
+    summary, results = await summary_score(input_body, strapi, supabase, faiss)
 
     feedback: SummaryResultsWithFeedback = summary_feedback(results)
 

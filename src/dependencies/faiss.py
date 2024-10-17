@@ -98,6 +98,7 @@ class FAISS_Wrapper:
                     and similarities[0][j] >= input_body.similarity_threshold
                 ):
                     search_docs.append((doc, similarities[0][j]))
+
         search_docs = sorted(search_docs, key=lambda x: x[1], reverse=True)[
             0 : input_body.match_count
         ]

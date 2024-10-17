@@ -47,6 +47,7 @@ def weight_chunks(
 async def summary_score(
     summary_input: SummaryInputStrapi,
     strapi: Strapi,
+    supabase: SupabaseClient,
     faiss: FAISS_Wrapper,
 ) -> tuple[Summary, SummaryResults]:
     """Checks summary for text copied from the source and for semantic
@@ -95,7 +96,7 @@ async def summary_score(
     # Check if summary is similar to source text
     summary_embed = embedding_pipe(summary.summary.text)[0].tolist()
     results["similarity"] = (
-        await faiss.page_similarity(summary_embed, summary.page_slug) + 0.15
+        await supabase.page_similarity(summary_embed, summary.page_slug) + 0.15
     )  # adding 0.15 to bring similarity score in line with old doc2vec model
 
     # Generate keyphrase suggestions
