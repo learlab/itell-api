@@ -4,7 +4,7 @@ from src.schemas.chat import EventType
 from src.schemas.summary import SummaryResultsWithFeedback
 
 
-async def test_summary_eval_stairs(client, parser):
+async def test_summary_eval_stairs(client, supabase):
     async with client.stream(
         "POST",
         "/score/summary/stairs",
@@ -41,8 +41,10 @@ async def test_summary_eval_stairs(client, parser):
             print(feedback.model_dump_json())
             raise AssertionError("Language score should be passing.")
 
+        supabase.reset_volume_prior("cornell")
 
-async def test_summary_eval_stairs_fail_language(client, parser):
+
+async def test_summary_eval_stairs_fail_language(client, parser, supabase):
     async with client.stream(
         "POST",
         "/score/summary/stairs",
@@ -72,8 +74,10 @@ async def test_summary_eval_stairs_fail_language(client, parser):
         print("*" * 80)
         print("LANGUAGE FEEDBACK: ", parser(response))
 
+        await supabase.reset_volume_prior("cornell")
 
-async def test_summary_eval_stairs_fail_content(client, parser):
+
+async def test_summary_eval_stairs_fail_content(client, parser, supabase):
     async with client.stream(
         "POST",
         "/score/summary/stairs",
@@ -102,6 +106,40 @@ async def test_summary_eval_stairs_fail_content(client, parser):
             raise AssertionError("Content score should be failing.")
         print("*" * 80)
         print("SERT QUESTION: ", parser(response))
+
+        await supabase.reset_volume_prior("cornell")
+
+
+async def test_threshold_adjustment(client, supabase):
+    async with client.stream(
+        "POST",
+        "/score/summary/stairs",
+        json={
+            "page_slug": "learning-analytics-for-self-regulated-learning",
+            "summary": "The paper introcuces what is self-regulated learning is, and elabrates the more granular definition of each faucets. COPES are a good words to memorize the concept, but overally spearking these terms are still pretty abstract for me. Collecting is hard, but it seems like collecting right data and utlize it is way more critical. ",  # noqa: E501
+            "score_history": [1.5, 1.5, 1.9, 2.0, 3.5],
+        },
+    ) as response:
+        assert response.status_code == 200
+
+        response = await anext(response.aiter_text())
+        stream = (chunk for chunk in response.split("\n\n"))
+
+        feedback = next(stream).removeprefix(
+            f"event: {EventType.summary_feedback}\ndata: "
+        )
+        feedback = SummaryResultsWithFeedback.model_validate_json(feedback)
+
+        # Check that the Content score is failing
+        content_threshold = next(
+            item.threshold for item in feedback.prompt_details if item.type == "Content"
+        )
+
+        assert content_threshold > 0.07, "Threshold should have been adjusted upwards."
+
+        await supabase.reset_volume_prior("cornell")
+        reset_prior = await supabase.get_volume_prior("cornell")
+        assert reset_prior.mean == 0.2, "Prior mean should have been reset to 0.2."
 
 
 async def test_bad_page_slug(client):

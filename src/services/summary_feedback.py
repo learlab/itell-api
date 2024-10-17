@@ -17,16 +17,18 @@ with open("assets/summary_feedback.toml", "rb") as f:
 def summary_feedback(results: SummaryResults) -> SummaryResultsWithFeedback:
     """Provide feedback on a summary based on the results
     of the summary scoring model."""
+
     prompt_details: list[AnalyticFeedback] = [
         feedback_processors["containment"](results.containment),
         feedback_processors["containment_chat"](results.containment_chat),
         feedback_processors["similarity"](results.similarity),
-        feedback_processors["content"](results.content),
+        feedback_processors["content"](
+            results.content, threshold=results.content_threshold
+        ),
         feedback_processors["english"](results.english),
         feedback_processors["profanity"](results.profanity),
         feedback_processors["language"](results.language),
     ]
-    print(prompt_details)
 
     # Overall Feedback
     # Check if all feedback that exists is passing

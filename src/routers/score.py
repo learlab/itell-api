@@ -66,7 +66,8 @@ async def score_summary_with_stairs(
     """
     strapi = request.app.state.strapi
     faiss = request.app.state.faiss
-    summary, results = await summary_score(input_body, strapi, faiss)
+    supabase = request.app.state.supabase
+    summary, results = await summary_score(input_body, strapi, supabase, faiss)
 
     feedback: SummaryResultsWithFeedback = summary_feedback(results)
 
