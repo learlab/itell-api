@@ -72,3 +72,4 @@ class EventType(str, Enum):
     content_feedback = "contentfeedback"
     language_feedback = "languagefeedback"
     constructed_response_feedback = "constructedresponsefeedback"
+    think_aloud = "thinkaloud"

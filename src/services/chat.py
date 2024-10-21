@@ -22,10 +22,8 @@ from ..schemas.summary import Summary
 with open("templates/chat.jinja2", "r", encoding="utf8") as file_:
     moderated_chat_template = Template(file_.read())
 
-# TODO: Consider creating custom chat templates for sert_chat and stairs_chat
-
-with open("templates/sert_chat_general.jinja2", "r", encoding="utf8") as file_:
-    sert_template = Template(file_.read())
+with open("templates/stairs_general.jinja2", "r", encoding="utf8") as file_:
+    stairs_template = Template(file_.read())
 
 with open("templates/sert_chat_final.jinja2", "r", encoding="utf8") as file_:
     sert_template_final = Template(file_.read())
@@ -120,37 +118,11 @@ async def sert_chat(
         chat_input.page_slug, chat_input.current_chunk
     )
 
-    # Get last 4 messages from chat history
-    chat_history = [(msg.agent, msg.text) for msg in chat_input.history[-4:]]
-
-    prompt = sert_template.render(
+    prompt = stairs_template.render(
         text_name=text_meta.Title,
         text_info=text_meta.Description,
         context=current_chunk.CleanText,
-        chat_history=chat_history,
-        user_message=chat_input.message,
-        student_summary=chat_input.summary,
-    )
-
-    return await chat_pipeline(prompt, sampling_params, event_type=EventType.chat)
-
-
-async def stairs_chat(
-    chat_input: ChatInputSTAIRS, strapi: Strapi
-) -> AsyncGenerator[bytes, None]:
-    text_meta = await strapi.get_text_meta(chat_input.page_slug)
-    current_chunk: Chunk = await strapi.get_chunk(
-        chat_input.page_slug, chat_input.current_chunk
-    )
-
-    # Get full chat history
-    chat_history = [(msg.agent, msg.text) for msg in chat_input.history]
-
-    prompt = moderated_chat_template.render(
-        text_name=text_meta.Title,
-        text_info=text_meta.Description,
-        context=current_chunk.CleanText,
-        chat_history=chat_history,
+        chat_history=chat_input.history,
         user_message=chat_input.message,
         student_summary=chat_input.summary,
     )

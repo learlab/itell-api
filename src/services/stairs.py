@@ -11,16 +11,16 @@ from src.dependencies.faiss import FAISS_Wrapper
 
 from ..dependencies.strapi import Strapi
 from ..pipelines.chat import chat_pipeline
-from ..schemas.chat import EventType
+from ..schemas.chat import ChatInputCRI, EventType
 from ..schemas.embedding import RetrievalInput, RetrievalStrategy
 from ..schemas.strapi import Volume
 from ..schemas.summary import ChunkWithWeight, Summary
 
-with open("templates/sert.jinja2", "r", encoding="utf8") as file_:
-    sert_template = Template(file_.read())
+with open("templates/sert_question.jinja2", "r", encoding="utf8") as file_:
+    sert_question_template = Template(file_.read())
 
 with open("templates/think_aloud.jinja2", "r", encoding="utf8") as file_:
-    stairs_template = Template(file_.read())
+    think_aloud_template = Template(file_.read())
 
 
 def weight_chunks_with_similarity(reading_time_score, similarity):
@@ -104,7 +104,7 @@ async def sert_question(
     question_type = random.choice(list(question_type_definitions.keys()))
 
     # Construct the SERT prompt
-    prompt = sert_template.render(
+    prompt = sert_question_template.render(
         text_name=text_meta.Title,
         excerpt_chunk=chunk_text,
         student_summary=summary.summary.text,
@@ -124,21 +124,16 @@ async def sert_question(
 
 
 async def think_aloud(
-    summary: Summary, strapi: Strapi, faiss: FAISS_Wrapper
+    input_body: ChatInputCRI, strapi: Strapi, faiss: FAISS_Wrapper
 ) -> AsyncGenerator[bytes, None]:
-    text_meta = await strapi.get_text_meta(summary.page_slug)
-
-    selected_chunk = await select_chunk(summary, text_meta, faiss)
-
-    chunk_text = selected_chunk.CleanText[
-        : min(2000, len(selected_chunk.CleanText))  # first 2,000 characters
-    ]
+    text_meta = await strapi.get_text_meta(input_body.page_slug)
+    chunk = await strapi.get_chunk(input_body.page_slug, input_body.chunk_slug)
 
     # Construct the STAIRS prompt
-    prompt = stairs_template.render(
+    prompt = think_aloud_template.render(
         text_name=text_meta.Title,
         text_info=text_meta.Description,
-        context=chunk_text,
+        context=chunk.CleanText,
     )
 
     sampling_params = SamplingParams(temperature=0.4, max_tokens=4096)
@@ -146,6 +141,6 @@ async def think_aloud(
     return await chat_pipeline(
         prompt,
         sampling_params,
-        event_type=EventType.content_feedback,
-        chunk=selected_chunk.Slug,
+        event_type=EventType.think_aloud,
+        chunk=input_body.chunk_slug,
     )

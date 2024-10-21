@@ -3,13 +3,8 @@ from fastapi.responses import StreamingResponse
 
 from ..logging.logging_router import LoggingRoute, LoggingStreamingResponse
 from ..schemas.chat import ChatInput, ChatInputCRI, ChatInputSTAIRS, PromptInput
-from ..services.chat import (
-    cri_chat,
-    moderated_chat,
-    sert_chat,
-    stairs_chat,
-    unmoderated_chat,
-)
+from ..services.chat import cri_chat, moderated_chat, sert_chat, unmoderated_chat
+from ..services.stairs import think_aloud
 
 router = APIRouter(route_class=LoggingRoute)
 
@@ -72,18 +67,18 @@ async def chat_sert(
     return LoggingStreamingResponse(content=chat_stream, media_type="text/event-stream")
 
 
-@router.post("/chat/STAIRS")
-async def chat_stairs(
-    input_body: ChatInputSTAIRS,
+@router.post("/chat/think_aloud")
+async def chat_think_aloud(
+    input_body: ChatInputCRI,
     request: Request,
 ) -> StreamingResponse:
-    """Responds to user queries incorporating the current in-focus chunk.
+    """Generates a think aloud protocol from the provided chunk.
 
     The response is a StreamingResponse wih the following fields:
     - **request_id**: a unique identifier for the request
     - **text**: the response text
     """
     strapi = request.app.state.strapi
-    chat_stream = await stairs_chat(input_body, strapi)
+    chat_stream = await think_aloud(input_body, strapi)
 
     return LoggingStreamingResponse(content=chat_stream, media_type="text/event-stream")
