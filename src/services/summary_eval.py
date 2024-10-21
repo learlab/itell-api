@@ -1,6 +1,7 @@
 import gcld3
 from spacy.tokens import Doc
-from transformers import logging
+
+from src.dependencies.faiss import FAISS_Wrapper
 
 from ..dependencies.strapi import Strapi
 from ..dependencies.supabase import SupabaseClient
@@ -17,10 +18,9 @@ from ..schemas.summary import (
     SummaryInputStrapi,
     SummaryResults,
 )
+from ..services.summary_feedback import feedback_processors
 
-logging.set_verbosity_error()
-
-content_pipe = LongformerPipeline("tiedaar/longformer-content-global")
+content_pipe = LongformerPipeline("tiedaar/longformer-content-global2")
 language_pipe = SummaryPipeline("tiedaar/language-beyond-the-source")
 embedding_pipe = EmbeddingPipeline()
 detector = gcld3.NNetLanguageIdentifier(  # type: ignore
@@ -48,6 +48,7 @@ async def summary_score(
     summary_input: SummaryInputStrapi,
     strapi: Strapi,
     supabase: SupabaseClient,
+    faiss: FAISS_Wrapper,
 ) -> tuple[Summary, SummaryResults]:
     """Checks summary for text copied from the source and for semantic
     relevance to the source text. If it passes these checks, score the summary
@@ -58,7 +59,7 @@ async def summary_score(
     # 3.33 words per second is an average reading pace
     chunks = await strapi.get_chunks(summary_input.page_slug)
 
-    chunk_docs = list(nlp.pipe([chunk.CleanText for chunk in chunks]))
+    chunk_docs = list(nlp.pipe([chunk.Header + "\n" + chunk.CleanText for chunk in chunks]))
 
     weighted_chunks = weight_chunks(chunks, chunk_docs, summary_input.focus_time)
 
@@ -113,12 +114,17 @@ async def summary_score(
     results["profanity"] = profanity_filter(summary.summary)
 
     # Check if summary fails to meet minimum requirements
-    junk_filter = (
-        results["containment"] > 0.6
-        or results.get("containment_chat", 0.0) > 0.6
-        or results["similarity"] < 0.5
-        or results["english"] is False
-        or results["profanity"] is True
+    junk_filter = any(
+        score.feedback.is_passed is False
+        for score in [
+            feedback_processors["containment"](results["containment"]),
+            feedback_processors["containment_chat"](
+                results.get("containment_chat", 0.0)
+            ),
+            feedback_processors["similarity"](results["similarity"]),
+            feedback_processors["english"](results["english"]),
+            feedback_processors["profanity"](results["profanity"]),
+        ]
     )
 
     if junk_filter:

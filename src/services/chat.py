@@ -4,8 +4,9 @@ from fastapi import HTTPException
 from jinja2 import Template
 from vllm.sampling_params import SamplingParams
 
+from src.dependencies.faiss import FAISS_Wrapper
+
 from ..dependencies.strapi import Strapi
-from ..dependencies.supabase import SupabaseClient
 from ..pipelines.chat import chat_pipeline
 from ..schemas.chat import (
     ChatInput,
@@ -23,6 +24,12 @@ with open("templates/chat.jinja2", "r", encoding="utf8") as file_:
 
 # TODO: Consider creating custom chat templates for sert_chat and stairs_chat
 
+with open("templates/sert_chat_general.jinja2", "r", encoding="utf8") as file_:
+    sert_template = Template(file_.read())
+
+with open("templates/sert_chat_final.jinja2", "r", encoding="utf8") as file_:
+    sert_template_final = Template(file_.read())
+
 with open("templates/cri_chat.jinja2", "r", encoding="utf8") as file_:
     cri_prompt_template = Template(file_.read())
 
@@ -32,13 +39,15 @@ with open("templates/language_feedback.jinja2", "r", encoding="utf8") as file_:
 sampling_params = SamplingParams(temperature=0.4, max_tokens=4096)
 
 
-def choose_relevant_chunk(relevant_chunks: list[Match], current_chunk: str):
-    if len(relevant_chunks.matches) == 0:
+def choose_relevant_chunk(
+    relevant_chunks: list[Match], current_chunk: str | None
+) -> Match | None:
+    if not relevant_chunks:
         return None
 
-    relevant_chunk_dict = {match.chunk: match for match in relevant_chunks.matches}
+    relevant_chunk_dict = {match.chunk: match for match in relevant_chunks}
 
-    if current_chunk in relevant_chunk_dict:
+    if current_chunk and current_chunk in relevant_chunk_dict:
         return relevant_chunk_dict[current_chunk]
     else:
         return max(relevant_chunks.matches, key=lambda match: match.similarity)
@@ -47,29 +56,33 @@ def choose_relevant_chunk(relevant_chunks: list[Match], current_chunk: str):
 async def moderated_chat(
     chat_input: ChatInput,
     strapi: Strapi,
-    supabase: SupabaseClient,
+    faiss: FAISS_Wrapper,
 ) -> AsyncGenerator[bytes, None]:
     # Adding in the specific name of the textbook majorly improved response quality
     text_meta = await strapi.get_text_meta(chat_input.page_slug)
 
-    relevant_chunks = await supabase.retrieve_chunks(
+    relevant_chunks = await faiss.retrieve_chunks(
         RetrievalInput(
             text_slug=text_meta.Slug,
-            page_slugs=[chat_input.page_slug, "itell-documentation"],
+            page_slugs=[chat_input.page_slug, "user-guide-baseline"],
             text=chat_input.message,
             similarity_threshold=0.15,
             match_count=10,
         )
     )
 
-    relevant_chunk = choose_relevant_chunk(relevant_chunks, chat_input.current_chunk)
+    relevant_chunk = choose_relevant_chunk(
+        relevant_chunks.matches, chat_input.current_chunk
+    )
 
-    if relevant_chunk and relevant_chunk.page == "itell-documentation":
-        text_name = "iTELL Documentation"
+    if relevant_chunk and relevant_chunk.page == "user-guide-baseline":
+        text_name = "iTELL User Guide"
         text_info = "iTELL stands for intelligent texts for enhanced lifelong learning. It is a platform that provides students with a personalized learning experience. This user guide provides information on how to navigate the iTELL platform."  # noqa: E501
+        cited_chunk = "[User Guide]"
     else:
         text_name = text_meta.Title
         text_info = text_meta.Description
+        cited_chunk = relevant_chunk.chunk if relevant_chunk else None
 
     # Get last 4 messages from chat history
     chat_history = [(msg.agent, msg.text) for msg in chat_input.history[-4:]]
@@ -83,14 +96,11 @@ async def moderated_chat(
         student_summary=chat_input.summary,
     )
 
-    if relevant_chunk.page == "itell-documentation":
-        cited_chunk = ["[User Guide]"]
-    else:
-        print("Cited chunk: ", relevant_chunk.chunk)
-        cited_chunk = [relevant_chunk.chunk]
-
     return await chat_pipeline(
-        prompt, sampling_params, event_type=EventType.chat, context=cited_chunk
+        prompt,
+        sampling_params,
+        event_type=EventType.chat,
+        context=[cited_chunk] if cited_chunk else None,
     )
 
 
@@ -133,8 +143,8 @@ async def stairs_chat(
         chat_input.page_slug, chat_input.current_chunk
     )
 
-    # Get last 4 messages from chat history
-    chat_history = [(msg.agent, msg.text) for msg in chat_input.history[-4:]]
+    # Get full chat history
+    chat_history = [(msg.agent, msg.text) for msg in chat_input.history]
 
     prompt = moderated_chat_template.render(
         text_name=text_meta.Title,

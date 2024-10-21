@@ -1,4 +1,5 @@
 from pydantic import ValidationError
+
 from src.schemas.chat import EventType
 from src.schemas.summary import SummaryResultsWithFeedback
 
@@ -77,8 +78,8 @@ async def test_summary_eval_stairs_fail_content(client, parser):
         "POST",
         "/score/summary/stairs",
         json={
-            "page_slug": "learning-an-1",
-            "summary": "Choosing the correct visualization to use for a dataset is essential in making sure researchers can answer the questions they have about the data and are working to answer, especially as there are many alternatives that can be considered. Additionally, even after visualizations are made, it is important to evaluate them to make sure the effectiveness, efficiency, and usefulness is known.",  # noqa: E501
+            "page_slug": "learning-analytics-for-self-regulated-learning",
+            "summary": "The paper introcuces what is self-regulated learning is, and elabrates the more granular definition of each faucets. COPES are a good words to memorize the concept, but overally spearking these terms are still pretty abstract for me. Collecting is hard, but it seems like collecting right data and utlize it is way more critical. ",  # noqa: E501
         },
     ) as response:
         assert response.status_code == 200

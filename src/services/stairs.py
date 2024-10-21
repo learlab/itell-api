@@ -7,8 +7,9 @@ from fastapi import HTTPException
 from jinja2 import Template
 from vllm.sampling_params import SamplingParams
 
+from src.dependencies.faiss import FAISS_Wrapper
+
 from ..dependencies.strapi import Strapi
-from ..dependencies.supabase import SupabaseClient
 from ..pipelines.chat import chat_pipeline
 from ..schemas.chat import EventType
 from ..schemas.embedding import RetrievalInput, RetrievalStrategy
@@ -36,12 +37,14 @@ question_type_definitions = {
 
 
 async def select_chunk(
-    supabase: SupabaseClient, summary: Summary, text_meta: Volume
+    summary: Summary,
+    text_meta: Volume,
+    faiss: FAISS_Wrapper,
 ) -> ChunkWithWeight:
     """Select a chunk for rereading based on the user's summary and reading behavior."""
 
     # Retrieve the chunks that are the least similar to the student's summary.
-    least_similar_chunks = await supabase.retrieve_chunks(
+    least_similar_chunks = await faiss.retrieve_chunks(
         RetrievalInput(
             text_slug=text_meta.Slug,
             page_slugs=[summary.page_slug],
@@ -88,11 +91,11 @@ async def select_chunk(
 
 
 async def sert_question(
-    summary: Summary, strapi: Strapi, supabase: SupabaseClient
+    summary: Summary, strapi: Strapi, faiss: FAISS_Wrapper
 ) -> AsyncGenerator[bytes, None]:
     text_meta = await strapi.get_text_meta(summary.page_slug)
 
-    selected_chunk = await select_chunk(supabase, summary, text_meta)
+    selected_chunk = await select_chunk(summary, text_meta, faiss)
 
     chunk_text = selected_chunk.CleanText[
         : min(2000, len(selected_chunk.CleanText))  # first 2,000 characters
@@ -121,11 +124,11 @@ async def sert_question(
 
 
 async def think_aloud(
-    summary: Summary, strapi: Strapi, supabase: SupabaseClient
+    summary: Summary, strapi: Strapi, faiss: FAISS_Wrapper
 ) -> AsyncGenerator[bytes, None]:
     text_meta = await strapi.get_text_meta(summary.page_slug)
 
-    selected_chunk = await select_chunk(supabase, summary, text_meta)
+    selected_chunk = await select_chunk(summary, text_meta, faiss)
 
     chunk_text = selected_chunk.CleanText[
         : min(2000, len(selected_chunk.CleanText))  # first 2,000 characters

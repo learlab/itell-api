@@ -3,7 +3,7 @@ from supabase.client import AsyncClient
 
 from ..pipelines.embed import EmbeddingPipeline
 from ..schemas.embedding import (
-    ChunkInput,
+    ChunkInput, 
     DeleteUnusedInput,
     RetrievalInput,
     RetrievalResults,
@@ -43,8 +43,36 @@ class SupabaseClient(AsyncClient):
 
         return Response(status_code=201)
 
-    async def retrieve_chunks(self, input_body: RetrievalInput) -> RetrievalResults:
+    async def delete_unused(self, input_body: DeleteUnusedInput) -> Response:
+        """Deletes all chunks not in the chunk slugs list."""
 
+        response = (
+            await self.table("embeddings")
+            .select("chunk")
+            .eq("page", input_body.page_slug)
+            .execute()
+        )
+
+        current_slugs = response.data
+
+        # Get all chunks in current_slugs not in input_body.chunk_slugs
+        unused_slugs = [
+            chunk["chunk"]
+            for chunk in current_slugs
+            if chunk["chunk"] not in input_body.chunk_slugs
+        ]
+
+        if unused_slugs:
+            (
+                await self.table("embeddings")
+                .delete()
+                .in_("chunk", unused_slugs)
+                .execute()
+            )
+
+        return Response(status_code=202)
+
+    async def retrieve_chunks(self, input_body: RetrievalInput) -> RetrievalResults:
         embedding = await self.embed(input_body.text)
 
         query_params = {
@@ -84,32 +112,3 @@ class SupabaseClient(AsyncClient):
             raise HTTPException(status_code=404, detail=message)
 
         return similarity
-
-    async def delete_unused(self, input_body: DeleteUnusedInput) -> Response:
-        """Deletes all chunks not in the chunk slugs list."""
-
-        response = (
-            await self.table("embeddings")
-            .select("chunk")
-            .eq("page", input_body.page_slug)
-            .execute()
-        )
-
-        current_slugs = response.data
-
-        # Get all chunks in current_slugs not in input_body.chunk_slugs
-        unused_slugs = [
-            chunk["chunk"]
-            for chunk in current_slugs
-            if chunk["chunk"] not in input_body.chunk_slugs
-        ]
-
-        if unused_slugs:
-            (
-                await self.table("embeddings")
-                .delete()
-                .in_("chunk", unused_slugs)
-                .execute()
-            )
-
-        return Response(status_code=202)

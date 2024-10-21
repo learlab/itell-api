@@ -16,7 +16,7 @@
 	"features": {
 		"ghcr.io/devcontainers/features/git:1": {
 			"ppa": true,
-			"version": "os-provided"
+			"version": "latest"
 		},
 		"ghcr.io/devcontainers/features/github-cli:1": {
 			"installDirectlyFromGitHubRelease": true,
@@ -24,14 +24,17 @@
 		},
 		"ghcr.io/joshuanianji/devcontainer-features/github-cli-persistence:1.0.3": {},
 		"ghcr.io/devcontainers/features/python:1": {
-			"installTools": true
+			"installTools": true,
+			"version": "latest"
 		}
 	},
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.
 	// "forwardPorts": [],
 	// Use 'postCreateCommand' to run commands after the container is created.
-	"postCreateCommand": "pip3 install pip-tools pytest asgi-lifespan",
-	"postStartCommand": "pip3 install -r requirements/requirements.in",
+	"postCreateCommand": "pip install pip-tools pytest asgi-lifespan",
+	// Install requirements here so the Docker image can persist across
+	// Changes to requirements.in
+	// "postStartCommand": "pip install -r requirements/requirements.in",
 	// Configure tool-specific properties.
 	"customizations": {
 		"vscode": {
@@ -46,15 +49,14 @@
 					"editor.formatOnSave": true,
 					"editor.codeActionsOnSave": {
 						"source.organizeImports": "explicit"
-					}
-				},
-				"isort.args": [
-					"--profile",
-					"black"
-				]
-			}
+					},
+					"defaultInterpreterPath": "/opt/miniconda3/bin/python"
+				}
+			},
+			"isort.args": [
+				"--profile",
+				"black"
+			]
 		}
 	}
-	// Uncomment to connect as root instead. More info: https://aka.ms/dev-containers-non-root.
-	// "remoteUser": "root"
 }

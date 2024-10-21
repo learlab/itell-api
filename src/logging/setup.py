@@ -44,10 +44,10 @@ def setup_logging():
     # Set up the queue and the queue handler
     queue = Queue()
     queue_handler = logging.handlers.QueueHandler(queue=queue)
-    queue_handler.setLevel(logging.DEBUG)
+    queue_handler.setLevel(logging.INFO)
 
     root_logger = logging.getLogger()
-    root_logger.setLevel(logging.DEBUG)
+    root_logger.setLevel(logging.INFO)
     root_logger.addHandler(queue_handler)
 
     listener = logging.handlers.QueueListener(
