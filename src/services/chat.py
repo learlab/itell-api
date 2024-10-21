@@ -50,7 +50,7 @@ def choose_relevant_chunk(
     if current_chunk and current_chunk in relevant_chunk_dict:
         return relevant_chunk_dict[current_chunk]
     else:
-        return max(relevant_chunks.matches, key=lambda match: match.similarity)
+        return max(relevant_chunks, key=lambda match: match.similarity)
 
 
 async def moderated_chat(
@@ -123,7 +123,7 @@ async def sert_chat(
     # Get last 4 messages from chat history
     chat_history = [(msg.agent, msg.text) for msg in chat_input.history[-4:]]
 
-    prompt = moderated_chat_template.render(
+    prompt = sert_template.render(
         text_name=text_meta.Title,
         text_info=text_meta.Description,
         context=current_chunk.CleanText,
