@@ -3,10 +3,13 @@ from typing import List
 
 import faiss
 import numpy as np
+from sentry_sdk import capture_message
 
 from ..pipelines.embed import EmbeddingPipeline
 from ..schemas.embedding import RetrievalInput, RetrievalResults, RetrievalStrategy
 from .supabase import SupabaseClient
+
+logger = logging.getLogger("itell_ai")
 
 
 class FAISS_Wrapper:
@@ -54,7 +57,7 @@ class FAISS_Wrapper:
             metadata = np.append(metadata, data_info)
             embedding = data["embedding"].replace("[", "").replace("]", "").split(",")
             if len(embedding) != dim:
-                logging.info(
+                logger.info(
                     f"Skipping {data['chunk']} due to incorrect embedding length"
                 )
                 continue
@@ -65,10 +68,10 @@ class FAISS_Wrapper:
         index = faiss.index_factory(dim, "Flat", faiss.METRIC_INNER_PRODUCT)
         gpu_index_flat = faiss.index_cpu_to_gpu(res, 0, index)
 
-        logging.info("Indexing embeddings...")
+        logger.info("Indexing embeddings...")
         faiss.normalize_L2(embeddings.astype(np.float32))
         gpu_index_flat.add(embeddings)
-        logging.info(f"Indexing complete. {gpu_index_flat.ntotal} embeddings indexed.")
+        logger.info(f"Indexing complete. {gpu_index_flat.ntotal} embeddings indexed.")
 
         self.index = gpu_index_flat
         self.metadata = metadata
@@ -129,4 +132,27 @@ class FAISS_Wrapper:
         if len(similarities) == 0:
             return -100.0
 
-        return sum(similarities) / len(similarities)
+        cosine_similarity = sum(similarities) / len(similarities)
+
+        if cosine_similarity < -1.0:
+            logger.error(
+                "Cosine similarity is less than -1.0",
+                extra={
+                    "cosine_similarity": cosine_similarity,
+                    "distances": distances,
+                    "results": results,
+                    "similarities": similarities,
+                },
+            )
+
+            capture_message(
+                "Cosine similarity is less than -1.0",
+                extras={
+                    "cosine_similarity": cosine_similarity,
+                    "distances": distances,
+                    "results": results,
+                    "similarities": similarities,
+                },
+            )
+
+        return cosine_similarity
