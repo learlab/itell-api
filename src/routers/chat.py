@@ -1,9 +1,17 @@
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import StreamingResponse
 
 from ..logging.logging_router import LoggingRoute, LoggingStreamingResponse
 from ..schemas.chat import ChatInput, ChatInputCRI, ChatInputSTAIRS, PromptInput
-from ..services.chat import cri_chat, moderated_chat, sert_chat, unmoderated_chat
+from ..services.chat import (
+    cri_chat,
+    moderated_chat,
+    sert_final,
+    sert_followup,
+    think_aloud_final,
+    think_aloud_followup,
+    unmoderated_chat,
+)
 from ..services.stairs import think_aloud
 
 router = APIRouter(route_class=LoggingRoute)
@@ -62,7 +70,16 @@ async def chat_sert(
     - **text**: the response text
     """
     strapi = request.app.state.strapi
-    chat_stream = await sert_chat(input_body, strapi)
+
+    if not input_body.history:
+        raise HTTPException(
+            status_code=400,
+            detail="The first message in a SERT chat must be a user message.",
+        )
+    elif len(input_body.history) == 1:
+        chat_stream = await sert_followup(input_body, strapi)
+    elif len(input_body.history) == 3:
+        chat_stream = await sert_final(input_body, strapi)
 
     return LoggingStreamingResponse(content=chat_stream, media_type="text/event-stream")
 
@@ -79,6 +96,11 @@ async def chat_think_aloud(
     - **text**: the response text
     """
     strapi = request.app.state.strapi
-    chat_stream = await think_aloud(input_body, strapi)
+    if not input_body.history:
+        chat_stream = await think_aloud(input_body, strapi)
+    elif len(input_body.history) == 1:
+        chat_stream = await think_aloud_followup(input_body, strapi)
+    elif len(input_body.history) == 3:
+        chat_stream = await think_aloud_final(input_body, strapi)
 
     return LoggingStreamingResponse(content=chat_stream, media_type="text/event-stream")
