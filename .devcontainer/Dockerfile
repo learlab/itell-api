@@ -24,3 +24,7 @@ COPY requirements/requirements.in /tmp/requirements.txt
 RUN conda install -c conda-forge libprotobuf
 RUN conda install --yes -c pytorch -c nvidia faiss-gpu=1.8.0
 RUN pip install --no-cache-dir -r /tmp/requirements.txt
+
+# Force reinstall numpy to resolve issue with vLLM:
+# ValueError: Model architectures ['LlamaForCausalLM'] are not supported for now. 
+RUN pip install --force-reinstall numpy==1.26.4
