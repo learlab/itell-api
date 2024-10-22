@@ -19,7 +19,7 @@ RUN wget $MINICONDA_URL -O miniconda.sh && \
     conda init bash
 
 # Protobuf required by gcld3
-RUN conda install -c conda-forge protobuf
+RUN conda install -c conda-forge libprotobuf
 RUN conda install --yes -c pytorch -c nvidia faiss-gpu=1.8.0
 
 # Do requirements first so we can cache them

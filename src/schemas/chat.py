@@ -25,8 +25,8 @@ class ChatInput(BaseModel):
     current_chunk: Optional[str] = None
 
 
-class ChatInputSERT(BaseModel):
-    """Chat input for SERT dialogues."""
+class ChatInputSTAIRS(BaseModel):
+    """Chat input for STAIRS dialogues."""
 
     page_slug: str
     history: list[ChatMessage] = Field(
@@ -72,3 +72,4 @@ class EventType(str, Enum):
     content_feedback = "contentfeedback"
     language_feedback = "languagefeedback"
     constructed_response_feedback = "constructedresponsefeedback"
+    think_aloud = "thinkaloud"

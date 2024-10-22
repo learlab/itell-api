@@ -29,7 +29,7 @@ async def chat_pipeline(
 ) -> AsyncGenerator[bytes, None]:
     """Generate completion for the request.
     - prompt: the prompt to use for the generation.
-    - sampling_params: the sampling parameters (See `SamplingParams` for details).
+    - sampling_params: the sampling parameters.
     """
     request_id = random_uuid()
 

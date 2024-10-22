@@ -15,11 +15,16 @@ RUN wget $MINICONDA_URL -O miniconda.sh && \
     mkdir -p /root/.conda && \
     bash miniconda.sh -b -p /opt/miniconda3 && \
     rm -f miniconda.sh && \
-    conda init bash
+    conda init bash && \
+    conda config --set solver classic
 
 COPY requirements/requirements.in /tmp/requirements.txt
 
 # Protobuf required for Chromium Language Detection Library (gcld3)
-RUN conda install -c conda-forge protobuf
-RUN conda install --name base --yes -c pytorch -c nvidia faiss-gpu=1.8.0
+RUN conda install -c conda-forge libprotobuf
+RUN conda install --yes -c pytorch -c nvidia faiss-gpu=1.8.0
 RUN pip install --no-cache-dir -r /tmp/requirements.txt
+
+# Force reinstall numpy to resolve issue with vLLM:
+# ValueError: Model architectures ['LlamaForCausalLM'] are not supported for now. 
+RUN pip install --force-reinstall numpy==1.26.4
