@@ -46,11 +46,9 @@ def weight_chunks(
     return weighted_chunks
 
 
-async def summary_score(
+async def prepare_summary(
     summary_input: SummaryInputStrapi,
     strapi: Strapi,
-    supabase: SupabaseClient,
-    faiss: FAISS_Wrapper,
 ) -> tuple[Summary, SummaryResults]:
     """Checks summary for text copied from the source and for semantic
     relevance to the source text. If it passes these checks, score the summary
@@ -61,7 +59,9 @@ async def summary_score(
     # 3.33 words per second is an average reading pace
     chunks = await strapi.get_chunks(summary_input.page_slug)
 
-    chunk_docs = list(nlp.pipe([chunk.CleanText for chunk in chunks]))
+    chunk_docs = list(
+        nlp.pipe([chunk.Header + "\n" + chunk.CleanText for chunk in chunks])
+    )
 
     weighted_chunks = weight_chunks(chunks, chunk_docs, summary_input.focus_time)
 
@@ -84,6 +84,22 @@ async def summary_score(
         ),
     )
 
+    return summary
+
+
+async def summary_score(
+    summary_input: SummaryInputStrapi,
+    strapi: Strapi,
+    supabase: SupabaseClient,
+    faiss: FAISS_Wrapper,
+) -> tuple[Summary, SummaryResults]:
+    """Checks summary for text copied from the source and for semantic
+    relevance to the source text. If it passes these checks, score the summary
+    using a Huggingface pipeline.
+    """
+
+    summary = await prepare_summary(summary_input, strapi)
+    
     results = {}
 
     # Check if summary borrows language from source
@@ -98,8 +114,11 @@ async def summary_score(
     # Check if summary is similar to source text
     summary_embed = embedding_pipe(summary.summary.text)[0].tolist()
     results["similarity"] = (
-        await faiss.page_similarity(summary_embed, summary.page_slug) + 0.15
+        await supabase.page_similarity(summary_embed, summary.page_slug) + 0.15
     )
+
+    # Trigger the FAISS method to collect errors, but discard the result
+    _ = await faiss.page_similarity(summary_embed, summary.page_slug)
 
     # Generate keyphrase suggestions
     included, suggested = suggest_keyphrases(summary.summary, summary.chunks)

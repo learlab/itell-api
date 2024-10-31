@@ -9,12 +9,11 @@ from ..schemas.chat import EventType
 from ..schemas.summary import (
     StreamingSummaryResults,
     SummaryInputStrapi,
-    SummaryResults,
     SummaryResultsWithFeedback,
 )
 from ..services.answer_eval import answer_score
 from ..services.chat import language_feedback_chat
-from ..services.sert import sert_chat
+from ..services.stairs import sert_question
 from ..services.summary_eval import summary_score
 from ..services.summary_feedback import summary_feedback
 
@@ -25,14 +24,16 @@ router = APIRouter(route_class=LoggingRoute)
 async def score_summary(
     input_body: SummaryInputStrapi,
     request: Request,
-) -> SummaryResults:
+) -> SummaryResultsWithFeedback:
     """Score a summary.
     Requires a page_slug.
     """
     strapi = request.app.state.strapi
+    supabase = request.app.state.supabase
     faiss = request.app.state.faiss
-    _, results = await summary_score(input_body, strapi, faiss)
-    return results
+    _, results = await summary_score(input_body, strapi, supabase, faiss)
+    feedback: SummaryResultsWithFeedback = summary_feedback(results)
+    return feedback
 
 
 @router.post("/score/answer")
@@ -65,8 +66,9 @@ async def score_summary_with_stairs(
     - **question_type**: the type of SERT question
     """
     strapi = request.app.state.strapi
-    faiss = request.app.state.faiss
     supabase = request.app.state.supabase
+    faiss = request.app.state.faiss
+
     summary, results = await summary_score(input_body, strapi, supabase, faiss)
 
     feedback: SummaryResultsWithFeedback = summary_feedback(results)
@@ -76,9 +78,9 @@ async def score_summary_with_stairs(
     # Failing specific scores triggers feedback as a token stream
     feedback_details = {item.type: item.feedback for item in feedback.prompt_details}
 
-    if not feedback_details["Content"].is_passed:
-        feedback_stream = await sert_chat(summary, strapi, faiss)
-    elif not feedback_details["Language"].is_passed:
+    if feedback_details["Content"].is_passed is False:
+        feedback_stream = await sert_question(summary, strapi, faiss)
+    elif feedback_details["Language"].is_passed is False:
         feedback_stream = await language_feedback_chat(summary, strapi)
 
     async def stream_results() -> AsyncGenerator[bytes, None]:

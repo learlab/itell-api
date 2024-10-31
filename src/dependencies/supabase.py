@@ -1,11 +1,21 @@
+import tomllib
+
 from fastapi import HTTPException, Response
 from pydantic import ValidationError
 from supabase.client import AsyncClient
 
 from ..pipelines.embed import EmbeddingPipeline
-from ..schemas.embedding import ChunkInput, DeleteUnusedInput
-from ..schemas.prior import VolumePrior
 
+from ..schemas.prior import VolumePrior
+from ..schemas.embedding import (
+    ChunkInput, 
+    DeleteUnusedInput,
+    RetrievalInput,
+    RetrievalResults,
+)
+
+with open("assets/global_prior.toml", "rb") as f:
+    global_prior = tomllib.load(f)
 
 class SupabaseClient(AsyncClient):
     """Supabase client with custom methods for embedding and retrieval.
@@ -82,10 +92,7 @@ class SupabaseClient(AsyncClient):
         if not response.data:
             return VolumePrior(
                 slug=volume_slug,
-                mean=0.8,
-                support=15,
-                alpha=3.5,
-                beta=4.0,
+                **global_prior.items()
             )
         else:
             try:
@@ -117,16 +124,49 @@ class SupabaseClient(AsyncClient):
 
         await (
             self.table("volume_priors")
-            .update(
-                {
-                    "mean": 0.8,
-                    "support": 15,
-                    "alpha": 3.5,
-                    "beta": 4.0,
-                }
-            )
+            .update(global_prior)
             .eq("slug", volume_slug)
             .execute()
         )
 
         return Response(status_code=201)
+    async def retrieve_chunks(self, input_body: RetrievalInput) -> RetrievalResults:
+        embedding = await self.embed(input_body.text)
+
+        query_params = {
+            "embed": embedding,
+            "match_threshold": input_body.similarity_threshold,
+            "match_count": input_body.match_count,
+            "retrieve_strategy": input_body.retrieve_strategy,
+            "page_slugs": input_body.page_slugs,
+        }
+
+        try:
+            response = await self.rpc("retrieve_chunks", query_params).execute()
+        except (TypeError, AttributeError) as error:
+            raise HTTPException(status_code=500, detail=str(error))
+
+        matches = response.data
+
+        return RetrievalResults(matches=matches)
+
+    async def page_similarity(self, embedding: list[float], page_slug: str) -> float:
+        """Returns the similarity between the embedding and the target page."""
+
+        query_params = {
+            "summary_embedding": embedding,
+            "target_page": page_slug,
+        }
+
+        try:
+            response = await self.rpc("page_similarity", query_params).execute()
+        except (TypeError, AttributeError) as error:
+            raise HTTPException(status_code=500, detail=str(error))
+
+        similarity = response.data[0]["similarity"]
+
+        if similarity is None:
+            message = f"Page similarity not found for {page_slug}"
+            raise HTTPException(status_code=404, detail=message)
+
+        return similarity

@@ -84,7 +84,7 @@ async def test_user_guide_rag(client, parser):
 async def test_final_sert_response(client, parser):
     async with client.stream(
         "POST",
-        "/chat/SERT",
+        "/chat/sert",
         json={
             "page_slug": "7-1-the-relatively-recent-arrival-of-economic-growth",
             "current_chunk": "Rule-of-Law-and-Economic-Growth-701t",

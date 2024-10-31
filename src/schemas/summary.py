@@ -164,7 +164,6 @@ class StreamingSummaryResults(SummaryResultsWithFeedback):
 
 
 class ChunkWithWeight(Chunk):
-    # This is a Python object rather than json.
     KeyPhrase: Optional[list[str]] = None
     weight: float
 

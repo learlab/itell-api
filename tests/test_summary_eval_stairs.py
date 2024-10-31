@@ -3,6 +3,7 @@ from pydantic import ValidationError
 from src.schemas.chat import EventType
 from src.schemas.summary import SummaryResultsWithFeedback
 
+import tomllib
 
 async def test_summary_eval_stairs(client, supabase):
     async with client.stream(
@@ -137,9 +138,12 @@ async def test_threshold_adjustment(client, supabase):
 
         assert content_threshold > 0.07, "Threshold should have been adjusted upwards."
 
+        with open("assets/global_prior.toml", "rb") as f:
+            global_prior = tomllib.load(f)
+
         await supabase.reset_volume_prior("cornell")
         reset_prior = await supabase.get_volume_prior("cornell")
-        assert reset_prior.mean == 0.2, "Prior mean should have been reset to 0.2."
+        assert reset_prior.mean == global_prior["mean"], "Prior mean should have been reset to 0.2."
 
 
 async def test_bad_page_slug(client):

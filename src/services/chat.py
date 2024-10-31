@@ -12,6 +12,7 @@ from ..schemas.chat import (
     ChatInput,
     ChatInputCRI,
     ChatInputSERT,
+    ChatInputThinkAloud,
     EventType,
     PromptInput,
 )
@@ -19,20 +20,20 @@ from ..schemas.embedding import Match, RetrievalInput
 from ..schemas.strapi import Chunk
 from ..schemas.summary import Summary
 
-with open("templates/chat.jinja2", "r", encoding="utf8") as file_:
-    prompt_template = Template(file_.read())
 
-with open("templates/sert_chat_general.jinja2", "r", encoding="utf8") as file_:
-    sert_template = Template(file_.read())
+def get_template(file_path: str) -> Template:
+    with open(file_path, "r", encoding="utf8") as file_:
+        return Template(file_.read())
 
-with open("templates/sert_chat_final.jinja2", "r", encoding="utf8") as file_:
-    sert_template_final = Template(file_.read())
 
-with open("templates/cri_chat.jinja2", "r", encoding="utf8") as file_:
-    cri_prompt_template = Template(file_.read())
+moderated_chat_template = get_template("templates/chat.jinja2")
+sert_followup_template = get_template("templates/sert_followup.jinja2")
+sert_final_template = get_template("templates/sert_final.jinja2")
+think_aloud_followup_template = get_template("templates/think_aloud_followup.jinja2")
+think_aloud_final_template = get_template("templates/think_aloud_final.jinja2")
 
-with open("templates/language_feedback.jinja2", "r", encoding="utf8") as file_:
-    language_feedback_template = Template(file_.read())
+cri_prompt_template = get_template("templates/cri_chat.jinja2")
+language_feedback_template = get_template("templates/language_feedback.jinja2")
 
 sampling_params = SamplingParams(temperature=0.4, max_tokens=4096)
 
@@ -85,7 +86,7 @@ async def moderated_chat(
     # Get last 4 messages from chat history
     chat_history = [(msg.agent, msg.text) for msg in chat_input.history[-4:]]
 
-    prompt = prompt_template.render(
+    prompt = moderated_chat_template.render(
         text_name=text_name,
         text_info=text_info,
         context=relevant_chunk.content if relevant_chunk else None,
@@ -110,7 +111,10 @@ async def unmoderated_chat(raw_chat_input: PromptInput) -> AsyncGenerator[bytes,
     )
 
 
-async def sert_chat(
+# SERT
+
+
+async def sert_followup(
     chat_input: ChatInputSERT, strapi: Strapi
 ) -> AsyncGenerator[bytes, None]:
     text_meta = await strapi.get_text_meta(chat_input.page_slug)
@@ -118,29 +122,71 @@ async def sert_chat(
         chat_input.page_slug, chat_input.current_chunk
     )
 
-    # Get full chat history
-    chat_history = [(msg.agent, msg.text) for msg in chat_input.history]
-
-    input_dict = {
-        "text_name": text_meta.Title,
-        "text_info": text_meta.Description,
-        "context": current_chunk.CleanText,
-        "chat_history": chat_history,
-        "user_message": chat_input.message,
-        "student_summary": chat_input.summary,
-    }
-
-    # If this is the user's second response to the bot, prompt should be different
-    # chat_history will contain [bot_msg, user_msg, bot_msg]
-    # 1st bot_msg is SERT question.
-    # current user_message is stored in chat_input.message
-    # next bot_msg should be the final response
-    if len(chat_history) >= 3:
-        prompt = sert_template_final.render(**input_dict)
-    else:
-        prompt = sert_template.render(**input_dict)
+    prompt = sert_followup_template.render(
+        text_name=text_meta.Title,
+        text_info=text_meta.Description,
+        context=current_chunk.CleanText,
+        chat_history=chat_input.history,
+        user_message=chat_input.message,
+        student_summary=chat_input.summary,
+    )
 
     return await chat_pipeline(prompt, sampling_params, event_type=EventType.chat)
+
+
+async def sert_final(
+    chat_input: ChatInputSERT, strapi: Strapi
+) -> AsyncGenerator[bytes, None]:
+    text_meta = await strapi.get_text_meta(chat_input.page_slug)
+    current_chunk: Chunk = await strapi.get_chunk(
+        chat_input.page_slug, chat_input.current_chunk
+    )
+
+    prompt = sert_final_template.render(
+        text_name=text_meta.Title,
+        text_info=text_meta.Description,
+        context=current_chunk.CleanText,
+        chat_history=chat_input.history,
+        user_message=chat_input.message,
+        student_summary=chat_input.summary,
+    )
+
+    return await chat_pipeline(prompt, sampling_params, event_type=EventType.chat)
+
+
+# Think Aloud
+
+
+async def think_aloud_followup(
+    chat_input: ChatInputThinkAloud, strapi: Strapi
+) -> AsyncGenerator[bytes, None]:
+    text_meta = await strapi.get_text_meta(chat_input.page_slug)
+
+    prompt = think_aloud_followup_template.render(
+        text_name=text_meta.Title,
+        text_info=text_meta.Description,
+        chat_history=chat_input.history,
+        user_message=chat_input.message,
+    )
+
+    return await chat_pipeline(prompt, sampling_params, event_type=EventType.chat)
+
+
+async def think_aloud_final(
+    chat_input: ChatInputThinkAloud, strapi: Strapi
+) -> AsyncGenerator[bytes, None]:
+    text_meta = await strapi.get_text_meta(chat_input.page_slug)
+
+    prompt = think_aloud_final_template.render(
+        text_name=text_meta.Title,
+        chat_history=chat_input.history,
+        user_message=chat_input.message,
+    )
+
+    return await chat_pipeline(prompt, sampling_params, event_type=EventType.chat)
+
+
+# CRI Feedback
 
 
 async def cri_chat(
@@ -171,6 +217,9 @@ async def cri_chat(
         sampling_params,
         event_type=EventType.constructed_response_feedback,
     )
+
+
+# Language Feedback (deprecated)
 
 
 async def language_feedback_chat(
