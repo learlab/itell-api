@@ -11,7 +11,8 @@ from ..pipelines.chat import chat_pipeline
 from ..schemas.chat import (
     ChatInput,
     ChatInputCRI,
-    ChatInputSTAIRS,
+    ChatInputSERT,
+    ChatInputThinkAloud,
     EventType,
     PromptInput,
 )
@@ -114,7 +115,7 @@ async def unmoderated_chat(raw_chat_input: PromptInput) -> AsyncGenerator[bytes,
 
 
 async def sert_followup(
-    chat_input: ChatInputSTAIRS, strapi: Strapi
+    chat_input: ChatInputSERT, strapi: Strapi
 ) -> AsyncGenerator[bytes, None]:
     text_meta = await strapi.get_text_meta(chat_input.page_slug)
     current_chunk: Chunk = await strapi.get_chunk(
@@ -134,7 +135,7 @@ async def sert_followup(
 
 
 async def sert_final(
-    chat_input: ChatInputSTAIRS, strapi: Strapi
+    chat_input: ChatInputSERT, strapi: Strapi
 ) -> AsyncGenerator[bytes, None]:
     text_meta = await strapi.get_text_meta(chat_input.page_slug)
     current_chunk: Chunk = await strapi.get_chunk(
@@ -157,7 +158,7 @@ async def sert_final(
 
 
 async def think_aloud_followup(
-    chat_input: ChatInputCRI, strapi: Strapi
+    chat_input: ChatInputThinkAloud, strapi: Strapi
 ) -> AsyncGenerator[bytes, None]:
     text_meta = await strapi.get_text_meta(chat_input.page_slug)
 
@@ -172,7 +173,7 @@ async def think_aloud_followup(
 
 
 async def think_aloud_final(
-    chat_input: ChatInputCRI, strapi: Strapi
+    chat_input: ChatInputThinkAloud, strapi: Strapi
 ) -> AsyncGenerator[bytes, None]:
     text_meta = await strapi.get_text_meta(chat_input.page_slug)
 

@@ -44,16 +44,10 @@ def weight_chunks(
     return weighted_chunks
 
 
-async def summary_score(
+async def prepare_summary(
     summary_input: SummaryInputStrapi,
     strapi: Strapi,
-    supabase: SupabaseClient,
-    faiss: FAISS_Wrapper,
-) -> tuple[Summary, SummaryResults]:
-    """Checks summary for text copied from the source and for semantic
-    relevance to the source text. If it passes these checks, score the summary
-    using a Huggingface pipeline.
-    """
+) -> Summary:
 
     # Retrieve chunks from Strapi and weight them
     # 3.33 words per second is an average reading pace
@@ -84,6 +78,22 @@ async def summary_score(
         ),
     )
 
+    return summary
+
+
+async def summary_score(
+    summary_input: SummaryInputStrapi,
+    strapi: Strapi,
+    supabase: SupabaseClient,
+    faiss: FAISS_Wrapper,
+) -> tuple[Summary, SummaryResults]:
+    """Checks summary for text copied from the source and for semantic
+    relevance to the source text. If it passes these checks, score the summary
+    using a Huggingface pipeline.
+    """
+
+    summary = await prepare_summary(summary_input, strapi)
+    
     results = {}
 
     # Check if summary borrows language from source

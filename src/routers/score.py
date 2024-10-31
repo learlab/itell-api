@@ -25,14 +25,16 @@ router = APIRouter(route_class=LoggingRoute)
 async def score_summary(
     input_body: SummaryInputStrapi,
     request: Request,
-) -> SummaryResults:
+) -> SummaryResultsWithFeedback:
     """Score a summary.
     Requires a page_slug.
     """
     strapi = request.app.state.strapi
+    supabase = request.app.state.supabase
     faiss = request.app.state.faiss
-    _, results = await summary_score(input_body, strapi, faiss)
-    return results
+    _, results = await summary_score(input_body, strapi, supabase, faiss)
+    feedback: SummaryResultsWithFeedback = summary_feedback(results)
+    return feedback
 
 
 @router.post("/score/answer")

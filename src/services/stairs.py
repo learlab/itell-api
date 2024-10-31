@@ -11,7 +11,7 @@ from src.dependencies.faiss import FAISS_Wrapper
 
 from ..dependencies.strapi import Strapi
 from ..pipelines.chat import chat_pipeline
-from ..schemas.chat import ChatInputCRI, EventType
+from ..schemas.chat import ChatInputThinkAloud, EventType
 from ..schemas.embedding import RetrievalInput, RetrievalStrategy
 from ..schemas.strapi import Volume
 from ..schemas.summary import ChunkWithWeight, Summary
@@ -124,7 +124,7 @@ async def sert_question(
 
 
 async def think_aloud(
-    input_body: ChatInputCRI, strapi: Strapi, faiss: FAISS_Wrapper
+    input_body: ChatInputThinkAloud, strapi: Strapi
 ) -> AsyncGenerator[bytes, None]:
     text_meta = await strapi.get_text_meta(input_body.page_slug)
     chunk = await strapi.get_chunk(input_body.page_slug, input_body.chunk_slug)

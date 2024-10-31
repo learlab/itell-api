@@ -26,7 +26,6 @@ def summary_feedback(results: SummaryResults) -> SummaryResultsWithFeedback:
         feedback_processors["profanity"](results.profanity),
         feedback_processors["language"](results.language),
     ]
-    print(prompt_details)
 
     # Overall Feedback
     # Check if all feedback that exists is passing

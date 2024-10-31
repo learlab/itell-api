@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import StreamingResponse
 
 from ..logging.logging_router import LoggingRoute, LoggingStreamingResponse
-from ..schemas.chat import ChatInput, ChatInputCRI, ChatInputSTAIRS, PromptInput
+from ..schemas.chat import ChatInput, ChatInputCRI, ChatInputSERT, ChatInputThinkAloud, PromptInput
 from ..services.chat import (
     cri_chat,
     moderated_chat,
@@ -60,7 +60,7 @@ async def chat_cri(
 
 @router.post("/chat/SERT")
 async def chat_sert(
-    input_body: ChatInputSTAIRS,
+    input_body: ChatInputSERT,
     request: Request,
 ) -> StreamingResponse:
     """Responds to user queries incorporating the current in-focus chunk.
@@ -73,8 +73,8 @@ async def chat_sert(
 
     if not input_body.history:
         raise HTTPException(
-            status_code=400,
-            detail="The first message in a SERT chat must be a user message.",
+            status_code=422,
+            detail="History must be provided to continue a SERT chat.",
         )
     elif len(input_body.history) == 1:
         chat_stream = await sert_followup(input_body, strapi)
@@ -86,7 +86,7 @@ async def chat_sert(
 
 @router.post("/chat/think_aloud")
 async def chat_think_aloud(
-    input_body: ChatInputCRI,
+    input_body: ChatInputThinkAloud,
     request: Request,
 ) -> StreamingResponse:
     """Generates a think aloud protocol from the provided chunk.
