@@ -58,7 +58,7 @@ async def chat_cri(
     return LoggingStreamingResponse(content=chat_stream, media_type="text/event-stream")
 
 
-@router.post("/chat/SERT")
+@router.post("/chat/sert")
 async def chat_sert(
     input_body: ChatInputSERT,
     request: Request,
