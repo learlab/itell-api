@@ -18,7 +18,6 @@ from ..schemas.chat import (
 )
 from ..schemas.embedding import Match, RetrievalInput
 from ..schemas.strapi import Chunk
-from ..schemas.summary import Summary
 
 
 def get_template(file_path: str) -> Template:
@@ -31,9 +30,7 @@ sert_followup_template = get_template("templates/sert_followup.jinja2")
 sert_final_template = get_template("templates/sert_final.jinja2")
 think_aloud_followup_template = get_template("templates/think_aloud_followup.jinja2")
 think_aloud_final_template = get_template("templates/think_aloud_final.jinja2")
-
 cri_prompt_template = get_template("templates/cri_chat.jinja2")
-language_feedback_template = get_template("templates/language_feedback.jinja2")
 
 sampling_params = SamplingParams(temperature=0.4, max_tokens=4096)
 
@@ -112,8 +109,6 @@ async def unmoderated_chat(raw_chat_input: PromptInput) -> AsyncGenerator[bytes,
 
 
 # SERT
-
-
 async def sert_followup(
     chat_input: ChatInputSERT, strapi: Strapi
 ) -> AsyncGenerator[bytes, None]:
@@ -155,8 +150,6 @@ async def sert_final(
 
 
 # Think Aloud
-
-
 async def think_aloud_followup(
     chat_input: ChatInputThinkAloud, strapi: Strapi
 ) -> AsyncGenerator[bytes, None]:
@@ -187,8 +180,6 @@ async def think_aloud_final(
 
 
 # CRI Feedback
-
-
 async def cri_chat(
     cri_input: ChatInputCRI, strapi: Strapi
 ) -> AsyncGenerator[bytes, None]:
@@ -216,22 +207,4 @@ async def cri_chat(
         prompt,
         sampling_params,
         event_type=EventType.constructed_response_feedback,
-    )
-
-
-# Language Feedback (deprecated)
-
-
-async def language_feedback_chat(
-    summary: Summary, strapi: Strapi
-) -> AsyncGenerator[bytes, None]:
-    text_meta = await strapi.get_text_meta(summary.page_slug)
-
-    prompt = language_feedback_template.render(
-        text_name=text_meta.Title,
-        summary=summary.summary.text,
-    )
-
-    return await chat_pipeline(
-        prompt, sampling_params, event_type=EventType.language_feedback
     )

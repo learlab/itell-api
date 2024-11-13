@@ -2,6 +2,7 @@ from pydantic import ValidationError
 
 from src.schemas.summary import SummaryResultsWithFeedback
 
+
 async def test_summary_eval_stairs(client):
     response = await client.post(
         "/score/summary",
@@ -15,11 +16,7 @@ async def test_summary_eval_stairs(client):
 
     feedback = SummaryResultsWithFeedback.model_validate(response.json())
 
-    # Check that the language score is passing
-    language = next(
-        item for item in feedback.prompt_details if item.type == "Language"
-    )
-
-    if not language.feedback.is_passed:
-        print(feedback.model_dump_json())
-        raise AssertionError("Language score should be passing.")
+    # Check that the content score is passing
+    if feedback.metrics.content.is_passed is False:
+        print(feedback.metrics.content.model_dump_json())
+        raise AssertionError("Content score should be passing.")

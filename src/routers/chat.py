@@ -2,7 +2,13 @@ from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import StreamingResponse
 
 from ..logging.logging_router import LoggingRoute, LoggingStreamingResponse
-from ..schemas.chat import ChatInput, ChatInputCRI, ChatInputSERT, ChatInputThinkAloud, PromptInput
+from ..schemas.chat import (
+    ChatInput,
+    ChatInputCRI,
+    ChatInputSERT,
+    ChatInputThinkAloud,
+    PromptInput,
+)
 from ..services.chat import (
     cri_chat,
     moderated_chat,

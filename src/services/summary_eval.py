@@ -11,19 +11,18 @@ from ..pipelines.embed import EmbeddingPipeline
 from ..pipelines.keyphrases import suggest_keyphrases
 from ..pipelines.nlp import nlp
 from ..pipelines.profanity_filter import profanity_filter
-from ..pipelines.summary import LongformerPipeline, SummaryPipeline
+from ..pipelines.summary import LongformerPipeline
 from ..schemas.prior import VolumePrior
 from ..schemas.strapi import Chunk
 from ..schemas.summary import (
     ChunkWithWeight,
     Summary,
     SummaryInputStrapi,
-    SummaryResults,
+    _SummaryResults,
 )
 from ..services.summary_feedback import feedback_processors
 
 content_pipe = LongformerPipeline("tiedaar/longformer-content-global2")
-language_pipe = SummaryPipeline("tiedaar/language-beyond-the-source")
 embedding_pipe = EmbeddingPipeline()
 detector = gcld3.NNetLanguageIdentifier(  # type: ignore
     min_num_bytes=0, max_num_bytes=1000
@@ -49,7 +48,7 @@ def weight_chunks(
 async def prepare_summary(
     summary_input: SummaryInputStrapi,
     strapi: Strapi,
-) -> tuple[Summary, SummaryResults]:
+) -> tuple[Summary, _SummaryResults]:
     """Checks summary for text copied from the source and for semantic
     relevance to the source text. If it passes these checks, score the summary
     using a Huggingface pipeline.
@@ -92,14 +91,14 @@ async def summary_score(
     strapi: Strapi,
     supabase: SupabaseClient,
     faiss: FAISS_Wrapper,
-) -> tuple[Summary, SummaryResults]:
+) -> tuple[Summary, _SummaryResults]:
     """Checks summary for text copied from the source and for semantic
     relevance to the source text. If it passes these checks, score the summary
     using a Huggingface pipeline.
     """
 
     summary = await prepare_summary(summary_input, strapi)
-    
+
     results = {}
 
     # Check if summary borrows language from source
@@ -136,8 +135,8 @@ async def summary_score(
 
     # Check if summary fails to meet minimum requirements
     junk_filter = any(
-        score.feedback.is_passed is False
-        for score in [
+        feedback.is_passed is False  # Do not trigger filter on None values
+        for feedback in [
             feedback_processors["containment"](results["containment"]),
             feedback_processors["containment_chat"](
                 results.get("containment_chat", 0.0)
@@ -149,16 +148,15 @@ async def summary_score(
     )
 
     if junk_filter:
-        return summary, SummaryResults(**results)
+        return summary, _SummaryResults(**results)
 
     volume = await strapi.get_text_meta(summary_input.page_slug)
 
     # Summary meets minimum requirements. Score it.
     input_text = summary.summary.text + "</s>" + summary.source.text
     results["content"] = float(content_pipe(input_text)[0]["score"])
-    results["language"] = float(language_pipe(summary.summary.text)[0]["score"])
 
-    # Calculate threshold for content feedback
+    ### Calculate threshold for content feedback
 
     # Fetch prior from Supabase
     prior_data = await supabase.get_volume_prior(volume.Slug)
@@ -184,4 +182,4 @@ async def summary_score(
 
     await supabase.update_volume_prior(updated_prior)
 
-    return summary, SummaryResults(**results)
+    return summary, _SummaryResults(**results)

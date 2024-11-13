@@ -43,11 +43,12 @@ class ChatInputSERT(BaseModel):
     )
     summary: Optional[str] = None
 
-    @model_validator(mode='after')
+    @model_validator(mode="after")
     def check_current_chunk_or_history(self):
         if self.history and not self.current_chunk:
-            raise ValueError('current_chunk is required to continue a conversation.')
+            raise ValueError("current_chunk is required to continue a conversation.")
         return self
+
 
 class ChatInputThinkAloud(BaseModel):
     """Think-aloud dialogue chat request.
@@ -65,8 +66,12 @@ class ChatInputThinkAloud(BaseModel):
             " dicts."
         ),
     )
-    question: str = Field(default=None, description="The CRI question that the student answered.")
-    student_response: str = Field(default=None, description="The student's response to the CRI question.")
+    question: str = Field(
+        default=None, description="The CRI question that the student answered."
+    )
+    student_response: str = Field(
+        default=None, description="The student's response to the CRI question."
+    )
 
 
 class ChatInputCRI(BaseModel):
@@ -96,6 +101,5 @@ class EventType(str, Enum):
     chat = "chat"
     summary_feedback = "summaryfeedback"  # First chunk when summary scoring
     content_feedback = "contentfeedback"
-    language_feedback = "languagefeedback"
     constructed_response_feedback = "constructedresponsefeedback"
     think_aloud = "thinkaloud"

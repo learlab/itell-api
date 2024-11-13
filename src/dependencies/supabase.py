@@ -8,7 +8,7 @@ from ..pipelines.embed import EmbeddingPipeline
 
 from ..schemas.prior import VolumePrior
 from ..schemas.embedding import (
-    ChunkInput, 
+    ChunkInput,
     DeleteUnusedInput,
     RetrievalInput,
     RetrievalResults,
@@ -16,6 +16,7 @@ from ..schemas.embedding import (
 
 with open("assets/global_prior.toml", "rb") as f:
     global_prior = tomllib.load(f)
+
 
 class SupabaseClient(AsyncClient):
     """Supabase client with custom methods for embedding and retrieval.
@@ -90,10 +91,7 @@ class SupabaseClient(AsyncClient):
 
         # Default prior if none exists
         if not response.data:
-            return VolumePrior(
-                slug=volume_slug,
-                **global_prior.items()
-            )
+            return VolumePrior(slug=volume_slug, **global_prior.items())
         else:
             try:
                 prior = VolumePrior(**response.data[0])
@@ -130,6 +128,7 @@ class SupabaseClient(AsyncClient):
         )
 
         return Response(status_code=201)
+
     async def retrieve_chunks(self, input_body: RetrievalInput) -> RetrievalResults:
         embedding = await self.embed(input_body.text)
 

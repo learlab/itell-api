@@ -5,6 +5,7 @@ from src.schemas.summary import SummaryResultsWithFeedback
 
 import tomllib
 
+
 async def test_summary_eval_stairs(client, supabase):
     async with client.stream(
         "POST",
@@ -33,49 +34,12 @@ async def test_summary_eval_stairs(client, supabase):
             print(err)
             raise
 
-        # Check that the language score is passing
-        language = next(
-            item for item in feedback.prompt_details if item.type == "Language"
-        )
-
-        if not language.feedback.is_passed:
-            print(feedback.model_dump_json())
-            raise AssertionError("Language score should be passing.")
+        # Check that the content score is passing
+        if not feedback.metrics.content.is_passed:
+            print(feedback.metrics.content.model_dump_json())
+            raise AssertionError("Content score should be passing.")
 
         supabase.reset_volume_prior("cornell")
-
-
-async def test_summary_eval_stairs_fail_language(client, parser, supabase):
-    async with client.stream(
-        "POST",
-        "/score/summary/stairs",
-        json={
-            "page_slug": "emotional",
-            "summary": "Before this, all my low-effort summaries just reiterated keywords from the title. This time, I'll throw in some keyphrases from the passage. This page discusses how we can detect affect from student activity and bodily signals. Some themes that are relevant to the analysis of such affect data are classroom analysis, teacher analysis, and sentiment analysis. Overall, it's all about measuring and analyzing students' emotions.",  # noqa: E501
-        },
-    ) as response:
-        assert response.status_code == 200
-
-        response = await anext(response.aiter_text())
-        stream = (chunk for chunk in response.split("\n\n"))
-
-        feedback = next(stream).removeprefix(
-            f"event: {EventType.summary_feedback}\ndata: "
-        )
-        feedback = SummaryResultsWithFeedback.model_validate_json(feedback)
-
-        # Check that the language score is failing
-        language = next(
-            item for item in feedback.prompt_details if item.type == "Language"
-        )
-
-        if language.feedback.is_passed:
-            print(feedback.model_dump_json())
-            raise AssertionError("Language score should be failing.")
-        print("*" * 80)
-        print("LANGUAGE FEEDBACK: ", parser(response))
-
-        await supabase.reset_volume_prior("cornell")
 
 
 async def test_summary_eval_stairs_fail_content(client, parser, supabase):
@@ -98,12 +62,8 @@ async def test_summary_eval_stairs_fail_content(client, parser, supabase):
         feedback = SummaryResultsWithFeedback.model_validate_json(feedback)
 
         # Check that the Content score is failing
-        content = next(
-            item for item in feedback.prompt_details if item.type == "Content"
-        )
-
-        if content.feedback.is_passed:
-            print(feedback.model_dump_json())
+        if feedback.metrics.content.is_passed:
+            print(feedback.metrics.content.model_dump_json())
             raise AssertionError("Content score should be failing.")
         print("*" * 80)
         print("SERT QUESTION: ", parser(response))
@@ -131,19 +91,19 @@ async def test_threshold_adjustment(client, supabase):
         )
         feedback = SummaryResultsWithFeedback.model_validate_json(feedback)
 
-        # Check that the Content score is failing
-        content_threshold = next(
-            item.threshold for item in feedback.prompt_details if item.type == "Content"
-        )
-
-        assert content_threshold > 0.07, "Threshold should have been adjusted upwards."
+        # Check that the Content threshold was adjusted upwards
+        assert (
+            feedback.metrics.content.threshold > 0.07
+        ), "Threshold should have been adjusted upwards."
 
         with open("assets/global_prior.toml", "rb") as f:
             global_prior = tomllib.load(f)
 
         await supabase.reset_volume_prior("cornell")
         reset_prior = await supabase.get_volume_prior("cornell")
-        assert reset_prior.mean == global_prior["mean"], "Prior mean should have been reset to 0.2."
+        assert (
+            reset_prior.mean == global_prior["mean"]
+        ), "Prior mean should have been reset to 0.2."
 
 
 async def test_bad_page_slug(client):
