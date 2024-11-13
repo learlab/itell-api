@@ -1,9 +1,7 @@
-from pydantic import ValidationError
-
 from src.schemas.summary import SummaryResultsWithFeedback
 
 
-async def test_summary_eval_stairs(client):
+async def test_summary_eval(client):
     response = await client.post(
         "/score/summary",
         json={

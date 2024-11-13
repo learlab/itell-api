@@ -5,14 +5,13 @@ from pydantic import ValidationError
 from supabase.client import AsyncClient
 
 from ..pipelines.embed import EmbeddingPipeline
-
-from ..schemas.prior import VolumePrior
 from ..schemas.embedding import (
     ChunkInput,
     DeleteUnusedInput,
     RetrievalInput,
     RetrievalResults,
 )
+from ..schemas.prior import VolumePrior
 
 with open("assets/global_prior.toml", "rb") as f:
     global_prior = tomllib.load(f)
@@ -91,7 +90,7 @@ class SupabaseClient(AsyncClient):
 
         # Default prior if none exists
         if not response.data:
-            return VolumePrior(slug=volume_slug, **global_prior.items())
+            return VolumePrior(slug=volume_slug, **global_prior)
         else:
             try:
                 prior = VolumePrior(**response.data[0])
@@ -128,6 +127,13 @@ class SupabaseClient(AsyncClient):
         )
 
         return Response(status_code=201)
+
+    async def delete_volume_prior(self, volume_slug: str) -> Response:
+        """Deletes the volume prior for a given volume."""
+
+        await self.table("volume_priors").delete().eq("slug", volume_slug).execute()
+
+        return Response(status_code=202)
 
     async def retrieve_chunks(self, input_body: RetrievalInput) -> RetrievalResults:
         embedding = await self.embed(input_body.text)
