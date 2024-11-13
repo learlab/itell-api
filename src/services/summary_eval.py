@@ -156,8 +156,9 @@ async def summary_score(
     input_text = summary.summary.text + "</s>" + summary.source.text
     results["content"] = float(content_pipe(input_text)[0]["score"])
 
-    ### Calculate threshold for content feedback
-
+    ###
+    # Calculate threshold for content feedback
+    ###
     # Fetch prior from Supabase
     prior_data = await supabase.get_volume_prior(volume.Slug)
     volume_prior = ConjugateNormal(prior_data)

@@ -1,7 +1,12 @@
 import tomllib
 
+from src.pipelines.conjugate_normal import ConjugateNormal
 from src.schemas.chat import EventType
+from src.schemas.prior import VolumePrior
 from src.schemas.summary import SummaryResultsWithFeedback
+
+with open("assets/global_prior.toml", "rb") as f:
+    global_prior = VolumePrior(slug="global", **tomllib.load(f))
 
 
 async def test_threshold_adjustment(client, supabase):
@@ -29,13 +34,10 @@ async def test_threshold_adjustment(client, supabase):
             feedback.metrics.content.threshold > 0.07
         ), "Threshold should have been adjusted upwards."
 
-        with open("assets/global_prior.toml", "rb") as f:
-            global_prior = tomllib.load(f)
-
         await supabase.reset_volume_prior("cornell")
         reset_prior = await supabase.get_volume_prior("cornell")
         assert (
-            reset_prior.mean == global_prior["mean"]
+            reset_prior.mean == global_prior.mean
         ), "Prior mean should have been reset to 0.2."
 
 
@@ -62,6 +64,13 @@ async def test_new_volume_threshold(client, supabase):
 
         feedback = SummaryResultsWithFeedback.model_validate_json(feedback)
 
+        # Check that the Content threshold is set to the global prior
+        global_threshold = ConjugateNormal(global_prior).threshold
+        assert round(feedback.metrics.content.threshold, 3) == round(
+            global_threshold, 3
+        ), f"Threshold should be set to {global_threshold}."
+
+        # Delete the volume prior for "user-guide"
         await supabase.delete_volume_prior("user-guide")
         empty_response = (
             await supabase.table("volume_priors")

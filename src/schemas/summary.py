@@ -102,21 +102,21 @@ class StreamingSummaryResults(SummaryResultsWithFeedback):
                             "is_passed": True,
                             "score": 0.0,
                             "threshold": 0.6,
-                            "feedback": "You need to rely less on the language in the text and focus more on rewriting the key ideas.",
+                            "feedback": "You need to rely less on the language in the text and focus more on rewriting the key ideas.",  # noqa: E501
                         },
                         "containment_chat": {
                             "name": "Language Borrowing (from iTELL AI)",
                             "is_passed": None,
                             "score": None,
                             "threshold": 0.6,
-                            "feedback": "The summary is not too long or too short. It is just right.",
+                            "feedback": "The summary is not too long or too short. It is just right.",  # noqa: E501
                         },
                         "similarity": {
                             "name": "Relevance",
                             "is_passed": False,
                             "score": 0.09705320000648499,
                             "threshold": 0.5,
-                            "feedback": "To be successful, you need to stay on topic. Find the main ideas of the text and focus your summary on those ideas.",
+                            "feedback": "To be successful, you need to stay on topic. Find the main ideas of the text and focus your summary on those ideas.",  # noqa: E501
                         },
                         "english": {
                             "name": "English",
