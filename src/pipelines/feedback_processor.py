@@ -38,9 +38,12 @@ class FeedbackProcessor:
         else:
             self.feedback_indexer = self._default_indexer
 
-    def _default_indexer(self, score: float) -> Literal[0, 1]:
+    def _default_indexer(
+        self, score: float, threshold: float | bool = None
+    ) -> Literal[0, 1]:
         """Returns 1 if score is passing, 0 if score is failing."""
-        return int(self.comparator(score, self.threshold))
+
+        return int(self.comparator(score, threshold))
 
     def _floor_indexer(self, score: float) -> int:
         """Returns the floor of the score."""
@@ -67,5 +70,5 @@ class FeedbackProcessor:
                 is_passed=self.comparator(score, threshold),
                 score=score,
                 threshold=threshold,
-                feedback=self.feedback[self.feedback_indexer(score)],
+                feedback=self.feedback[self.feedback_indexer(score, threshold)],
             )
