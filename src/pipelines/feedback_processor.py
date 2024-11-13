@@ -1,8 +1,8 @@
 import math
 import operator
-from typing import Literal, Union
+from typing import Literal
 
-from ..schemas.summary import AnalyticFeedback, Feedback, ScoreType
+from ..schemas.summary import AnalyticFeedback, ScoreType
 
 
 class FeedbackProcessor:
@@ -46,11 +46,26 @@ class FeedbackProcessor:
         """Returns the floor of the score."""
         return math.floor(score)
 
-    def __call__(self, score: Union[float, bool, None]) -> AnalyticFeedback:
+    def __call__(
+        self,
+        score: float | bool | None,
+        threshold: float | bool | None = None,
+    ) -> AnalyticFeedback:
+
+        if threshold is None:
+            threshold = self.threshold
+
         if score is None:
-            feedback = Feedback(is_passed=None, prompt=None)
+            return AnalyticFeedback(
+                name=self.score_type,
+                threshold=threshold,
+            )
+
         else:
-            is_passed = self.comparator(score, self.threshold)
-            prompt = self.feedback[self.feedback_indexer(score)]
-            feedback = Feedback(is_passed=is_passed, prompt=prompt)
-        return AnalyticFeedback(type=self.score_type, feedback=feedback)
+            return AnalyticFeedback(
+                name=self.score_type,
+                is_passed=self.comparator(score, threshold),
+                score=score,
+                threshold=threshold,
+                feedback=self.feedback[self.feedback_indexer(score)],
+            )

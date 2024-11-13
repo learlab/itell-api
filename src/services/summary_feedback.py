@@ -2,8 +2,8 @@ import tomllib
 
 from ..pipelines.feedback_processor import FeedbackProcessor
 from ..schemas.summary import (
-    AnalyticFeedback,
-    SummaryResults,
+    SummaryMetrics,
+    _SummaryResults,
     SummaryResultsWithFeedback,
 )
 
@@ -14,25 +14,28 @@ with open("assets/summary_feedback.toml", "rb") as f:
         feedback_processors[score_type] = FeedbackProcessor(**values)
 
 
-def summary_feedback(results: SummaryResults) -> SummaryResultsWithFeedback:
+def summary_feedback(results: _SummaryResults) -> SummaryResultsWithFeedback:
     """Provide feedback on a summary based on the results
     of the summary scoring model."""
-    prompt_details: list[AnalyticFeedback] = [
-        feedback_processors["containment"](results.containment),
-        feedback_processors["containment_chat"](results.containment_chat),
-        feedback_processors["similarity"](results.similarity),
-        feedback_processors["content"](results.content),
-        feedback_processors["english"](results.english),
-        feedback_processors["profanity"](results.profanity),
-        feedback_processors["language"](results.language),
-    ]
-    print(prompt_details)
+
+    metrics = SummaryMetrics(
+        containment=feedback_processors["containment"](results.containment),
+        containment_chat=feedback_processors["containment_chat"](
+            results.containment_chat
+        ),
+        similarity=feedback_processors["similarity"](results.similarity),
+        content=feedback_processors["content"](
+            results.content, threshold=results.content_threshold
+        ),
+        english=feedback_processors["english"](results.english),
+        profanity=feedback_processors["profanity"](results.profanity),
+    )
 
     # Overall Feedback
     # Check if all feedback that exists is passing
     # Ignores feedback with .is_passed = None
     is_passed: bool = all(
-        feedback.feedback.is_passed is not False for feedback in prompt_details
+        feedback["is_passed"] is not False for feedback in metrics.model_dump().values()
     )
 
     if is_passed:
@@ -46,8 +49,7 @@ def summary_feedback(results: SummaryResults) -> SummaryResultsWithFeedback:
         )
 
     return SummaryResultsWithFeedback(
-        **results.model_dump(),
         is_passed=is_passed,
         prompt=prompt,
-        prompt_details=prompt_details,
+        metrics=metrics,
     )

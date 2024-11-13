@@ -6,14 +6,11 @@ Here is the user's initial summary:
 {{student_summary}}
 
 {%- endif %}
-You will briefly respond to the student's final message and then ask the student to revise their summary. If applicable, your response may include a suggestion for how the summary could be improved based on the conversation.
-Your response to the final user message must instruct the student to revise their summary.<|eot_id|>
-{%- if chat_history %}
+You will briefly respond to the student's final message and then state that the student should now revise their summary. Your response should provide guidance on how the student can revise their summary, but it absolutely will not contain an example summary or any specific language that the student could copy into their summary. Your response must state that the student will now revise their summary.<|eot_id|>
 {%- for agent, message in chat_history -%}
 <|start_header_id|>{{ "assistant" if agent == "BOT" else "user" }}<|end_header_id|>
 {{message}}<|eot_id|>
 {%- endfor %}
-{%- endif -%}
 <|start_header_id|>user<|end_header_id|>
 {{user_message}}<|eot_id|>
 <|start_header_id|>assistant<|end_header_id|>

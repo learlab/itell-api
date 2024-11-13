@@ -5,23 +5,24 @@ from src.dependencies.faiss import FAISS_Wrapper
 
 from ..dependencies.strapi import Strapi
 from ..dependencies.supabase import SupabaseClient
+from ..pipelines.conjugate_normal import ConjugateNormal
 from ..pipelines.containment import score_containment
 from ..pipelines.embed import EmbeddingPipeline
 from ..pipelines.keyphrases import suggest_keyphrases
 from ..pipelines.nlp import nlp
 from ..pipelines.profanity_filter import profanity_filter
-from ..pipelines.summary import LongformerPipeline, SummaryPipeline
+from ..pipelines.summary import LongformerPipeline
+from ..schemas.prior import VolumePrior
 from ..schemas.strapi import Chunk
 from ..schemas.summary import (
     ChunkWithWeight,
     Summary,
     SummaryInputStrapi,
-    SummaryResults,
+    _SummaryResults,
 )
 from ..services.summary_feedback import feedback_processors
 
 content_pipe = LongformerPipeline("tiedaar/longformer-content-global2")
-language_pipe = SummaryPipeline("tiedaar/language-beyond-the-source")
 embedding_pipe = EmbeddingPipeline()
 detector = gcld3.NNetLanguageIdentifier(  # type: ignore
     min_num_bytes=0, max_num_bytes=1000
@@ -44,12 +45,10 @@ def weight_chunks(
     return weighted_chunks
 
 
-async def summary_score(
+async def prepare_summary(
     summary_input: SummaryInputStrapi,
     strapi: Strapi,
-    supabase: SupabaseClient,
-    faiss: FAISS_Wrapper,
-) -> tuple[Summary, SummaryResults]:
+) -> tuple[Summary, _SummaryResults]:
     """Checks summary for text copied from the source and for semantic
     relevance to the source text. If it passes these checks, score the summary
     using a Huggingface pipeline.
@@ -59,7 +58,9 @@ async def summary_score(
     # 3.33 words per second is an average reading pace
     chunks = await strapi.get_chunks(summary_input.page_slug)
 
-    chunk_docs = list(nlp.pipe([chunk.Header + "\n" + chunk.CleanText for chunk in chunks]))
+    chunk_docs = list(
+        nlp.pipe([chunk.Header + "\n" + chunk.CleanText for chunk in chunks])
+    )
 
     weighted_chunks = weight_chunks(chunks, chunk_docs, summary_input.focus_time)
 
@@ -82,6 +83,22 @@ async def summary_score(
         ),
     )
 
+    return summary
+
+
+async def summary_score(
+    summary_input: SummaryInputStrapi,
+    strapi: Strapi,
+    supabase: SupabaseClient,
+    faiss: FAISS_Wrapper,
+) -> tuple[Summary, _SummaryResults]:
+    """Checks summary for text copied from the source and for semantic
+    relevance to the source text. If it passes these checks, score the summary
+    using a Huggingface pipeline.
+    """
+
+    summary = await prepare_summary(summary_input, strapi)
+
     results = {}
 
     # Check if summary borrows language from source
@@ -97,7 +114,10 @@ async def summary_score(
     summary_embed = embedding_pipe(summary.summary.text)[0].tolist()
     results["similarity"] = (
         await supabase.page_similarity(summary_embed, summary.page_slug) + 0.15
-    )  # adding 0.15 to bring similarity score in line with old doc2vec model
+    )
+
+    # Trigger the FAISS method to collect errors, but discard the result
+    _ = await faiss.page_similarity(summary_embed, summary.page_slug)
 
     # Generate keyphrase suggestions
     included, suggested = suggest_keyphrases(summary.summary, summary.chunks)
@@ -115,8 +135,8 @@ async def summary_score(
 
     # Check if summary fails to meet minimum requirements
     junk_filter = any(
-        score.feedback.is_passed is False
-        for score in [
+        feedback.is_passed is False  # Do not trigger filter on None values
+        for feedback in [
             feedback_processors["containment"](results["containment"]),
             feedback_processors["containment_chat"](
                 results.get("containment_chat", 0.0)
@@ -128,11 +148,38 @@ async def summary_score(
     )
 
     if junk_filter:
-        return summary, SummaryResults(**results)
+        return summary, _SummaryResults(**results)
+
+    volume = await strapi.get_text_meta(summary_input.page_slug)
 
     # Summary meets minimum requirements. Score it.
     input_text = summary.summary.text + "</s>" + summary.source.text
     results["content"] = float(content_pipe(input_text)[0]["score"])
-    results["language"] = float(language_pipe(summary.summary.text)[0]["score"])
 
-    return summary, SummaryResults(**results)
+    ### Calculate threshold for content feedback
+
+    # Fetch prior from Supabase
+    prior_data = await supabase.get_volume_prior(volume.Slug)
+    volume_prior = ConjugateNormal(prior_data)
+    results["content_threshold"] = volume_prior.threshold
+
+    # Update prior with score_history
+    if summary_input.score_history:
+        prior_data.support = 3  # Assign a weight of 3 to the volume prior
+        student_prior = ConjugateNormal(prior_data)
+        student_prior.update(summary_input.score_history)
+        results["content_threshold"] = student_prior.threshold
+
+    # Update prior in Supabase
+    volume_prior.update([results["content"]])
+    updated_prior = VolumePrior(
+        slug=volume.Slug,
+        mean=volume_prior.mu,
+        support=volume_prior.k,
+        alpha=volume_prior.alpha,
+        beta=volume_prior.beta,
+    )
+
+    await supabase.update_volume_prior(updated_prior)
+
+    return summary, _SummaryResults(**results)

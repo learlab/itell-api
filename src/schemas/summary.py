@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Literal, Optional
+from typing import Literal, Optional, Union
 
 from pydantic import BaseModel, ConfigDict, Field
 from spacy.tokens import Doc
@@ -34,9 +34,15 @@ class SummaryInputStrapi(BaseModel):
             " response item about a chunk."
         ),
     )
+    score_history: list[float] = Field(
+        default_factory=list,
+        description="A list of the user's previous content scores.",
+    )
 
 
-class SummaryResults(BaseModel):
+class _SummaryResults(BaseModel):
+    """Intermediate Object for Storing Summary Scores"""
+
     containment: float
     containment_chat: Optional[float] = None
     similarity: float
@@ -45,8 +51,7 @@ class SummaryResults(BaseModel):
     included_keyphrases: list[str]
     suggested_keyphrases: list[str]
     content: Optional[float] = None
-    language: Optional[float] = None
-    wording: Optional[float] = None  # Deprecated. Always None.
+    content_threshold: Optional[float] = None
 
 
 class ScoreType(str, Enum):
@@ -56,24 +61,29 @@ class ScoreType(str, Enum):
     english = "English"
     profanity = "Profanity"
     content = "Content"
-    language = "Language"
-    wording = "Wording"  # Deprecated.
-
-
-class Feedback(BaseModel):
-    is_passed: Optional[bool] = None
-    prompt: Optional[str] = None
 
 
 class AnalyticFeedback(BaseModel):
-    type: ScoreType
-    feedback: Feedback
+    name: ScoreType
+    is_passed: Optional[bool] = None
+    score: Optional[Union[float, bool]] = None
+    threshold: Optional[Union[float, bool]] = None
+    feedback: Optional[str] = None
 
 
-class SummaryResultsWithFeedback(SummaryResults):
+class SummaryMetrics(BaseModel):
+    containment: AnalyticFeedback
+    containment_chat: AnalyticFeedback
+    content: AnalyticFeedback
+    similarity: AnalyticFeedback
+    english: AnalyticFeedback
+    profanity: AnalyticFeedback
+
+
+class SummaryResultsWithFeedback(BaseModel):
     is_passed: bool
     prompt: Optional[str] = None
-    prompt_details: list[AnalyticFeedback]
+    metrics: SummaryMetrics
 
 
 class StreamingSummaryResults(SummaryResultsWithFeedback):
@@ -81,58 +91,53 @@ class StreamingSummaryResults(SummaryResultsWithFeedback):
         json_schema_extra={
             "examples": [
                 {
-                    "containment": 0.0,
-                    "containment_chat": None,
-                    "similarity": 0.09705320000648499,
-                    "english": True,
-                    "profanity": False,
-                    "included_keyphrases": [],
-                    "suggested_keyphrases": [
-                        "promote social justice",
-                        "preserve individual rights",
-                        "legislators",
-                    ],
-                    "content": None,
-                    "language": None,
                     "is_passed": False,
                     "prompt": (
                         "Before moving onto the next page, you will need to revise the"
                         " summary you wrote using the feedback provided."
                     ),
-                    "prompt_details": [
-                        {
-                            "type": "Language Borrowing",
-                            "feedback": {
-                                "is_passed": False,
-                                "prompt": (
-                                    "You need to rely less on the language in the text"
-                                    " and focus more on rewriting the key ideas."
-                                ),
-                            },
+                    "metrics": {
+                        "containment": {
+                            "name": "Language Borrowing",
+                            "is_passed": True,
+                            "score": 0.0,
+                            "threshold": 0.6,
+                            "feedback": "You need to rely less on the language in the text and focus more on rewriting the key ideas.",
                         },
-                        {
-                            "type": "Language Borrowing (from iTELL AI)",
-                            "feedback": {"is_passed": False, "prompt": None},
+                        "containment_chat": {
+                            "name": "Language Borrowing (from iTELL AI)",
+                            "is_passed": None,
+                            "score": None,
+                            "threshold": 0.6,
+                            "feedback": "The summary is not too long or too short. It is just right.",
                         },
-                        {
-                            "type": "Relevance",
-                            "feedback": {
-                                "is_passed": False,
-                                "prompt": (
-                                    "To be successful, you need to stay on topic. Find"
-                                    " the main ideas of the text and focus your summary"
-                                    " on those ideas."
-                                ),
-                            },
+                        "similarity": {
+                            "name": "Relevance",
+                            "is_passed": False,
+                            "score": 0.09705320000648499,
+                            "threshold": 0.5,
+                            "feedback": "To be successful, you need to stay on topic. Find the main ideas of the text and focus your summary on those ideas.",
                         },
-                        {
-                            "type": "Content",
-                            "feedback": {"is_passed": False, "prompt": None},
+                        "english": {
+                            "name": "English",
+                            "is_passed": True,
+                            "score": True,
+                            "threshold": False,
+                            "feedback": None,
                         },
-                        {
-                            "type": "Language",
-                            "feedback": {"is_passed": False, "prompt": None},
+                        "profanity": {
+                            "name": "Profanity",
+                            "is_passed": True,
+                            "score": True,
+                            "threshold": False,
+                            "feedback": None,
                         },
+                    },
+                    "included_keyphrases": [],
+                    "suggested_keyphrases": [
+                        "promote social justice",
+                        "preserve individual rights",
+                        "legislators",
                     ],
                 },
                 {
@@ -153,7 +158,6 @@ class StreamingSummaryResults(SummaryResultsWithFeedback):
 
 
 class ChunkWithWeight(Chunk):
-    # This is a Python object rather than json.
     KeyPhrase: Optional[list[str]] = None
     weight: float
 

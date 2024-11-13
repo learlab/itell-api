@@ -1,9 +1,24 @@
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import StreamingResponse
 
 from ..logging.logging_router import LoggingRoute, LoggingStreamingResponse
-from ..schemas.chat import ChatInput, ChatInputCRI, ChatInputSERT, PromptInput
-from ..services.chat import cri_chat, moderated_chat, sert_chat, unmoderated_chat
+from ..schemas.chat import (
+    ChatInput,
+    ChatInputCRI,
+    ChatInputSERT,
+    ChatInputThinkAloud,
+    PromptInput,
+)
+from ..services.chat import (
+    cri_chat,
+    moderated_chat,
+    sert_final,
+    sert_followup,
+    think_aloud_final,
+    think_aloud_followup,
+    unmoderated_chat,
+)
+from ..services.stairs import think_aloud
 
 router = APIRouter(route_class=LoggingRoute)
 
@@ -49,18 +64,49 @@ async def chat_cri(
     return LoggingStreamingResponse(content=chat_stream, media_type="text/event-stream")
 
 
-@router.post("/chat/SERT")
+@router.post("/chat/sert")
 async def chat_sert(
     input_body: ChatInputSERT,
     request: Request,
 ) -> StreamingResponse:
-    """Responds to user queries incorporating relevant chunks from the current page.
+    """Responds to user queries incorporating the current in-focus chunk.
 
     The response is a StreamingResponse wih the following fields:
     - **request_id**: a unique identifier for the request
     - **text**: the response text
     """
     strapi = request.app.state.strapi
-    chat_stream = await sert_chat(input_body, strapi)
+
+    if not input_body.history:
+        raise HTTPException(
+            status_code=422,
+            detail="History must be provided to continue a SERT chat.",
+        )
+    elif len(input_body.history) == 1:
+        chat_stream = await sert_followup(input_body, strapi)
+    elif len(input_body.history) == 3:
+        chat_stream = await sert_final(input_body, strapi)
+
+    return LoggingStreamingResponse(content=chat_stream, media_type="text/event-stream")
+
+
+@router.post("/chat/think_aloud")
+async def chat_think_aloud(
+    input_body: ChatInputThinkAloud,
+    request: Request,
+) -> StreamingResponse:
+    """Generates a think aloud protocol from the provided chunk.
+
+    The response is a StreamingResponse wih the following fields:
+    - **request_id**: a unique identifier for the request
+    - **text**: the response text
+    """
+    strapi = request.app.state.strapi
+    if not input_body.history:
+        chat_stream = await think_aloud(input_body, strapi)
+    elif len(input_body.history) == 1:
+        chat_stream = await think_aloud_followup(input_body, strapi)
+    elif len(input_body.history) == 3:
+        chat_stream = await think_aloud_final(input_body, strapi)
 
     return LoggingStreamingResponse(content=chat_stream, media_type="text/event-stream")

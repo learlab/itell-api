@@ -11,12 +11,21 @@ from src.dependencies.faiss import FAISS_Wrapper
 
 from ..dependencies.strapi import Strapi
 from ..pipelines.chat import chat_pipeline
-from ..schemas.chat import EventType
+from ..schemas.chat import ChatInputThinkAloud, EventType
 from ..schemas.embedding import RetrievalInput, RetrievalStrategy
+from ..schemas.strapi import Volume
 from ..schemas.summary import ChunkWithWeight, Summary
 
-with open("templates/sert.jinja2", "r", encoding="utf8") as file_:
-    prompt_template = Template(file_.read())
+with open("templates/sert_question.jinja2", "r", encoding="utf8") as file_:
+    sert_question_template = Template(file_.read())
+
+with open("templates/think_aloud.jinja2", "r", encoding="utf8") as file_:
+    think_aloud_template = Template(file_.read())
+
+
+def weight_chunks_with_similarity(reading_time_score, similarity):
+    return reading_time_score * similarity
+
 
 question_type_definitions = {
     "paraphrasing": "A paraphrasing question asks readers to restate the text in different words.",  # noqa E501
@@ -27,16 +36,14 @@ question_type_definitions = {
 }
 
 
-def weight_chunks_with_similarity(reading_time_score, similarity):
-    return reading_time_score * similarity
+async def select_chunk(
+    summary: Summary,
+    text_meta: Volume,
+    faiss: FAISS_Wrapper,
+) -> ChunkWithWeight:
+    """Select a chunk for rereading based on the user's summary and reading behavior."""
 
-
-async def sert_chat(
-    summary: Summary, strapi: Strapi, faiss: FAISS_Wrapper
-) -> AsyncGenerator[bytes, None]:
-    text_meta = await strapi.get_text_meta(summary.page_slug)
-
-    # Retrieve the chunks that are the least similar to the student's summary
+    # Retrieve the chunks that are the least similar to the student's summary.
     least_similar_chunks = await faiss.retrieve_chunks(
         RetrievalInput(
             text_slug=text_meta.Slug,
@@ -80,6 +87,16 @@ async def sert_chat(
     # Select the chunk with the lowest score
     selected_chunk, _ = min(chunks, key=lambda x: x[1])
 
+    return selected_chunk
+
+
+async def sert_question(
+    summary: Summary, strapi: Strapi, faiss: FAISS_Wrapper
+) -> AsyncGenerator[bytes, None]:
+    text_meta = await strapi.get_text_meta(summary.page_slug)
+
+    selected_chunk = await select_chunk(summary, text_meta, faiss)
+
     chunk_text = selected_chunk.CleanText[
         : min(2000, len(selected_chunk.CleanText))  # first 2,000 characters
     ]
@@ -87,7 +104,7 @@ async def sert_chat(
     question_type = random.choice(list(question_type_definitions.keys()))
 
     # Construct the SERT prompt
-    prompt = prompt_template.render(
+    prompt = sert_question_template.render(
         text_name=text_meta.Title,
         excerpt_chunk=chunk_text,
         student_summary=summary.summary.text,
@@ -103,4 +120,27 @@ async def sert_chat(
         event_type=EventType.content_feedback,
         chunk=selected_chunk.Slug,
         question_type=question_type,
+    )
+
+
+async def think_aloud(
+    input_body: ChatInputThinkAloud, strapi: Strapi
+) -> AsyncGenerator[bytes, None]:
+    text_meta = await strapi.get_text_meta(input_body.page_slug)
+    chunk = await strapi.get_chunk(input_body.page_slug, input_body.chunk_slug)
+
+    # Construct the STAIRS prompt
+    prompt = think_aloud_template.render(
+        text_name=text_meta.Title,
+        text_info=text_meta.Description,
+        context=chunk.CleanText,
+    )
+
+    sampling_params = SamplingParams(temperature=0.4, max_tokens=4096)
+
+    return await chat_pipeline(
+        prompt,
+        sampling_params,
+        event_type=EventType.think_aloud,
+        chunk=input_body.chunk_slug,
     )
