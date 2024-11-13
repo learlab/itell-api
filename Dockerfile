@@ -16,7 +16,8 @@ RUN wget $MINICONDA_URL -O miniconda.sh && \
     mkdir -p /root/.conda && \
     bash miniconda.sh -b -p /opt/miniconda3 && \
     rm -f miniconda.sh && \
-    conda init bash
+    conda init bash && \
+    conda config --set solver classic
 
 # Protobuf required by gcld3
 RUN conda install -c conda-forge libprotobuf
