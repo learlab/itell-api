@@ -17,10 +17,10 @@ def suggest_keyphrases(summary: Doc, chunks: list) -> tuple[list[str], list[str]
     summary_lemmas = " ".join([t.lemma_.lower() for t in summary if not t.is_stop])
 
     for chunk in chunks:
-        if not chunk.KeyPhrase:
+        if not chunk.keyphrases:
             continue
 
-        for keyphrase in nlp.pipe(chunk.KeyPhrase):
+        for keyphrase in nlp.pipe(chunk.keyphrases):
             keyphrase_lemmas = [t.lemma_ for t in keyphrase if not t.is_stop]
             keyphrase_included = re.search(
                 re.escape(r" ".join(keyphrase_lemmas)),

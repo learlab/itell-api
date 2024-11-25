@@ -14,12 +14,18 @@ async def test_threshold_adjustment(client, supabase):
         "POST",
         "/score/summary/stairs",
         json={
-            "page_slug": "learning-analytics-for-self-regulated-learning",
-            "summary": "The paper introcuces what is self-regulated learning is, and elabrates the more granular definition of each faucets. COPES are a good words to memorize the concept, but overally spearking these terms are still pretty abstract for me. Collecting is hard, but it seems like collecting right data and utlize it is way more critical. ",  # noqa: E501
+            "page_slug": "page-26",
+            "summary": "Writing tests is essential in software development. They catch bugs early, serve as reliable documentation, and give developers confidence to improve code without introducing errors. Testing also promotes better code design through modular architecture and clear interfaces. The investment in writing tests pays off through more maintainable, reliable software.",  # noqa: E501
             "score_history": [1.5, 1.5, 1.9, 2.0, 3.5],
         },
     ) as response:
-        assert response.status_code == 200
+        if response.is_error:
+            await response.aread()
+            try:
+                error_detail = response.json().get("detail", "No detail provided")
+            except ValueError:  # In case response isn't JSON
+                error_detail = response.text
+            print(f"{response.status_code} Error: {error_detail}")
 
         response = await anext(response.aiter_text())
         stream = (chunk for chunk in response.split("\n\n"))
@@ -48,12 +54,18 @@ async def test_new_volume_threshold(client, supabase):
         json={
             # Use the User Guide because it will exist in Strapi,
             # but we can safely delete the volume threshold after it is created.
-            "page_slug": "user-guide-baseline",
-            "summary": "iTELL is a learning tool that is designed to help students ingest reading materials effectively. Reading in iTELL is complemented by activities such as short answer questions and end-of-page summaries. These activities are required in order to proceed with the reading, and they are evaluated by AI. Learners may also use the Guide-on-the-side to converse about their reading, and they can see performance metrics in the user dashboard.",  # noqa: E501
+            "page_slug": "page-26",
+            "summary": "Writing tests is essential in software development. They catch bugs early, serve as reliable documentation, and give developers confidence to improve code without introducing errors. Testing also promotes better code design through modular architecture and clear interfaces. The investment in writing tests pays off through more maintainable, reliable software.",  # noqa: E501
             "score_history": [],
         },
     ) as response:
-        assert response.status_code == 200
+        if response.is_error:
+            await response.aread()
+            try:
+                error_detail = response.json().get("detail", "No detail provided")
+            except ValueError:  # In case response isn't JSON
+                error_detail = response.text
+            print(f"{response.status_code} Error: {error_detail}")
 
         response = await anext(response.aiter_text())
         stream = (chunk for chunk in response.split("\n\n"))

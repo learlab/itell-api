@@ -6,7 +6,12 @@ from cachetools import TTLCache, keys
 from fastapi import HTTPException
 from pydantic import ValidationError
 
-from ..schemas.strapi import Chunk, PageWithChunks, PageWithVolume, Volume
+from ..schemas.strapi import (
+    Chunk,
+    PageWithChunksResponse,
+    PageWithVolumeResponse,
+    Volume,
+)
 from ..utils.async_cache import acached
 
 
@@ -49,6 +54,7 @@ class Strapi:
             message = (
                 f"Error connecting to Strapi {resp.status_code}:"
                 f" {resp.reason_phrase}"
+                f"\n{request.url}"
             )
             raise HTTPException(
                 status_code=404,
@@ -128,18 +134,22 @@ class Strapi:
         json_response = await self.get_entries(
             plural_api_id="pages",
             filters={"Slug": {"$eq": page_slug}},
-            populate={"Content": {"filters": {"Slug": {"$eq": chunk_slug}}}},
+            populate={
+                "Content": {
+                    "on": {"page.chunk": {"filters": {"Slug": {"$eq": chunk_slug}}}}
+                }
+            },
         )
 
         try:
-            page_with_chunks = PageWithChunks(**json_response)
+            page_with_chunks = PageWithChunksResponse(**json_response)
         except ValidationError as error:
             raise HTTPException(
                 status_code=404,
                 detail=f"Chunk '{chunk_slug}' not found in page '{page_slug}'. {error}",
             )
 
-        return page_with_chunks.data[0].attributes.Content[0]
+        return page_with_chunks.data[0].content[0]
 
     async def get_text_meta(self, page_slug) -> Volume:
         json_response = await self.get_entries(
@@ -149,14 +159,14 @@ class Strapi:
         )
 
         try:
-            page_with_text = PageWithVolume(**json_response)
+            page_with_text = PageWithVolumeResponse(**json_response)
         except ValidationError as error:
             raise HTTPException(
                 status_code=404,
                 detail=f"No parent text found for {page_slug}. {error}",
             )
 
-        text_meta = page_with_text.data[0].attributes.Volume.data.attributes
+        text_meta = page_with_text.data[0].volume
 
         return text_meta
 
@@ -166,17 +176,19 @@ class Strapi:
         json_response = await self.get_entries(
             plural_api_id="pages",
             filters={"Slug": {"$eq": page_slug}},
-            populate={"Content": "*"},
+            populate="Content",
         )
+
         try:
-            page_with_chunks = PageWithChunks(**json_response)
+            page_with_chunks = PageWithChunksResponse(**json_response)
         except ValidationError as error:
+            print(json_response)
             raise HTTPException(
                 status_code=404,
                 detail=f"No chunks found for {page_slug}. {error}",
             )
 
-        return page_with_chunks.data[0].attributes.Content
+        return page_with_chunks.data[0].content
 
 
 async def get_strapi() -> AsyncGenerator[Strapi, None]:

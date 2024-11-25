@@ -46,7 +46,7 @@ async def select_chunk(
     # Retrieve the chunks that are the least similar to the student's summary.
     least_similar_chunks = await faiss.retrieve_chunks(
         RetrievalInput(
-            text_slug=text_meta.Slug,
+            text_slug=text_meta.slug,
             page_slugs=[summary.page_slug],
             text=summary.summary.text,
             retrieve_strategy=RetrievalStrategy.least_similar,
@@ -73,9 +73,9 @@ async def select_chunk(
 
     # Calculate final score for rereading: reading_time_score * similarity
     chunks: list[tuple[ChunkWithWeight, float]] = [
-        (chunk, (chunk.weight * similarity_dict[chunk.Slug]))
+        (chunk, (chunk.weight * similarity_dict[chunk.slug]))
         for chunk in summary.chunks
-        if chunk.Slug in similarity_dict
+        if chunk.slug in similarity_dict
     ]
 
     if len(chunks) == 0:
@@ -97,8 +97,8 @@ async def sert_question(
 
     selected_chunk = await select_chunk(summary, text_meta, faiss)
 
-    chunk_text = selected_chunk.CleanText[
-        : min(2000, len(selected_chunk.CleanText))  # first 2,000 characters
+    chunk_text = selected_chunk.clean_text[
+        : min(2000, len(selected_chunk.clean_text))  # first 2,000 characters
     ]
 
     question_type = random.choice(list(question_type_definitions.keys()))
@@ -118,7 +118,7 @@ async def sert_question(
         prompt,
         sampling_params,
         event_type=EventType.content_feedback,
-        chunk=selected_chunk.Slug,
+        chunk=selected_chunk.slug,
         question_type=question_type,
     )
 
@@ -132,8 +132,8 @@ async def think_aloud(
     # Construct the STAIRS prompt
     prompt = think_aloud_template.render(
         text_name=text_meta.Title,
-        text_info=text_meta.Description,
-        context=chunk.CleanText,
+        text_info=text_meta.description,
+        context=chunk.clean_text,
     )
 
     sampling_params = SamplingParams(temperature=0.4, max_tokens=4096)
