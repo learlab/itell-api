@@ -14,7 +14,7 @@ async def test_threshold_adjustment(client, supabase):
         "POST",
         "/score/summary/stairs",
         json={
-            "page_slug": "page-26",
+            "page_slug": "test-page",
             "summary": "Writing tests is essential in software development. They catch bugs early, serve as reliable documentation, and give developers confidence to improve code without introducing errors. Testing also promotes better code design through modular architecture and clear interfaces. The investment in writing tests pays off through more maintainable, reliable software.",  # noqa: E501
             "score_history": [1.5, 1.5, 1.9, 2.0, 3.5],
         },
@@ -54,7 +54,7 @@ async def test_new_volume_threshold(client, supabase):
         json={
             # Use the User Guide because it will exist in Strapi,
             # but we can safely delete the volume threshold after it is created.
-            "page_slug": "page-26",
+            "page_slug": "test-page",
             "summary": "Writing tests is essential in software development. They catch bugs early and give developers shame about their inability to accomplish the most basic tasks. While reliable software is ostensibly the goal, the true value of tests is that they weed out feeble-minded tech bros from the profession.",  # noqa: E501
             "score_history": [],
         },

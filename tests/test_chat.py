@@ -8,7 +8,7 @@ async def test_chat(client, parser):
         "POST",
         "/chat",
         json={
-            "page_slug": "page-26",
+            "page_slug": "test-page",
             "message": "Why should I write tests?",
         },
     ) as response:
@@ -45,7 +45,7 @@ async def test_chat_CRI(client, parser):
     response = await client.post(
         "/chat/CRI",
         json={
-            "page_slug": "page-26",
+            "page_slug": "test-page",
             "chunk_slug": "Test-Chunk-1718t",
             "student_response": "Predictions and goals.",
         },
@@ -60,7 +60,7 @@ async def test_user_guide_rag(client, parser):
         "POST",
         "/chat",
         json={
-            "page_slug": "page-26",
+            "page_slug": "test-page",
             "message": "How do I navigate the iTELL Dashboard?",
         },
     ) as response:
@@ -98,7 +98,7 @@ async def test_final_sert_response(client, parser):
         "POST",
         "/chat/sert",
         json={
-            "page_slug": "page-26",
+            "page_slug": "test-page",
             "current_chunk": "Test-Chunk-1718t",
             "message": "Yes",
             "history": [

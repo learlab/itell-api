@@ -136,7 +136,11 @@ class Strapi:
             filters={"Slug": {"$eq": page_slug}},
             populate={
                 "Content": {
-                    "on": {"page.chunk": {"filters": {"Slug": {"$eq": chunk_slug}}}}
+                    "on": {
+                        "page.chunk": {"filters": {"Slug": {"$eq": chunk_slug}}},
+                        "page.plain-chunk": {"filters": {"Slug": {"$eq": chunk_slug}}},
+                        "page.video": {"filters": {"Slug": {"$eq": chunk_slug}}},
+                    }
                 }
             },
         )

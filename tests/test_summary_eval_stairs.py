@@ -9,7 +9,7 @@ async def test_summary_eval_stairs(client, supabase):
         "POST",
         "/score/summary/stairs",
         json={
-            "page_slug": "page-26",
+            "page_slug": "test-page",
             "summary": "Writing tests is essential in software development. They catch bugs early, serve as reliable documentation, and give developers confidence to improve code without introducing errors. Testing also promotes better code design through modular architecture and clear interfaces. The investment in writing tests pays off through more maintainable, reliable software.",  # noqa: E501
         },
     ) as response:
@@ -51,7 +51,7 @@ async def test_summary_eval_stairs_fail_content(client, parser, supabase):
         "POST",
         "/score/summary/stairs",
         json={
-            "page_slug": "page-26",
+            "page_slug": "test-page",
             "summary": "Tests r rly important 4 making software!!!! They help u find bugs b4 they get 2 bad LOL!! When u write tests its like having a safety blanket 4 ur code. Tests r gr8 documentation 2!! U can change stuff without breaking everything else. Tests make code way better OMG!!!!!! Developers luv them!!",  # noqa: E501
         },
     ) as response:
