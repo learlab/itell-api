@@ -59,7 +59,7 @@ async def moderated_chat(
 
     relevant_chunks = await faiss.retrieve_chunks(
         RetrievalInput(
-            text_slug=text_meta.Slug,
+            text_slug=text_meta.slug,
             page_slugs=[chat_input.page_slug, "user-guide-baseline"],
             text=chat_input.message,
             similarity_threshold=0.15,
@@ -76,8 +76,8 @@ async def moderated_chat(
         text_info = "iTELL stands for intelligent texts for enhanced lifelong learning. It is a platform that provides students with a personalized learning experience. This user guide provides information on how to navigate the iTELL platform."  # noqa: E501
         cited_chunk = "[User Guide]"
     else:
-        text_name = text_meta.Title
-        text_info = text_meta.Description
+        text_name = text_meta.title
+        text_info = text_meta.description
         cited_chunk = relevant_chunk.chunk if relevant_chunk else None
 
     # Get last 4 messages from chat history
@@ -118,9 +118,9 @@ async def sert_followup(
     )
 
     prompt = sert_followup_template.render(
-        text_name=text_meta.Title,
-        text_info=text_meta.Description,
-        context=current_chunk.CleanText,
+        text_name=text_meta.title,
+        text_info=text_meta.description,
+        context=current_chunk.clean_text,
         chat_history=chat_input.history,
         user_message=chat_input.message,
         student_summary=chat_input.summary,
@@ -138,9 +138,9 @@ async def sert_final(
     )
 
     prompt = sert_final_template.render(
-        text_name=text_meta.Title,
-        text_info=text_meta.Description,
-        context=current_chunk.CleanText,
+        text_name=text_meta.title,
+        text_info=text_meta.description,
+        context=current_chunk.clean_text,
         chat_history=chat_input.history,
         user_message=chat_input.message,
         student_summary=chat_input.summary,
@@ -156,8 +156,8 @@ async def think_aloud_followup(
     text_meta = await strapi.get_text_meta(chat_input.page_slug)
 
     prompt = think_aloud_followup_template.render(
-        text_name=text_meta.Title,
-        text_info=text_meta.Description,
+        text_name=text_meta.title,
+        text_info=text_meta.description,
         chat_history=chat_input.history,
         user_message=chat_input.message,
     )
@@ -171,7 +171,7 @@ async def think_aloud_final(
     text_meta = await strapi.get_text_meta(chat_input.page_slug)
 
     prompt = think_aloud_final_template.render(
-        text_name=text_meta.Title,
+        text_name=text_meta.title,
         chat_history=chat_input.history,
         user_message=chat_input.message,
     )
@@ -186,7 +186,7 @@ async def cri_chat(
     chunk = await strapi.get_chunk(cri_input.page_slug, cri_input.chunk_slug)
     text_meta = await strapi.get_text_meta(cri_input.page_slug)
 
-    target_properties = ["ConstructedResponse", "Question", "CleanText"]
+    target_properties = ["constructed_response", "question", "clean_text"]
 
     for prop in target_properties:
         if getattr(chunk, prop) is None:
@@ -196,10 +196,10 @@ async def cri_chat(
             )
 
     prompt = cri_prompt_template.render(
-        text_name=text_meta.Title,
-        clean_text=chunk.CleanText,
-        question=chunk.Question,
-        golden_answer=chunk.ConstructedResponse,
+        text_name=text_meta.title,
+        clean_text=chunk.clean_text,
+        question=chunk.question,
+        golden_answer=chunk.constructed_response,
         student_response=cri_input.student_response,
     )
 

@@ -2,8 +2,8 @@ from fastapi import HTTPException
 from transformers import logging
 
 from ..dependencies.strapi import Strapi
-from ..schemas.answer import AnswerInputStrapi, AnswerResults
 from ..pipelines.answer import AnswerPipeline
+from ..schemas.answer import AnswerInputStrapi, AnswerResults
 
 logging.set_verbosity_error()
 
@@ -34,13 +34,13 @@ async def answer_score(
 ) -> AnswerResults:
     chunk = await strapi.get_chunk(answer_input.page_slug, answer_input.chunk_slug)
 
-    if chunk.ConstructedResponse is None:
+    if chunk.constructed_response is None:
         raise HTTPException(
             status_code=404,
             detail="Requested Chunk does not have a ConstructedResponse",
         )
 
-    answer = Answer(chunk.ConstructedResponse, answer_input.answer)
+    answer = Answer(chunk.constructed_response, answer_input.answer)
     answer.score_answer()
 
     return AnswerResults(**answer.results)

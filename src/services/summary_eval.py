@@ -37,7 +37,7 @@ def weight_chunks(
     for chunk, chunk_doc in zip(chunks, chunk_docs):
         if not chunk.component_type == "page.chunk":
             continue
-        focus_time = max(focus_time_dict.get(chunk.Slug, 1), 1)
+        focus_time = max(focus_time_dict.get(chunk.slug, 1), 1)
         weight = 3.33 * (focus_time / len(chunk_doc))
         weighted_chunks.append(
             ChunkWithWeight(**chunk.model_dump(by_alias=True), weight=weight)
@@ -59,7 +59,7 @@ async def prepare_summary(
     chunks = await strapi.get_chunks(summary_input.page_slug)
 
     chunk_docs = list(
-        nlp.pipe([chunk.Header + "\n" + chunk.CleanText for chunk in chunks])
+        nlp.pipe([chunk.header + "\n" + chunk.clean_text for chunk in chunks])
     )
 
     weighted_chunks = weight_chunks(chunks, chunk_docs, summary_input.focus_time)
@@ -160,7 +160,7 @@ async def summary_score(
     # Calculate threshold for content feedback
     ###
     # Fetch prior from Supabase
-    prior_data = await supabase.get_volume_prior(volume.Slug)
+    prior_data = await supabase.get_volume_prior(volume.slug)
     volume_prior = ConjugateNormal(prior_data)
     results["content_threshold"] = volume_prior.threshold
 
@@ -174,7 +174,7 @@ async def summary_score(
     # Update prior in Supabase
     volume_prior.update([results["content"]])
     updated_prior = VolumePrior(
-        slug=volume.Slug,
+        slug=volume.slug,
         mean=volume_prior.mu,
         support=volume_prior.k,
         alpha=volume_prior.alpha,

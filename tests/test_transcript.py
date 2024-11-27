@@ -7,7 +7,7 @@ async def test_generate_transcript(client):
             "end_time": 200,
         },
     )
-    assert response.status_code == 200
+    assert response.status_code == 200, response.text
 
 
 async def test_generate_transcript_short_URL(client):
@@ -19,4 +19,4 @@ async def test_generate_transcript_short_URL(client):
             "end_time": 200,
         },
     )
-    assert response.status_code == 200
+    assert response.status_code == 200, response.text

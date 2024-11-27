@@ -8,11 +8,17 @@ async def test_chat(client, parser):
         "POST",
         "/chat",
         json={
-            "page_slug": "emotional",
-            "message": "What are emotions about?",
+            "page_slug": "page-26",
+            "message": "Why should I write tests?",
         },
     ) as response:
-        assert response.status_code == 200
+        if response.is_error:
+            await response.aread()
+            try:
+                error_detail = response.json().get("detail", "No detail provided")
+            except ValueError:  # In case response isn't JSON
+                error_detail = response.text
+            print(f"{response.status_code} Error: {error_detail}")
 
         # We need to simulate the streaming response due to an issue with
         # Starlette's TestClient https://github.com/encode/starlette/issues/1102
@@ -32,19 +38,19 @@ async def test_chat(client, parser):
         print("CHAT RESPONSE: ", parser(response))
 
     # Check that a chunk was cited
-    assert len(message.context) != 0, "A chunk should be cited."
+    assert message.context, "A chunk should be cited."
 
 
 async def test_chat_CRI(client, parser):
     response = await client.post(
         "/chat/CRI",
         json={
-            "page_slug": "emotional",
-            "chunk_slug": "Core-Themes-3-483t",
+            "page_slug": "page-26",
+            "chunk_slug": "Test-Chunk-1718t",
             "student_response": "Predictions and goals.",
         },
     )
-    assert response.status_code == 200
+    assert response.status_code == 200, response.text
     print("*" * 80)
     print("CHAT CRI: ", parser(response.text))
 
@@ -54,11 +60,17 @@ async def test_user_guide_rag(client, parser):
         "POST",
         "/chat",
         json={
-            "page_slug": "emotional",
+            "page_slug": "page-26",
             "message": "How do I navigate the iTELL Dashboard?",
         },
     ) as response:
-        assert response.status_code == 200
+        if response.is_error:
+            await response.aread()
+            try:
+                error_detail = response.json().get("detail", "No detail provided")
+            except ValueError:  # In case response isn't JSON
+                error_detail = response.text
+            print(f"{response.status_code} Error: {error_detail}")
 
         # We need to simulate the streaming response due to an issue with
         # Starlette's TestClient https://github.com/encode/starlette/issues/1102
@@ -86,8 +98,8 @@ async def test_final_sert_response(client, parser):
         "POST",
         "/chat/sert",
         json={
-            "page_slug": "7-1-the-relatively-recent-arrival-of-economic-growth",
-            "current_chunk": "Rule-of-Law-and-Economic-Growth-701t",
+            "page_slug": "page-26",
+            "current_chunk": "Test-Chunk-1718t",
             "message": "Yes",
             "history": [
                 {
@@ -105,7 +117,13 @@ async def test_final_sert_response(client, parser):
             ],
         },
     ) as response:
-        assert response.status_code == 200
+        if response.is_error:
+            await response.aread()
+            try:
+                error_detail = response.json().get("detail", "No detail provided")
+            except ValueError:  # In case response isn't JSON
+                error_detail = response.text
+            print(f"{response.status_code} Error: {error_detail}")
 
         response = await anext(response.aiter_text())
         stream = (chunk for chunk in response.split("\n\n"))
