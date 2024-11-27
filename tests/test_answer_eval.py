@@ -3,7 +3,7 @@ async def test_short_answer_strapi(client):
         "/score/answer",
         json={
             "page_slug": "page-26",
-            "chunk_slug": "Test-Chunk-1721t",
+            "chunk_slug": "Test-Chunk-1718t",
             "answer": "Writing tests helps to catch bugs early and serves as living documentation.",  # noqa: E501
         },
     )

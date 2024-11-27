@@ -52,7 +52,7 @@ async def test_summary_eval_stairs_fail_content(client, parser, supabase):
         "/score/summary/stairs",
         json={
             "page_slug": "page-26",
-            "summary": "Good software development requires careful planning and attention to detail. Writing clean, maintainable code helps teams collaborate effectively and adapt to changing requirements. Following established best practices and design patterns creates robust applications that are easier to understand, debug, and enhance over time. Regular code reviews ensure quality.",  # noqa: E501
+            "summary": "Tests r rly important 4 making software!!!! They help u find bugs b4 they get 2 bad LOL!! When u write tests its like having a safety blanket 4 ur code. Tests r gr8 documentation 2!! U can change stuff without breaking everything else. Tests make code way better OMG!!!!!! Developers luv them!!",  # noqa: E501
         },
     ) as response:
         if response.is_error:

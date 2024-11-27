@@ -46,7 +46,7 @@ async def test_chat_CRI(client, parser):
         "/chat/CRI",
         json={
             "page_slug": "page-26",
-            "chunk_slug": "Test-Chunk-1721t",
+            "chunk_slug": "Test-Chunk-1718t",
             "student_response": "Predictions and goals.",
         },
     )
@@ -99,7 +99,7 @@ async def test_final_sert_response(client, parser):
         "/chat/sert",
         json={
             "page_slug": "page-26",
-            "current_chunk": "Test-Chunk-1721t",
+            "current_chunk": "Test-Chunk-1718t",
             "message": "Yes",
             "history": [
                 {

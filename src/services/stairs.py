@@ -105,7 +105,7 @@ async def sert_question(
 
     # Construct the SERT prompt
     prompt = sert_question_template.render(
-        text_name=text_meta.Title,
+        text_name=text_meta.title,
         excerpt_chunk=chunk_text,
         student_summary=summary.summary.text,
         question_type=question_type,
@@ -131,7 +131,7 @@ async def think_aloud(
 
     # Construct the STAIRS prompt
     prompt = think_aloud_template.render(
-        text_name=text_meta.Title,
+        text_name=text_meta.title,
         text_info=text_meta.description,
         context=chunk.clean_text,
     )
