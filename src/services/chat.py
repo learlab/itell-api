@@ -117,13 +117,17 @@ async def sert_followup(
         chat_input.page_slug, chat_input.current_chunk
     )
 
+    try:
+        sert_question = chat_input.history[0].text
+    except IndexError:
+        raise HTTPException(status_code=400, detail="No SERT question found in history")
+
     prompt = sert_followup_template.render(
         text_name=text_meta.title,
         text_info=text_meta.description,
         context=current_chunk.clean_text,
-        chat_history=chat_input.history,
-        user_message=chat_input.message,
-        student_summary=chat_input.summary,
+        sert_question=sert_question,
+        learner_response=chat_input.message
     )
 
     return await chat_pipeline(prompt, sampling_params, event_type=EventType.chat)

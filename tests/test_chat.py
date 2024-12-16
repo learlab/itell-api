@@ -93,6 +93,45 @@ async def test_user_guide_rag(client, parser):
     assert message.context[0] == "[User Guide]", "The user guide should be cited."
 
 
+async def test_followup_sert_response(client, parser):
+    async with client.stream(
+        "POST",
+        "/chat/sert",
+        json={
+            "page_slug": "test-page",
+            "current_chunk": "Test-Chunk-1718t",
+            "message": "a strong legal framework, which ensures effective protection of property and contractual rights is crucial for economic growth.", # noqa: E501
+            "history": [
+                {
+                    "text": "\n\nWhat is the relationship between the economic growth of a country and the strength of its legal framework, according",  # noqa: E501
+                    "agent": "bot",
+                },
+            ],
+        },
+    ) as response:
+        if response.is_error:
+            await response.aread()
+            try:
+                error_detail = response.json().get("detail", "No detail provided")
+            except ValueError:  # In case response isn't JSON
+                error_detail = response.text
+            print(f"{response.status_code} Error: {error_detail}")
+
+        response = await anext(response.aiter_text())
+        stream = (chunk for chunk in response.split("\n\n"))
+
+        # The first chunk is the feedback
+        first_chunk = next(stream).removeprefix(f"event: {EventType.chat}\ndata: ")
+
+        # Checks that the first chunk is a valid ChatResponse object.
+        try:
+            ChatResponse.model_validate_json(first_chunk)
+        except ValidationError as err:
+            print(err)
+            raise
+        print("*" * 80)
+        print("FOLLOWUP SERT RESPONSE:", parser(response))
+
 async def test_final_sert_response(client, parser):
     async with client.stream(
         "POST",
