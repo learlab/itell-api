@@ -16,7 +16,11 @@ class AnswerPipeline:
     bleurt_threshold = 0.7
 
     def __init__(self):
-        self.mpnet_classifier = pipeline("text-classification", model=self.mpnet_model)
+        self.mpnet_classifier = pipeline(
+            "text-classification",
+            model=self.mpnet_model,
+            revision="77b846ec4606bfcfdf913888d7f0ab51f977a579",
+            )
         self.bleurt_classifier = pipeline(
             "text-classification", model=self.bleurt_model
         )
