@@ -9,6 +9,7 @@ from ..schemas.chat import EventType
 from ..schemas.summary import (
     StreamingSummaryResults,
     SummaryInputStrapi,
+    SummaryInputTest,
     SummaryResultsWithFeedback,
 )
 from ..services.answer_eval import answer_score
@@ -83,6 +84,39 @@ async def score_summary_with_stairs(
         yield "\n".join([event_str, data_str]).encode("utf-8")
         if feedback_stream:
             async for chunk in feedback_stream:
+                yield chunk
+
+    return LoggingStreamingResponse(
+        content=stream_results(), media_type="text/event-stream"
+    )
+
+@router.post("/score/summary/test", response_model=StreamingSummaryResults)
+async def score_summary_with_stairs_test(
+    input_body: SummaryInputTest,
+    request: Request,
+) -> StreamingResponse:
+    """Returns a static StreamingSummaryResults object."""
+
+    content = 1.5 if input_body.passing_content else -1.5
+
+    fake_results = _summary_results(
+        containment=0.1,
+        containment_chat=0.05,
+        similarity=0.7,
+        content=content,
+        english=True,
+        profanity=False,
+    )
+
+    fake_feedback: SummaryResultsWithFeedback = summary_feedback(fake_results)
+
+    async def stream_results() -> AsyncGenerator[bytes, None]:
+        event_str = f"event: {EventType.summary_feedback}"
+        data_str = f"data: {fake_feedback.model_dump_json()}\n\n"
+        yield "\n".join([event_str, data_str]).encode("utf-8")
+        if input_body.passing_content is False:
+            fake_stream = ["test_token"] * 200
+            async for chunk in fake_stream:
                 yield chunk
 
     return LoggingStreamingResponse(

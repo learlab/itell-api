@@ -40,6 +40,12 @@ class SummaryInputStrapi(BaseModel):
     )
 
 
+class SummaryInputTest(SummaryInputStrapi):
+    passing_content: bool = Field(
+        description="Whether the summary response is passing or failing on content.",        
+    )
+
+
 class _SummaryResults(BaseModel):
     """Intermediate Object for Storing Summary Scores"""
 
