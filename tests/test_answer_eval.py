@@ -14,7 +14,7 @@ async def test_short_answer_video_chunk(client):
         "/score/answer",
         json={
             "page_slug": "test-page",
-            "chunk_slug": "Test-Video-Chunk-27",
+            "chunk_slug": "Test-Video-Chunk-50",
             "answer": "The principle of test-driven development called red green refactor involves writing a failing test first, then writing code to pass the test, and finally optimizing or refactoring the code.",  # noqa: E501
         },
     )
