@@ -16,7 +16,7 @@ push:
 	docker push ${user}/${image_name}
 
 deploy:
-	microk8s kubectl rollout restart deployment/itell-api
+	microk8s kubectl -n jhub rollout restart deployment/itell-api
 
 all: build test push deploy
 
