@@ -117,7 +117,7 @@ async def score_summary_with_stairs_test(
         if input_body.passing_content is False:
             fake_stream = ["test_token"] * 200
             async for chunk in fake_stream:
-                yield chunk
+                yield f"event: test_chat\ndata: {chunk}\n\n"
 
     return LoggingStreamingResponse(
         content=stream_results(), media_type="text/event-stream"
