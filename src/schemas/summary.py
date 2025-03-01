@@ -38,15 +38,23 @@ class SummaryInputStrapi(BaseModel):
         default_factory=list,
         description="A list of the user's previous content scores.",
     )
+    enrolled_in_class: bool = Field(
+        default=False,
+        description=(
+            "Whether the student is enrolled in a class."
+            "The volume prior will not be updated if the student"
+            "is not enrolled in a class."
+        ),
+    )
 
 
 class SummaryInputTest(SummaryInputStrapi):
     passing_content: bool = Field(
-        description="Whether the summary response is passing or failing on content.",        
+        description="Whether the summary response is passing or failing on content.",
     )
 
 
-class _SummaryResults(BaseModel):
+class SummaryScoreResults(BaseModel):
     """Intermediate Object for Storing Summary Scores"""
 
     containment: float
