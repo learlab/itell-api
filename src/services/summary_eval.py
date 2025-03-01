@@ -18,7 +18,7 @@ from ..schemas.summary import (
     ChunkWithWeight,
     Summary,
     SummaryInputStrapi,
-    _SummaryResults,
+    SummaryScoreResults,
 )
 from ..services.summary_feedback import feedback_processors
 
@@ -48,7 +48,7 @@ def weight_chunks(
 async def prepare_summary(
     summary_input: SummaryInputStrapi,
     strapi: Strapi,
-) -> tuple[Summary, _SummaryResults]:
+) -> tuple[Summary, SummaryScoreResults]:
     """Checks summary for text copied from the source and for semantic
     relevance to the source text. If it passes these checks, score the summary
     using a Huggingface pipeline.
@@ -91,7 +91,7 @@ async def summary_score(
     strapi: Strapi,
     supabase: SupabaseClient,
     faiss: FAISS_Wrapper,
-) -> tuple[Summary, _SummaryResults]:
+) -> tuple[Summary, SummaryScoreResults]:
     """Checks summary for text copied from the source and for semantic
     relevance to the source text. If it passes these checks, score the summary
     using a Huggingface pipeline.
@@ -148,7 +148,7 @@ async def summary_score(
     )
 
     if junk_filter:
-        return summary, _SummaryResults(**results)
+        return summary, SummaryScoreResults(**results)
 
     volume = await strapi.get_text_meta(summary_input.page_slug)
 
@@ -156,9 +156,7 @@ async def summary_score(
     input_text = summary.summary.text + "</s>" + summary.source.text
     results["content"] = float(content_pipe(input_text)[0]["score"])
 
-    ###
     # Calculate threshold for content feedback
-    ###
     # Fetch prior from Supabase
     prior_data = await supabase.get_volume_prior(volume.slug)
     volume_prior = ConjugateNormal(prior_data)
@@ -172,15 +170,16 @@ async def summary_score(
         results["content_threshold"] = student_prior.threshold
 
     # Update prior in Supabase
-    volume_prior.update([results["content"]])
-    updated_prior = VolumePrior(
-        slug=volume.slug,
-        mean=volume_prior.mu,
-        support=volume_prior.k,
-        alpha=volume_prior.alpha,
-        beta=volume_prior.beta,
-    )
+    if summary_input.enrolled_in_class is True:
+        volume_prior.update([results["content"]])
+        updated_prior = VolumePrior(
+            slug=volume.slug,
+            mean=volume_prior.mu,
+            support=volume_prior.k,
+            alpha=volume_prior.alpha,
+            beta=volume_prior.beta,
+        )
 
-    await supabase.update_volume_prior(updated_prior)
+        await supabase.update_volume_prior(updated_prior)
 
-    return summary, _SummaryResults(**results)
+    return summary, SummaryScoreResults(**results)

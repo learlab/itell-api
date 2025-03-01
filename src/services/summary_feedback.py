@@ -3,8 +3,8 @@ import tomllib
 from ..pipelines.feedback_processor import FeedbackProcessor
 from ..schemas.summary import (
     SummaryMetrics,
-    _SummaryResults,
     SummaryResultsWithFeedback,
+    SummaryScoreResults,
 )
 
 feedback_processors = {}
@@ -14,7 +14,7 @@ with open("assets/summary_feedback.toml", "rb") as f:
         feedback_processors[score_type] = FeedbackProcessor(**values)
 
 
-def summary_feedback(results: _SummaryResults) -> SummaryResultsWithFeedback:
+def summary_feedback(results: SummaryScoreResults) -> SummaryResultsWithFeedback:
     """Provide feedback on a summary based on the results
     of the summary scoring model."""
 
