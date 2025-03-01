@@ -51,7 +51,9 @@ class ConjugateNormal:
 
     @property
     def threshold(self):
-        return stats.norm.ppf(self.percentile, loc=self.mu, scale=self.sigma)
+        df = 2 * self.alpha
+        scale = np.sqrt(self.beta * (1 + 1 / self.k) / self.alpha)
+        return stats.t.ppf(self.percentile, df=df, loc=self.mu, scale=scale)
 
     def sum_square_diffs(self, A, B):
         """Sum of squared differences"""
